@@ -29,7 +29,7 @@ export default class E2EEcontext {
         // Determine the URL for the worker script. Relative URLs are relative to
         // the entry point, not the script that launches the worker.
         let baseUrl = '';
-        const ljm = document.querySelector('script[src*="lib-jitsi-meet"]');
+        const ljm = document.querySelector('script[src*="sriska-media-transport"]');
 
         if (ljm) {
             const idx = ljm.src.lastIndexOf('/');
@@ -37,8 +37,9 @@ export default class E2EEcontext {
             baseUrl = `${ljm.src.substring(0, idx)}/`;
         }
 
-        let workerUrl = `${baseUrl}lib-jitsi-meet.e2ee-worker.js`;
-
+        // Initialize the E2EE worker. In order to avoid CORS issues, start the worker and have it
+        // synchronously load the JS.
+        const workerUrl = `${baseUrl}sariska-media-transport.e2ee-worker.js`;
         // If there is no baseUrl then we create the worker in a normal way
         // as you cant load scripts inside blobs from relative paths.
         // See: https://www.html5rocks.com/en/tutorials/workers/basics/#toc-inlineworkers-loadingscripts

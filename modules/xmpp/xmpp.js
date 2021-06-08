@@ -50,24 +50,24 @@ function createConnection({
     token,
     websocketKeepAlive,
     websocketKeepAliveUrl,
-    xmppPing }) {
+    xmppPing,
+    name }) {
 
     // Append token as URL param
     if (token) {
         // eslint-disable-next-line no-param-reassign
-        serviceUrl += `${serviceUrl.indexOf('?') === -1 ? '?' : '&'}token=${token}`;
+        serviceUrl += `${serviceUrl.indexOf('?') === -1 ? '?' : '&'}token=${token}&room=${name}`;
     }
-
     return new XmppConnection({
         enableWebsocketResume,
         serviceUrl,
         websocketKeepAlive,
         websocketKeepAliveUrl,
         xmppPing,
-        shard
+        shard,
+        name
     });
 }
-
 /**
  * Initializes Strophe plugins that need to work with Strophe.Connection directly rather than the lib-jitsi-meet's
  * {@link XmppConnection} wrapper.
@@ -128,7 +128,7 @@ export default class XMPP extends Listenable {
      * @param {Array<Object>} options.p2pStunServers see {@link JingleConnectionPlugin} for more details.
      * @param token
      */
-    constructor(options, token) {
+    constructor(options, token, roomName) {
         super();
         this.connection = null;
         this.disconnectInProgress = false;
@@ -145,6 +145,7 @@ export default class XMPP extends Listenable {
         xmppPing.domain = options.hosts.domain;
 
         this.connection = createConnection({
+            name: roomName,
             enableWebsocketResume: options.enableWebsocketResume,
 
             // FIXME remove deprecated bosh option at some point
@@ -186,11 +187,11 @@ export default class XMPP extends Listenable {
         // they wanted to utilize the connected connection in an unload handler
         // of their own. However, it should be fairly easy for them to do that
         // by registering their unload handler before us.
-        $(window).on('beforeunload unload', ev => {
-            this.disconnect(ev).catch(() => {
-                // ignore errors in order to not brake the unload.
-            });
-        });
+        // $(window).on('beforeunload unload', ev => {
+        //     this.disconnect(ev).catch(() => {
+        //         // ignore errors in order to not brake the unload.
+        //     });
+        // });
     }
 
     /**

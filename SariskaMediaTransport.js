@@ -1,5 +1,6 @@
 import Logger from '@jitsi/logger';
-
+/* global __filename */
+import './dom/jquery.js';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import JitsiConnection from './JitsiConnection';
@@ -37,6 +38,7 @@ import * as ConnectionQualityEvents
     from './service/connectivity/ConnectionQualityEvents';
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
+import {sdkDefaultOptions} from './config';
 
 const logger = Logger.getLogger(__filename);
 
@@ -92,8 +94,8 @@ function getAnalyticsAttributesFromOptions(options) {
  */
 function _mergeNamespaceAndModule(module) {
     return (
-        typeof window.JitsiMeetJS === 'object'
-            ? Object.assign({}, window.JitsiMeetJS, module)
+        typeof window.SariskaMediaTransport === 'object'
+            ? Object.assign({}, window.SariskaMediaTransport, module)
             : module);
 }
 
@@ -142,6 +144,7 @@ export default _mergeNamespaceAndModule({
     mediaDevices: JitsiMediaDevices,
     analytics: Statistics.analytics,
     init(options = {}) {
+        options = {...sdkDefaultOptions, ...options};
         Settings.init(options.externalStorage);
         Statistics.init(options);
 
@@ -169,7 +172,7 @@ export default _mergeNamespaceAndModule({
         if (this.version) {
             const logObject = {
                 id: 'component_version',
-                component: 'lib-jitsi-meet',
+                component: 'sariska-media-transport',
                 version: this.version
             };
 

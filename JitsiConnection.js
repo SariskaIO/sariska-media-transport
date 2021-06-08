@@ -6,7 +6,7 @@ import {
     CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED,
     createConnectionFailedEvent
 } from './service/statistics/AnalyticsEvents';
-
+import {connectionDefaultOptions} from './config';
 /**
  * Creates a new connection object for the Jitsi Meet server side video
  * conferencing service. Provides access to the JitsiConference interface.
@@ -17,11 +17,14 @@ import {
  * the server.
  * @constructor
  */
-export default function JitsiConnection(appID, token, options) {
-    this.appID = appID;
+export default function JitsiConnection(token, options) {
+    options = {...connectionDefaultOptions, ...options}
     this.token = token;
-    this.options = options;
-    this.xmpp = new XMPP(options, token);
+    const jwt = this.parseJwt(token);
+    this.name = jwt ? jwt.room : null;
+    this.user = jwt.context.user;
+    this.xmpp = new XMPP(options, token, this.name);
+    this.token = token;
 
     /* eslint-disable max-params */
     this.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED,
@@ -52,6 +55,14 @@ export default function JitsiConnection(appID, token, options) {
         });
 }
 
+JitsiConnection.prototype.parseJwt = function (token) {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    }
+    catch (e) {
+        return null;
+    }
+};
 /**
  * Connect the client with the server.
  * @param options {object} connecting options
@@ -109,11 +120,12 @@ JitsiConnection.prototype.setToken = function(token) {
  * that will be created.
  * @returns {JitsiConference} returns the new conference object.
  */
-JitsiConnection.prototype.initJitsiConference = function(name, options) {
+JitsiConnection.prototype.initJitsiConference = function(options) {
     return new JitsiConference({
-        name,
+        this.name,
         config: options,
-        connection: this
+        connection: this,
+        user: this.user
     });
 };
 

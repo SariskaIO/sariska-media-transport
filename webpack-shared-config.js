@@ -1,18 +1,17 @@
 /* global __dirname */
-
+const path = require('path');
 const process = require('process');
-const { ProvidePlugin } = require('webpack');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-
+const { ProvidePlugin } = require('webpack');
 
 module.exports = (minimize, analyzeBundle) => {
-    return {
+   return {
         // The inline-source-map is used to allow debugging the unit tests with Karma
         devtool: minimize ? 'source-map' : 'inline-source-map',
         mode: minimize ? 'production' : 'development',
         module: {
             rules: [ {
-                // Version this build of the lib-jitsi-meet library.
+                // Version this build of the sariska-media-transport library.
 
                 loader: 'string-replace-loader',
                 options: {
@@ -21,7 +20,7 @@ module.exports = (minimize, analyzeBundle) => {
                         process.env.LIB_JITSI_MEET_COMMIT_HASH || 'development',
                     search: '{#COMMIT_HASH#}'
                 },
-                test: `${__dirname}/JitsiMeetJS.js`
+                test: `${__dirname}/SariskMediaTransport.js`
             }, {
                 // Transpile ES2015 (aka ES6) to ES5.
 
@@ -50,6 +49,13 @@ module.exports = (minimize, analyzeBundle) => {
                                 }
                             }
                         ]
+                    ],
+                    plugins: [
+                        '@babel/plugin-transform-flow-strip-types',
+                        '@babel/plugin-proposal-class-properties',
+                        '@babel/plugin-proposal-optional-chaining',
+                        '@babel/plugin-proposal-export-namespace-from',
+                        '@babel/plugin-proposal-nullish-coalescing-operator'
                     ]
                 },
                 test: /\.js$/
@@ -66,6 +72,7 @@ module.exports = (minimize, analyzeBundle) => {
         },
         output: {
             filename: `[name]${minimize ? '.min' : ''}.js`,
+            path: path.resolve(__dirname, 'dist'),
             sourceMapFilename: `[name].${minimize ? 'min' : 'js'}.map`
         },
         performance: {
@@ -74,15 +81,18 @@ module.exports = (minimize, analyzeBundle) => {
             maxEntrypointSize: 750 * 1024
         },
         plugins: [
+            new webpack.ProvidePlugin({
+                $: path.resolve(__dirname, './src/dom/jquery.js')
+            }),
             analyzeBundle
-                && new BundleAnalyzerPlugin({
-                    analyzerMode: 'disabled',
-                    generateStatsFile: true
-                }),
+            && new BundleAnalyzerPlugin({
+                analyzerMode: 'disabled',
+                generateStatsFile: true
+            }),
             !minimize
-                && new ProvidePlugin({
-                    process: 'process/browser'
-                })
+            && new ProvidePlugin({
+                process: 'process/browser'
+            })
         ].filter(Boolean)
-    };
+    }
 };

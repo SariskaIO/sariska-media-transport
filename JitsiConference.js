@@ -73,7 +73,7 @@ import {
     createP2PEvent
 } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
-
+import {conferenceDefaultOptions} from './config';
 const logger = getLogger(__filename);
 
 /**
@@ -122,7 +122,8 @@ const JINGLE_SI_TIMEOUT = 5000;
  *       and so on...
  */
 export default function JitsiConference(options) {
-    if (!options.name || options.name.toLowerCase() !== options.name.toString()) {
+    options = {...conferenceDefaultOptions, ...options};
+    if (!options.name || options.name.toLowerCase() !== options.name) {
         const errmsg
             = 'Invalid conference name (no conference name passed or it '
                 + 'contains invalid characters like capital letters)!';
@@ -141,6 +142,7 @@ export default function JitsiConference(options) {
         logger.error(errmsg);
         throw new Error(errmsg);
     }
+    this.user = options.user;
     this.eventEmitter = new EventEmitter();
     this.options = options;
     this.eventManager = new JitsiConferenceEventManager(this);
@@ -302,29 +304,8 @@ JitsiConference.prototype.constructor = JitsiConference;
  * @returns {string}
  * @static
  */
-JitsiConference.resourceCreator = function(jid, isAuthenticatedUser) {
-    let mucNickname;
-
-    if (isAuthenticatedUser) {
-        // For authenticated users generate a random ID.
-        mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-    } else {
-        // We try to use the first part of the node (which for anonymous users
-        // on prosody is a UUID) to match the previous behavior (and maybe make
-        // debugging easier).
-        mucNickname = Strophe.getNodeFromJid(jid).substr(0, 8)
-            .toLowerCase();
-
-        // But if this doesn't have the required format we just generate a new
-        // random nickname.
-        const re = /[0-9a-f]{8}/g;
-
-        if (!re.test(mucNickname)) {
-            mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-        }
-    }
-
-    return mucNickname;
+JitsiConference.resourceCreator = function(jid) {
+    return Strophe.getNodeFromJid(jid);
 };
 
 /**
@@ -4012,4 +3993,13 @@ JitsiConference.prototype.avModerationReject = function(mediaType, id) {
  */
 JitsiConference.prototype.getBreakoutRooms = function() {
     return this.room?.getBreakoutRooms();
+};
+
+/**
+ * Gets the local user when joined
+ */
+JitsiConference.prototype.getLocalUser = function() {
+    if (this.user) {
+        return this.user;
+    }
 };
