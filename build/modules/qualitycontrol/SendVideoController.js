@@ -1,0 +1,117 @@
+import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
+import RTCEvents from '../../service/RTC/RTCEvents';
+import MediaSessionEvents from '../xmpp/MediaSessionEvents';
+/**
+ * The class manages send video constraints across media sessions({@link JingleSessionPC}) which belong to
+ * {@link JitsiConference}. It finds the lowest common value, between the local user's send preference and
+ * the remote party's receive preference. Also this module will consider only the active session's receive value,
+ * because local tracks are shared and while JVB may have no preference, the remote p2p may have and they may be totally
+ * different.
+ */
+
+export class SendVideoController {
+  /**
+   * Creates new instance for a given conference.
+   *
+   * @param {JitsiConference} conference - the conference instance for which the new instance will be managing
+   * the send video quality constraints.
+   * @param {RTC} rtc - the rtc instance that is responsible for sending the messages on the bridge channel.
+   */
+  constructor(conference, rtc) {
+    var _conference$options, _conference$options$c;
+
+    this.conference = conference;
+    this.layerSuspensionEnabled = (_conference$options = conference.options) === null || _conference$options === void 0 ? void 0 : (_conference$options$c = _conference$options.config) === null || _conference$options$c === void 0 ? void 0 : _conference$options$c.enableLayerSuspension;
+    this.rtc = rtc;
+    this.conference.on(JitsiConferenceEvents._MEDIA_SESSION_STARTED, session => this._onMediaSessionStarted(session));
+    this.conference.on(JitsiConferenceEvents._MEDIA_SESSION_ACTIVE_CHANGED, () => this._propagateSendMaxFrameHeight());
+    this.rtc.on(RTCEvents.SENDER_VIDEO_CONSTRAINTS_CHANGED, videoConstraints => {
+      var _this$_senderVideoCon;
+
+      // Propagate the sender constraint only if it has changed.
+      if (((_this$_senderVideoCon = this._senderVideoConstraints) === null || _this$_senderVideoCon === void 0 ? void 0 : _this$_senderVideoCon.idealHeight) !== videoConstraints.idealHeight) {
+        this._senderVideoConstraints = videoConstraints;
+
+        this._propagateSendMaxFrameHeight();
+      }
+    });
+  }
+  /**
+   * Handles the {@link JitsiConferenceEvents.MEDIA_SESSION_STARTED}, that is when the conference creates new media
+   * session. It doesn't mean it's already active though. For example the JVB connection may be created after
+   * the conference has entered the p2p mode already.
+   *
+   * @param {JingleSessionPC} mediaSession - the started media session.
+   * @private
+   */
+
+
+  _onMediaSessionStarted(mediaSession) {
+    mediaSession.addListener(MediaSessionEvents.REMOTE_VIDEO_CONSTRAINTS_CHANGED, session => {
+      if (session === this.conference._getActiveMediaSession()) {
+        this._propagateSendMaxFrameHeight();
+      }
+    }); // Set the degradation preference on the local video track.
+
+    mediaSession.setSenderVideoDegradationPreference(); // Set the max bitrates on video sender if they are specified in config.js videoQuality settings.
+
+    mediaSession.setSenderMaxBitrates();
+  }
+  /**
+   * Figures out the send video constraint as specified by {@link selectSendMaxFrameHeight} and sets it on all media
+   * sessions for the reasons mentioned in this class description.
+   *
+   * @returns {Promise<void[]>}
+   * @private
+   */
+
+
+  _propagateSendMaxFrameHeight() {
+    const sendMaxFrameHeight = this.selectSendMaxFrameHeight();
+    const promises = [];
+
+    if (sendMaxFrameHeight >= 0) {
+      for (const session of this.conference._getMediaSessions()) {
+        promises.push(session.setSenderVideoConstraint(sendMaxFrameHeight));
+      }
+    }
+
+    return Promise.all(promises);
+  }
+  /**
+   * Selects the lowest common value for the local video send constraint by looking at local user's preference and
+   * the active media session's receive preference set by the remote party.
+   *
+   * @returns {number|undefined}
+   */
+
+
+  selectSendMaxFrameHeight() {
+    var _this$_senderVideoCon2;
+
+    const activeMediaSession = this.conference._getActiveMediaSession();
+
+    const remoteRecvMaxFrameHeight = activeMediaSession ? activeMediaSession.isP2P ? activeMediaSession.getRemoteRecvMaxFrameHeight() : this.layerSuspensionEnabled ? (_this$_senderVideoCon2 = this._senderVideoConstraints) === null || _this$_senderVideoCon2 === void 0 ? void 0 : _this$_senderVideoCon2.idealHeight : undefined : undefined;
+
+    if (this.preferredSendMaxFrameHeight >= 0 && remoteRecvMaxFrameHeight >= 0) {
+      return Math.min(this.preferredSendMaxFrameHeight, remoteRecvMaxFrameHeight);
+    } else if (remoteRecvMaxFrameHeight >= 0) {
+      return remoteRecvMaxFrameHeight;
+    }
+
+    return this.preferredSendMaxFrameHeight;
+  }
+  /**
+   * Sets local preference for max send video frame height.
+   *
+   * @param {number} maxFrameHeight - the new value to set.
+   * @returns {Promise<void[]>} - resolved when the operation is complete.
+   */
+
+
+  setPreferredSendMaxFrameHeight(maxFrameHeight) {
+    this.preferredSendMaxFrameHeight = maxFrameHeight;
+    return this._propagateSendMaxFrameHeight();
+  }
+
+}

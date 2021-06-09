@@ -9,7 +9,6 @@ WEBPACK = ./node_modules/.bin/webpack
 
 all: transpile compile deploy clean
 
-
 transpile:
 	npm run transpile
 
