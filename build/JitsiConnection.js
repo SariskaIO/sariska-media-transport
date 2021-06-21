@@ -23,6 +23,7 @@ export default function JitsiConnection(token, options = {}) {
   const jwt = this.parseJwt(token);
   this.name = jwt ? jwt.room : null;
   this.user = jwt.context.user;
+  this.options = options;
   this.xmpp = new XMPP(options, token, this.name);
   this.token = token;
   /* eslint-disable max-params */
@@ -129,7 +130,7 @@ JitsiConnection.prototype.initJitsiConference = function (options = {}) {
   const name = this.name;
   return new JitsiConference({
     name,
-    config: options,
+    config: this.options,
     connection: this,
     user: this.user
   });
