@@ -41,7 +41,7 @@ export default class JibriSession {
   /**
    * Returns the initiator of the session instance.
    *
-   * @returns {JitsiParticipant|undefined} The participant that started the session.
+   * @returns {JitsiParticipant|string} The participant that started the session.
    */
 
 
@@ -71,7 +71,7 @@ export default class JibriSession {
   /**
    * Returns the jid of the participant that stopped the session.
    *
-   * @returns {JitsiParticipant|undefined} The participant that stopped the session.
+   * @returns {JitsiParticipant|string} The participant that stopped the session.
    */
 
 
@@ -124,8 +124,9 @@ export default class JibriSession {
     this._status = status;
   }
   /**
-   * Sets the creator's jid of the session.
-   * @param {JitsiParticipant} participant - The creator of the session.
+   * Sets the participant that started the session.
+   * @param {JitsiParticipant | string} participant - The participant or resource id
+   * if local participant.
    */
 
 
@@ -133,9 +134,9 @@ export default class JibriSession {
     this._initiator = participant;
   }
   /**
-   * Sets the jid of the participant that stopped the session.
-   * @param {JitsiParticipant} participant  - The participant's jid,
-   * that stopped the session.
+   * Sets the participant that stopped the session.
+   * @param {JitsiParticipant | string} participant - The participant or the resource id
+   * if local participant.
    */
 
 

@@ -104,7 +104,7 @@ export default class BrowserCapabilities extends BrowserDetection {
 
 
   supportsVideoMuteOnConnInterrupted() {
-    return this.isChromiumBased() || this.isReactNative() || this.isWebKitBased();
+    return this.isChromiumBased() || this.isReactNative();
   }
   /**
    * Checks if the current browser reports upload and download bandwidth

@@ -1,17 +1,12 @@
 import { getLogger } from 'jitsi-meet-logger';
 import transform from 'sdp-transform';
+import MediaDirection from '../../service/RTC/MediaDirection';
 import * as MediaType from '../../service/RTC/MediaType';
 import browser from '../browser';
 const logger = getLogger(__filename);
 const SIM_LAYER_1_RID = '1';
 const SIM_LAYER_2_RID = '2';
 const SIM_LAYER_3_RID = '3';
-const TransceiverDirection = {
-  INACTIVE: 'inactive',
-  RECVONLY: 'recvonly',
-  SENDONLY: 'sendonly',
-  SENDRECV: 'sendrecv'
-};
 export const SIM_LAYER_RIDS = [SIM_LAYER_1_RID, SIM_LAYER_2_RID, SIM_LAYER_3_RID];
 /**
  * Handles track related operations on TraceablePeerConnection when browser is
@@ -220,7 +215,7 @@ export class TPCUtils {
       // Use pc.addTransceiver() for the initiator case when local tracks are getting added
       // to the peerconnection before a session-initiate is sent over to the peer.
       const transceiverInit = {
-        direction: TransceiverDirection.SENDRECV,
+        direction: MediaDirection.SENDRECV,
         streams: [localTrack.getOriginalStream()],
         sendEncodings: []
       };
@@ -254,7 +249,7 @@ export class TPCUtils {
       return Promise.reject(new Error(`RTCRtpTransceiver for ${mediaType} not found`));
     }
 
-    logger.debug(`Adding ${localTrack} on ${this.pc}`);
+    logger.debug(`${this.pc} Adding ${localTrack}`);
     return transceiver.sender.replaceTrack(track);
   }
   /**
@@ -301,7 +296,7 @@ export class TPCUtils {
       return Promise.reject(new Error(`RTCRtpTransceiver for ${mediaType} not found`));
     }
 
-    logger.debug(`Removing ${localTrack} on ${this.pc}`);
+    logger.debug(`${this.pc} Removing ${localTrack}`);
     return transceiver.sender.replaceTrack(null);
   }
   /**
@@ -334,7 +329,7 @@ export class TPCUtils {
         return Promise.reject(new Error('replace track failed'));
       }
 
-      logger.debug(`Replacing ${oldTrack} with ${newTrack} on ${this.pc}`);
+      logger.debug(`${this.pc} Replacing ${oldTrack} with ${newTrack}`);
       return transceiver.sender.replaceTrack(track).then(() => {
         const ssrc = this.pc.localSSRCs.get(oldTrack.rtcId);
         this.pc.localTracks.delete(oldTrack.rtcId);
@@ -355,7 +350,7 @@ export class TPCUtils {
 
 
         if (transceiver) {
-          transceiver.direction = TransceiverDirection.RECVONLY;
+          transceiver.direction = MediaDirection.RECVONLY;
         } // Remove the old track from the list of local tracks.
 
 
@@ -371,7 +366,7 @@ export class TPCUtils {
 
 
         if (transceiver) {
-          transceiver.direction = TransceiverDirection.SENDRECV;
+          transceiver.direction = MediaDirection.SENDRECV;
         } // Avoid configuring the encodings on Chromium/Safari until simulcast is configured
         // for the newly added track using SDP munging which happens during the renegotiation.
 
@@ -384,7 +379,7 @@ export class TPCUtils {
       });
     }
 
-    logger.info('TPCUtils.replaceTrack called with no new track and no old track');
+    logger.info(`${this.pc} TPCUtils.replaceTrack called with no new track and no old track`);
     return Promise.resolve();
   }
   /**
@@ -440,17 +435,17 @@ export class TPCUtils {
   setMediaTransferActive(mediaType, active) {
     const transceivers = this.pc.peerconnection.getTransceivers().filter(t => t.receiver && t.receiver.track && t.receiver.track.kind === mediaType);
     const localTracks = this.pc.getLocalTracks(mediaType);
-    logger.info(`${active ? 'Enabling' : 'Suspending'} ${mediaType} media transfer on ${this.pc}`);
+    logger.info(`${this.pc} ${active ? 'Enabling' : 'Suspending'} ${mediaType} media transfer.`);
     transceivers.forEach((transceiver, idx) => {
       if (active) {
         // The first transceiver is for the local track and only this one can be set to 'sendrecv'
         if (idx === 0 && localTracks.length) {
-          transceiver.direction = TransceiverDirection.SENDRECV;
+          transceiver.direction = MediaDirection.SENDRECV;
         } else {
-          transceiver.direction = TransceiverDirection.RECVONLY;
+          transceiver.direction = MediaDirection.RECVONLY;
         }
       } else {
-        transceiver.direction = TransceiverDirection.INACTIVE;
+        transceiver.direction = MediaDirection.INACTIVE;
       }
     });
   }

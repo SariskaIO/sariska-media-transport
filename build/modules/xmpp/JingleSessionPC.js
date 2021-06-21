@@ -2,6 +2,7 @@
 import { getLogger } from 'jitsi-meet-logger';
 import { $iq, Strophe } from 'strophe.js';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
+import MediaDirection from '../../service/RTC/MediaDirection';
 import { ICE_DURATION, ICE_STATE_CHANGED } from '../../service/statistics/AnalyticsEvents';
 import XMPPEvents from '../../service/xmpp/XMPPEvents';
 import { SS_DEFAULT_FRAME_RATE } from '../RTC/ScreenObtainer';
@@ -1628,9 +1629,21 @@ export default class JingleSessionPC extends JingleSession {
           const mid = remoteSdp.media.findIndex(mLine => mLine.includes(line));
 
           if (mid > -1) {
-            remoteSdp.media[mid] = remoteSdp.media[mid].replace(`${line}\r\n`, ''); // Change the direction to "inactive".
+            remoteSdp.media[mid] = remoteSdp.media[mid].replace(`${line}\r\n`, ''); // The current direction of the transceiver for p2p will depend on whether a local sources is
+            // added or not. It will be 'sendrecv' if the local source is present, 'sendonly' otherwise.
 
-            remoteSdp.media[mid] = remoteSdp.media[mid].replace('a=sendonly', 'a=inactive');
+            if (this.isP2P) {
+              var _SDPUtil$parseMLine;
+
+              const mediaType = (_SDPUtil$parseMLine = SDPUtil.parseMLine(remoteSdp.media[mid].split('\r\n')[0])) === null || _SDPUtil$parseMLine === void 0 ? void 0 : _SDPUtil$parseMLine.media;
+              const desiredDirection = this.peerconnection.getDesiredMediaDirection(mediaType, false);
+              [MediaDirection.SENDRECV, MediaDirection.SENDONLY].forEach(direction => {
+                remoteSdp.media[mid] = remoteSdp.media[mid].replace(`a=${direction}`, `a=${desiredDirection}`);
+              }); // Jvb connections will have direction set to 'sendonly' when the remote ssrc is present.
+            } else {
+              // Change the direction to "inactive" always for jvb connection.
+              remoteSdp.media[mid] = remoteSdp.media[mid].replace(`a=${MediaDirection.SENDONLY}`, `a=${MediaDirection.INACTIVE}`);
+            }
           }
         });
       } else {
@@ -1654,7 +1667,18 @@ export default class JingleSessionPC extends JingleSession {
   _processRemoteAddSource(addSsrcInfo) {
     const remoteSdp = new SDP(this.peerconnection.remoteDescription.sdp);
     addSsrcInfo.forEach((lines, idx) => {
-      remoteSdp.media[idx] += lines;
+      remoteSdp.media[idx] += lines; // Make sure to change the direction to 'sendrecv' only for p2p connections. For jvb connections, a new
+      // m-line is added for the new remote sources.
+
+      if (this.isP2P && this.usesUnifiedPlan) {
+        var _SDPUtil$parseMLine2;
+
+        const mediaType = (_SDPUtil$parseMLine2 = SDPUtil.parseMLine(remoteSdp.media[idx].split('\r\n')[0])) === null || _SDPUtil$parseMLine2 === void 0 ? void 0 : _SDPUtil$parseMLine2.media;
+        const desiredDirection = this.peerconnection.getDesiredMediaDirection(mediaType, true);
+        [MediaDirection.RECVONLY, MediaDirection.INACTIVE].forEach(direction => {
+          remoteSdp.media[idx] = remoteSdp.media[idx].replace(`a=${direction}`, `a=${desiredDirection}`);
+        });
+      }
     });
     remoteSdp.raw = remoteSdp.session + remoteSdp.media.join('');
     return remoteSdp;

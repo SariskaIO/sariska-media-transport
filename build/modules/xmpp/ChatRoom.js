@@ -117,6 +117,7 @@ export default class ChatRoom extends Listenable {
     this.roomjid = Strophe.getBareJidFromJid(jid);
     this.myroomjid = jid;
     this.password = password;
+    this.replaceParticipant = false;
     logger.info(`Joined MUC as ${this.myroomjid}`);
     this.members = {};
     this.presMap = {};
@@ -185,8 +186,9 @@ export default class ChatRoom extends Listenable {
    */
 
 
-  join(password) {
+  join(password, replaceParticipant) {
     this.password = password;
+    this.replaceParticipant = replaceParticipant;
     return new Promise(resolve => {
       this.options.disableFocus && logger.info(`Conference focus disabled for ${this.roomjid}`);
       const preJoin = this.options.disableFocus ? Promise.resolve() : this.moderator.allocateConferenceFocus();
@@ -222,6 +224,10 @@ export default class ChatRoom extends Listenable {
     // for the room on every presence
 
     if (fromJoin) {
+      if (this.replaceParticipant) {
+        pres.c('flip_device').up();
+      }
+
       pres.c('x', {
         xmlns: this.presMap.xns
       });
@@ -425,6 +431,7 @@ export default class ChatRoom extends Listenable {
     let hasVersionUpdate = false;
     const xElement = pres.getElementsByTagNameNS('http://jabber.org/protocol/muc#user', 'x')[0];
     const mucUserItem = xElement && xElement.getElementsByTagName('item')[0];
+    member.isReplaceParticipant = pres.getElementsByTagName('flip_device').length;
     member.affiliation = mucUserItem && mucUserItem.getAttribute('affiliation');
     member.role = mucUserItem && mucUserItem.getAttribute('role'); // Focus recognition
 
@@ -582,7 +589,7 @@ export default class ChatRoom extends Listenable {
         // identity is being added to member joined, so external
         // services can be notified for that (currently identity is
         // not used inside library)
-        this.eventEmitter.emit(XMPPEvents.MUC_MEMBER_JOINED, from, member.nick, member.role, member.isHiddenDomain, member.statsID, member.status, member.identity, member.botType, member.jid, member.features); // we are reporting the status with the join
+        this.eventEmitter.emit(XMPPEvents.MUC_MEMBER_JOINED, from, member.nick, member.role, member.isHiddenDomain, member.statsID, member.status, member.identity, member.botType, member.jid, member.features, member.isReplaceParticipant); // we are reporting the status with the join
         // so we do not want a second event about status update
 
         hasStatusUpdate = false;
@@ -944,6 +951,7 @@ export default class ChatRoom extends Listenable {
     const isSelfPresence = $(pres).find('>x[xmlns="http://jabber.org/protocol/muc#user"]>' + 'status[code="110"]').length;
     const isKick = $(pres).find('>x[xmlns="http://jabber.org/protocol/muc#user"]' + '>status[code="307"]').length;
     const membersKeys = Object.keys(this.members);
+    const isReplaceParticipant = $(pres).find('flip_device').length;
 
     if (isKick) {
       const actorSelect = $(pres).find('>x[xmlns="http://jabber.org/protocol/muc#user"]>item>actor');
@@ -963,7 +971,7 @@ export default class ChatRoom extends Listenable {
       // we fire kicked for us and for any participant kicked
 
 
-      this.eventEmitter.emit(XMPPEvents.KICKED, isSelfPresence, actorNick, Strophe.getResourceFromJid(from), reason);
+      this.eventEmitter.emit(XMPPEvents.KICKED, isSelfPresence, actorNick, Strophe.getResourceFromJid(from), reason, isReplaceParticipant);
     }
 
     if (isSelfPresence) {

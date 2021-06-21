@@ -141,7 +141,7 @@ export default class RTC extends Listenable {
     this._onDeviceListChanged = this._onDeviceListChanged.bind(this);
     this._updateAudioOutputForAudioTracks = this._updateAudioOutputForAudioTracks.bind(this); // The default video type assumed by the bridge.
 
-    this._videoType = VideoType.CAMERA; // Switch audio output device on all remote audio tracks. Local audio
+    this._videoType = VideoType.NONE; // Switch audio output device on all remote audio tracks. Local audio
     // tracks handle this event by themselves.
 
     if (RTCUtils.isDeviceChangeAvailable('output')) {

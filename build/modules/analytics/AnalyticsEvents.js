@@ -835,21 +835,3 @@ export function createVpaasConferenceJoinedEvent(tenant) {
     }
   };
 }
-/**
- * Creates an event for an action on the welcome page.
- *
- * @param {string} action - The action that the event represents.
- * @param {string} actionSubject - The subject that was acted upon.
- * @param {boolean} attributes - Additional attributes to attach to the event.
- * @returns {Object} The event in a format suitable for sending via
- * sendAnalytics.
- */
-
-export function createWelcomePageEvent(action, actionSubject, attributes = {}) {
-  return {
-    action,
-    actionSubject,
-    attributes,
-    source: 'welcomePage'
-  };
-}

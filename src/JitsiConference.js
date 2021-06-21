@@ -122,7 +122,6 @@ const JINGLE_SI_TIMEOUT = 5000;
  *       and so on...
  */
 export default function JitsiConference(options) {
-    options = {...conferenceDefaultOptions, ...options};
     if (!options.name || options.name.toLowerCase() !== options.name) {
         const errmsg
             = 'Invalid conference name (no conference name passed or it '

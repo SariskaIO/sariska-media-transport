@@ -3,7 +3,7 @@ import * as JitsiConnectionEvents from './JitsiConnectionEvents';
 import Statistics from './modules/statistics/statistics';
 import XMPP from './modules/xmpp/xmpp';
 import { CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED, createConnectionFailedEvent } from './service/statistics/AnalyticsEvents';
-import { connectionDefaultOptions } from './config';
+import { connectionDefaultOptions, conferenceDefaultOptions } from './config';
 /**
  * Creates a new connection object for the Jitsi Meet server side video
  * conferencing service. Provides access to the JitsiConference interface.
@@ -16,9 +16,6 @@ import { connectionDefaultOptions } from './config';
  */
 
 export default function JitsiConnection(token, options) {
-  options = { ...connectionDefaultOptions,
-    ...options
-  };
   this.token = token;
   const jwt = this.parseJwt(token);
   this.name = jwt ? jwt.room : null;
@@ -123,6 +120,9 @@ JitsiConnection.prototype.setToken = function (token) {
 
 
 JitsiConnection.prototype.initJitsiConference = function (options) {
+  options = { ...conferenceDefaultOptions,
+    ...options
+  };
   const name = this.name;
   return new JitsiConference({
     name,

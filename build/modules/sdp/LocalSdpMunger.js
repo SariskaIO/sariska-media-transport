@@ -1,5 +1,6 @@
 /* global __filename */
 import { getLogger } from 'jitsi-meet-logger';
+import MediaDirection from '../../service/RTC/MediaDirection';
 import * as MediaType from '../../service/RTC/MediaType';
 import { SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);
@@ -85,7 +86,7 @@ export default class LocalSdpMunger {
       // as localDescription. That's why
       // TraceablePeerConnection.mediaTransferActive is ignored here.
 
-      videoMLine.direction = 'sendrecv'; // Check if the recvonly has MSID
+      videoMLine.direction = MediaDirection.SENDRECV; // Check if the recvonly has MSID
 
       const primarySSRC = requiredSSRCs[0]; // FIXME The cname could come from the stream, but may turn out to
       // be too complex. It is fine to come up with any value, as long as
@@ -208,11 +209,11 @@ export default class LocalSdpMunger {
 
     const msid = mediaSection.ssrcs.find(s => s.attribute === 'msid');
 
-    if (!this.tpc.isP2P && (!msid || ((_mediaSection$mLine2 = mediaSection.mLine) === null || _mediaSection$mLine2 === void 0 ? void 0 : _mediaSection$mLine2.direction) === 'recvonly' || ((_mediaSection$mLine3 = mediaSection.mLine) === null || _mediaSection$mLine3 === void 0 ? void 0 : _mediaSection$mLine3.direction) === 'inactive')) {
+    if (!this.tpc.isP2P && (!msid || ((_mediaSection$mLine2 = mediaSection.mLine) === null || _mediaSection$mLine2 === void 0 ? void 0 : _mediaSection$mLine2.direction) === MediaDirection.RECVONLY || ((_mediaSection$mLine3 = mediaSection.mLine) === null || _mediaSection$mLine3 === void 0 ? void 0 : _mediaSection$mLine3.direction) === MediaDirection.INACTIVE)) {
       mediaSection.ssrcs = undefined;
       mediaSection.ssrcGroups = undefined; // Add the msid attribute if it is missing for p2p sources. Firefox doesn't produce a a=ssrc line
       // with msid attribute.
-    } else if (this.tpc.isP2P && ((_mediaSection$mLine4 = mediaSection.mLine) === null || _mediaSection$mLine4 === void 0 ? void 0 : _mediaSection$mLine4.direction) === 'sendrecv') {
+    } else if (this.tpc.isP2P && ((_mediaSection$mLine4 = mediaSection.mLine) === null || _mediaSection$mLine4 === void 0 ? void 0 : _mediaSection$mLine4.direction) === MediaDirection.SENDRECV) {
       var _mediaSection$mLine5, _mediaSection$mLine6, _mediaSection$mLine6$;
 
       const msidLine = (_mediaSection$mLine5 = mediaSection.mLine) === null || _mediaSection$mLine5 === void 0 ? void 0 : _mediaSection$mLine5.msid;

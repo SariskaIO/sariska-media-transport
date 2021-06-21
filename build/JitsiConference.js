@@ -95,10 +95,6 @@ const JINGLE_SI_TIMEOUT = 5000;
  */
 
 export default function JitsiConference(options) {
-  options = { ...conferenceDefaultOptions,
-    ...options
-  };
-
   if (!options.name || options.name.toLowerCase() !== options.name) {
     const errmsg = 'Invalid conference name (no conference name passed or it ' + 'contains invalid characters like capital letters)!';
     logger.error(errmsg);
@@ -231,6 +227,77 @@ export default function JitsiConference(options) {
     logger.info('End-to-End Encryprtion is supported');
     this._e2eEncryption = new E2EEncryption(this);
   }
+
+  let lastMessage = {};
+  this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, json) => {
+    const JSON_TYPE_TRANSCRIPTION_RESULT = 'transcription-result';
+    const JSON_TYPE_TRANSLATION_RESULT = 'translation-result';
+    const P_NAME_REQUESTING_TRANSCRIPTION = 'requestingTranscription';
+    const P_NAME_TRANSLATION_LANGUAGE = 'translation_language';
+
+    if (!(json && (json.type === JSON_TYPE_TRANSCRIPTION_RESULT || json.type === JSON_TYPE_TRANSLATION_RESULT))) {
+      return;
+    }
+
+    const translationLanguage = this.getLocalParticipantProperty("translation_language");
+
+    try {
+      const transcriptMessageID = json.message_id;
+      const participantName = json.participant.name;
+      let newTranscriptMessage = {};
+
+      if (json.type === JSON_TYPE_TRANSLATION_RESULT && json.language === translationLanguage) {
+        // Displays final results in the target language if translation is
+        // enabled.
+        newTranscriptMessage = {
+          final: json.text,
+          participantName
+        };
+      } else if (json.type === JSON_TYPE_TRANSCRIPTION_RESULT && !translationLanguage) {
+        // Displays interim and final results without any translation if
+        // translations are disabled.
+        const {
+          text
+        } = json.transcript[0]; // We update the previous transcript message with the same
+        // message ID or adds a new transcript message if it does not
+        // exist in the map.
+
+        newTranscriptMessage = {};
+
+        if (lastMessage[transcriptMessageID]) {
+          newTranscriptMessage = lastMessage;
+        } else {
+          newTranscriptMessage = {
+            participantName
+          };
+        } // If this is final result, update the state as a final result
+        // and start a count down to remove the subtitle from the state
+
+
+        if (!json.is_interim) {
+          newTranscriptMessage.final = text;
+        } else if (json.stability > 0.85) {
+          // If the message has a high stability, we can update the
+          // stable field of the state and remove the previously
+          // unstable results
+          newTranscriptMessage.stable = text;
+          newTranscriptMessage.unstable = undefined;
+        } else {
+          // Otherwise, this result has an unstable result, which we
+          // add to the state. The unstable result will be appended
+          // after the stable part.
+          newTranscriptMessage.unstable = text;
+        }
+      }
+
+      lastMessage = {
+        transcriptMessageID,
+        newTranscriptMessage
+      };
+    } catch (error) {
+      logger.error('Error occurred while updating transcriptions\n', error);
+    }
+  });
 } // FIXME convert JitsiConference to ES6 - ASAP !
 
 JitsiConference.prototype.constructor = JitsiConference;
@@ -430,12 +497,14 @@ JitsiConference.prototype._init = function (options = {}) {
 /**
  * Joins the conference.
  * @param password {string} the password
+ * @param replaceParticipant {boolean} whether the current join replaces
+ * an existing participant with same jwt from the meeting.
  */
 
 
-JitsiConference.prototype.join = function (password) {
+JitsiConference.prototype.join = function (password, replaceParticipant = false) {
   if (this.room) {
-    this.room.join(password).then(() => this._maybeSetSITimeout());
+    this.room.join(password, replaceParticipant).then(() => this._maybeSetSITimeout());
   }
 };
 /**
@@ -952,6 +1021,13 @@ JitsiConference.prototype._fireMuteChangeEvent = function (track) {
   } else if (this.mutedVideoByFocusActor && track.isVideoTrack()) {
     const actorId = Strophe.getResourceFromJid(this.mutedVideoByFocusActor);
     actorParticipant = this.participants[actorId];
+  } // Send the video type message to the bridge if the track is not removed/added to the pc as part of
+  // the mute/unmute operation. This currently happens only on Firefox.
+
+
+  if (track.isVideoTrack() && !browser.doesVideoMuteByStreamRemove()) {
+    const videoType = track.isMuted() ? VideoType.NONE : track.getVideoType();
+    this.rtc.setVideoType(videoType);
   }
 
   this.eventEmitter.emit(JitsiConferenceEvents.TRACK_MUTE_CHANGED, track, actorParticipant);
@@ -1036,7 +1112,7 @@ JitsiConference.prototype.replaceTrack = function (oldTrack, newTrack) {
       // Now handle the addition of the newTrack at the JitsiConference level
       this._setupNewTrack(newTrack);
 
-      newTrack.isVideoTrack() && this.rtc.setVideoType(newTrack.videoType);
+      newTrack.isVideoTrack() && this.rtc.setVideoType(newTrack.getVideoType());
     } else {
       oldTrack && oldTrack.isVideoTrack() && this.rtc.setVideoType(VideoType.NONE);
     }
@@ -1151,7 +1227,7 @@ JitsiConference.prototype._addLocalTrackAsUnmute = function (track) {
 
   return Promise.allSettled(addAsUnmutePromises).then(() => {
     // Signal the video type to the bridge.
-    track.isVideoTrack() && this.rtc.setVideoType(track.videoType);
+    track.isVideoTrack() && this.rtc.setVideoType(track.getVideoType());
   });
 };
 /**
@@ -1490,10 +1566,12 @@ JitsiConference.prototype.muteParticipant = function (id, mediaType) {
  * @param botType the member botType, if any
  * @param fullJid the member full jid, if any
  * @param features the member botType, if any
+ * @param isReplaceParticipant whether this join replaces a participant with
+ * the same jwt.
  */
 
 
-JitsiConference.prototype.onMemberJoined = function (jid, nick, role, isHidden, statsID, status, identity, botType, fullJid, features) {
+JitsiConference.prototype.onMemberJoined = function (jid, nick, role, isHidden, statsID, status, identity, botType, fullJid, features, isReplaceParticipant) {
   const id = Strophe.getResourceFromJid(jid);
 
   if (id === 'focus' || this.myUserId() === id) {
@@ -1504,6 +1582,7 @@ JitsiConference.prototype.onMemberJoined = function (jid, nick, role, isHidden, 
   participant.setRole(role);
   participant.setBotType(botType);
   participant.setFeatures(features);
+  participant.setIsReplacing(isReplaceParticipant);
   this.participants[id] = participant;
   this.eventEmitter.emit(JitsiConferenceEvents.USER_JOINED, id, participant);
 
@@ -1621,6 +1700,8 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
     this._maybeClearSITimeout();
   });
 };
+/* eslint-disable max-params */
+
 /**
  * Designates an event indicating that we were kicked from the XMPP MUC.
  * @param {boolean} isSelfPresence - whether it is for local participant
@@ -1630,10 +1711,12 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
  * @param {string?} kickedParticipantId - when it is not a kick for local participant,
  * this is the id of the participant which was kicked.
  * @param {string} reason - reason of the participant to kick
+ * @param {boolean?} isReplaceParticipant - whether this is a server initiated kick in order
+ * to replace it with a participant with same jwt.
  */
 
 
-JitsiConference.prototype.onMemberKicked = function (isSelfPresence, actorId, kickedParticipantId, reason) {
+JitsiConference.prototype.onMemberKicked = function (isSelfPresence, actorId, kickedParticipantId, reason, isReplaceParticipant) {
   // This check which be true when we kick someone else. With the introduction of lobby
   // the ChatRoom KICKED event is now also emitted for ourselves (the kicker) so we want to
   // avoid emitting an event where `undefined` kicked someone.
@@ -1644,12 +1727,13 @@ JitsiConference.prototype.onMemberKicked = function (isSelfPresence, actorId, ki
   const actorParticipant = this.participants[actorId];
 
   if (isSelfPresence) {
-    this.eventEmitter.emit(JitsiConferenceEvents.KICKED, actorParticipant, reason);
+    this.eventEmitter.emit(JitsiConferenceEvents.KICKED, actorParticipant, reason, isReplaceParticipant);
     this.leave();
     return;
   }
 
   const kickedParticipant = this.participants[kickedParticipantId];
+  kickedParticipant.setIsReplaced(isReplaceParticipant);
   this.eventEmitter.emit(JitsiConferenceEvents.PARTICIPANT_KICKED, actorParticipant, kickedParticipant, reason);
 };
 /**
@@ -1803,7 +1887,7 @@ JitsiConference.prototype.onRemoteTrackRemoved = function (removedTrack) {
 JitsiConference.prototype._onIncomingCallP2P = function (jingleSession, jingleOffer) {
   let rejectReason;
 
-  if (!this.isP2PEnabled() && !this.isP2PTestModeEnabled() && (browser.isFirefox() || browser.isWebKitBased())) {
+  if (!this.isP2PEnabled() && !this.isP2PTestModeEnabled() || browser.isFirefox() || browser.isWebKitBased()) {
     rejectReason = {
       reason: 'decline',
       reasonDescription: 'P2P disabled',
@@ -3493,26 +3577,6 @@ JitsiConference.prototype.avModerationApprove = function (mediaType, id) {
 
 
 JitsiConference.prototype.getLocalUser = function () {
-  if (this.user) {
-    return this.user;
-  }
-};
-
-
-JitsiConference.prototype.startLocalRecording = function (format, ) {
-  if (this.user) {
-    return this.user;
-  }
-};
-
-JitsiConference.prototype.switchFormat = function (format, ) {
-  if (this.user) {
-    return this.user;
-  }
-};
-
-
-JitsiConference.prototype.startAnalytics = function () {
   if (this.user) {
     return this.user;
   }

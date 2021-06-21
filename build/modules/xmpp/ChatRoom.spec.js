@@ -121,7 +121,8 @@ describe('ChatRoom', () => {
       null, // role
       false, // isHiddenDomain
       undefined, // statsID
-      'status-text', undefined, undefined, 'fulljid', undefined // features
+      'status-text', undefined, undefined, 'fulljid', undefined, // features
+      0 // isReplaceParticipant
       ]);
     });
     it('parses muc user item correctly', () => {
@@ -134,7 +135,21 @@ describe('ChatRoom', () => {
       'role-attr', // role
       jasmine.any(Boolean), // isHiddenDomain
       undefined, // statsID
-      undefined, undefined, undefined, 'jid=attr', undefined); // features
+      undefined, undefined, undefined, 'jid=attr', undefined, // features
+      0); // isReplaceParticipant
+    });
+    it('parses muc user replacing other user correctly', () => {
+      const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns="http://jabber.org/protocol/muc#user">' + '<item jid="jid=attr" affiliation="affiliation-attr" role="role-attr"/>' + '</x>' + '<flip_device />' + '</presence>';
+      const pres = new DOMParser().parseFromString(presStr, 'text/xml').documentElement;
+      room.onPresence(pres);
+      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
+      expect(emitterSpy).toHaveBeenCalledWith(XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
+      'role-attr', // role
+      jasmine.any(Boolean), // isHiddenDomain
+      undefined, // statsID
+      undefined, undefined, undefined, 'jid=attr', undefined, // features
+      1); // isReplaceParticipant
     });
     it('parses identity correctly', () => {
       const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns=\'http://jabber.org/protocol/muc#user\'>' + '<item jid=\'fulljid\'/>' + '</x>' + '<status>status-text</status>' + '<identity>' + '<user>' + '<id>id-text</id>' + '<name>name-text</name>' + '<avatar>avatar-text</avatar>' + '</user>' + '<group>group-text</group>' + '</identity>' + '</presence>';
@@ -154,7 +169,8 @@ describe('ChatRoom', () => {
       null, // role
       false, // isHiddenDomain
       undefined, // statsID
-      'status-text', expectedIdentity, undefined, 'fulljid', undefined // features
+      'status-text', expectedIdentity, undefined, 'fulljid', undefined, // features
+      0 // isReplaceParticipant
       ]);
     });
     it('parses bot correctly', () => {
@@ -168,7 +184,8 @@ describe('ChatRoom', () => {
       null, // role
       false, // isHiddenDomain
       undefined, // statsID
-      'status-text', undefined, expectedBotType, 'fulljid', undefined // features
+      'status-text', undefined, expectedBotType, 'fulljid', undefined, // features
+      0 // isReplaceParticipant
       ]);
     });
   });

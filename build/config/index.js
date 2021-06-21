@@ -24,10 +24,13 @@ export const connectionDefaultOptions = {
 export const conferenceDefaultOptions = {
   openBridgeChannel: 'websocket',
   //- Enables/disables bridge channel. Values can be "datachannel", "websocket", true (treat it as "datachannel"), undefined (treat it as "datachannel") and false (don't open any channel). NOTE: we recommend to set that option to true
+  // startAudioMuted
+  // startVideoMuted
   // recordingType - the type of recording to be used
   // callStatsID - callstats credentials
   // callStatsSecret - callstats credentials
-  // enableTalkWhileMuted - boolean property. Enables/disables talk while muted detection, by default the value is false/disabled.
+  enableTalkWhileMuted: true,
+  // - boolean property. Enables/disables talk while muted detection, by default the value is false/disabled.
   // ignoreStartMuted - ignores start muted events coming from jicofo.
   // startSilent - enables silent mode, will mark audio as inactive will not send/receive audio
   // confID - Used for statistics to identify conference, if tenants are supported will contain tenant and the non lower case variant for the room name.
@@ -35,8 +38,8 @@ export const conferenceDefaultOptions = {
   // statisticsId - The id to be used as stats instead of default callStatsUsername.
   // statisticsDisplayName - The display name to be used for stats, used for callstats.
   // focusUserJid - The real JID of focus participant - can be overridden here
-  // enableNoAudioDetection
-  // enableNoisyMicDetection
+  enableNoAudioDetection: true,
+  enableNoisyMicDetection: true,
   // enableRemb
   // enableTcc
   // useRoomAsSharedDocumentName
@@ -45,8 +48,6 @@ export const conferenceDefaultOptions = {
   // stereo
   // forceJVB121Ratio - "Math.random() < forceJVB121Ratio" will determine whether a 2 people conference should be moved to the JVB instead of P2P. The decision is made on the responder side, after ICE succeeds on the P2P connection.
   hiddenDomain: "recorder.sariska.io",
-  // startAudioMuted
-  // startVideoMuted
   // enableLayerSuspension - if set to 'true', we will cap the video send bitrate when we are told we have not been selected by any endpoints (and therefore the non-thumbnail streams are not in use).
   // deploymentInfo
   // shard
@@ -69,6 +70,28 @@ export const conferenceDefaultOptions = {
   // p2pTestMode
   // octo
   // probability
+  analytics: {
+    // The Google Analytics Tracking ID:
+    googleAnalyticsTrackingId: 'your-tracking-id-UA-123456-1',
+    matomoEndpoint: 'https://your-matomo-endpoint/',
+    matomoSiteID: '42',
+    // The Amplitude APP Key:
+    amplitudeAPPKey: '<APP_KEY>',
+    // Configuration for the rtcstats server:
+    // By enabling rtcstats server every time a conference is joined the rtcstats
+    // module connects to the provided rtcstatsEndpoint and sends statistics regarding
+    // PeerConnection states along with getStats metrics polled at the specified
+    // interval.
+    rtcstatsEnabled: true,
+    // In order to enable rtcstats one needs to provide a endpoint url.
+    // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
+    // The interval at which rtcstats will poll getStats, defaults to 1000ms.
+    // If the value is set to 0 getStats won't be polled and the rtcstats client
+    // will only send data related to RTCPeerConnection events.
+    rtcstatsPolIInterval: 1000,
+    scriptURLs: ["libs/analytics-ga.min.js", // google-analytics
+    "https://example.com/my-custom-analytics.js"]
+  },
   p2p: {
     // Enables peer to peer mode. When enabled the system will try to
     // establish a direct connection when there are exactly 2 participants
@@ -95,6 +118,11 @@ export const conferenceDefaultOptions = {
     // How long we're going to wait, before going back to P2P after the 3rd
     // participant has left the conference (to filter out page reload).
     // backToP2PDelay: 5
+
+  },
+  localRecording: {
+    enabled: true,
+    format: 'flac' //The recording format, can be one of 'ogg', 'flac' or 'wav'
 
   }
 };

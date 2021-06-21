@@ -155,7 +155,8 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
   });
   chatRoom.addListener(XMPPEvents.RECORDER_STATE_CHANGED, (session, jid) => {
     if (jid) {
-      const participant = conference.getParticipantById(Strophe.getResourceFromJid(jid));
+      const resource = Strophe.getResourceFromJid(jid);
+      const participant = conference.getParticipantById(resource) || resource;
 
       if (session.getStatus() === 'off') {
         session.setTerminator(participant);

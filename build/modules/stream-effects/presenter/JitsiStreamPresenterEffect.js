@@ -1,0 +1,196 @@
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+import { CLEAR_INTERVAL, INTERVAL_TIMEOUT, SET_INTERVAL, timerWorkerScript } from './TimeWorker';
+/**
+ * Represents a modified MediaStream that adds video as pip on a desktop stream.
+ * <tt>JitsiStreamPresenterEffect</tt> does the processing of the original
+ * desktop stream.
+ */
+
+export default class JitsiStreamPresenterEffect {
+  /**
+   * Represents a modified MediaStream that adds a camera track at the
+   * bottom right corner of the desktop track using a HTML canvas.
+   * <tt>JitsiStreamPresenterEffect</tt> does the processing of the original
+   * video stream.
+   *
+   * @param {MediaStream} videoStream - The video stream which is user for
+   * creating the canvas.
+   */
+  constructor(videoStream) {
+    var _firstVideoTrack$getS;
+
+    _defineProperty(this, "_canvas", void 0);
+
+    _defineProperty(this, "_ctx", void 0);
+
+    _defineProperty(this, "_desktopElement", void 0);
+
+    _defineProperty(this, "_desktopStream", void 0);
+
+    _defineProperty(this, "_frameRate", void 0);
+
+    _defineProperty(this, "_onVideoFrameTimer", void 0);
+
+    _defineProperty(this, "_onVideoFrameTimerWorker", void 0);
+
+    _defineProperty(this, "_renderVideo", void 0);
+
+    _defineProperty(this, "_videoFrameTimerWorker", void 0);
+
+    _defineProperty(this, "_videoElement", void 0);
+
+    _defineProperty(this, "isEnabled", void 0);
+
+    _defineProperty(this, "startEffect", void 0);
+
+    _defineProperty(this, "stopEffect", void 0);
+
+    const videoDiv = document.createElement('div');
+    const firstVideoTrack = videoStream.getVideoTracks()[0];
+    const {
+      height,
+      width,
+      frameRate
+    } = (_firstVideoTrack$getS = firstVideoTrack.getSettings()) !== null && _firstVideoTrack$getS !== void 0 ? _firstVideoTrack$getS : firstVideoTrack.getConstraints();
+    this._canvas = document.createElement('canvas');
+    this._ctx = this._canvas.getContext('2d');
+    this._desktopElement = document.createElement('video');
+    this._videoElement = document.createElement('video');
+    videoDiv.appendChild(this._videoElement);
+    videoDiv.appendChild(this._desktopElement);
+
+    if (document.body !== null) {
+      document.body.appendChild(videoDiv);
+    } // Set the video element properties
+
+
+    this._frameRate = parseInt(frameRate, 10);
+    this._videoElement.width = parseInt(width, 10);
+    this._videoElement.height = parseInt(height, 10);
+    this._videoElement.autoplay = true;
+    this._videoElement.srcObject = videoStream; // autoplay is not enough to start the video on Safari, it's fine to call play() on other platforms as well
+
+    this._videoElement.play(); // set the style attribute of the div to make it invisible
+
+
+    videoDiv.style.display = 'none'; // Bind event handler so it is only bound once for every instance.
+
+    this._onVideoFrameTimer = this._onVideoFrameTimer.bind(this);
+  }
+  /**
+   * EventHandler onmessage for the videoFrameTimerWorker WebWorker.
+   *
+   * @private
+   * @param {EventHandler} response - The onmessage EventHandler parameter.
+   * @returns {void}
+   */
+
+
+  _onVideoFrameTimer(response) {
+    if (response.data.id === INTERVAL_TIMEOUT) {
+      this._renderVideo();
+    }
+  }
+  /**
+   * Loop function to render the video frame input and draw presenter effect.
+   *
+   * @private
+   * @returns {void}
+   */
+
+
+  _renderVideo() {
+    var _track$getSettings;
+
+    // adjust the canvas width/height on every frame incase the window has been resized.
+    const [track] = this._desktopStream.getVideoTracks();
+
+    const {
+      height,
+      width
+    } = (_track$getSettings = track.getSettings()) !== null && _track$getSettings !== void 0 ? _track$getSettings : track.getConstraints();
+    this._canvas.width = parseInt(width, 10);
+    this._canvas.height = parseInt(height, 10);
+
+    this._ctx.drawImage(this._desktopElement, 0, 0, this._canvas.width, this._canvas.height);
+
+    this._ctx.drawImage(this._videoElement, this._canvas.width - this._videoElement.width, this._canvas.height - this._videoElement.height, this._videoElement.width, this._videoElement.height); // draw a border around the video element.
+
+
+    this._ctx.beginPath();
+
+    this._ctx.lineWidth = 2;
+    this._ctx.strokeStyle = '#A9A9A9'; // dark grey
+
+    this._ctx.rect(this._canvas.width - this._videoElement.width, this._canvas.height - this._videoElement.height, this._videoElement.width, this._videoElement.height);
+
+    this._ctx.stroke();
+  }
+  /**
+   * Checks if the local track supports this effect.
+   *
+   * @param {JitsiLocalTrack} jitsiLocalTrack - Track to apply effect.
+   * @returns {boolean} - Returns true if this effect can run on the
+   * specified track, false otherwise.
+   */
+
+
+  isEnabled(jitsiLocalTrack) {
+    return jitsiLocalTrack.isVideoTrack() && jitsiLocalTrack.videoType === 'desktop';
+  }
+  /**
+   * Starts loop to capture video frame and render presenter effect.
+   *
+   * @param {MediaStream} desktopStream - Stream to be used for processing.
+   * @returns {MediaStream} - The stream with the applied effect.
+   */
+
+
+  startEffect(desktopStream) {
+    var _firstVideoTrack$getS2;
+
+    const firstVideoTrack = desktopStream.getVideoTracks()[0];
+    const {
+      height,
+      width
+    } = (_firstVideoTrack$getS2 = firstVideoTrack.getSettings()) !== null && _firstVideoTrack$getS2 !== void 0 ? _firstVideoTrack$getS2 : firstVideoTrack.getConstraints(); // set the desktop element properties.
+
+    this._desktopStream = desktopStream;
+    this._desktopElement.width = parseInt(width, 10);
+    this._desktopElement.height = parseInt(height, 10);
+    this._desktopElement.autoplay = true;
+    this._desktopElement.srcObject = desktopStream; // autoplay is not enough to start the video on Safari, it's fine to call play() on other platforms as well
+
+    this._desktopElement.play();
+
+    this._canvas.width = parseInt(width, 10);
+    this._canvas.height = parseInt(height, 10);
+    this._videoFrameTimerWorker = new Worker(timerWorkerScript, {
+      name: 'Presenter effect worker'
+    });
+    this._videoFrameTimerWorker.onmessage = this._onVideoFrameTimer;
+
+    this._videoFrameTimerWorker.postMessage({
+      id: SET_INTERVAL,
+      timeMs: 1000 / this._frameRate
+    });
+
+    return this._canvas.captureStream(this._frameRate);
+  }
+  /**
+   * Stops the capture and render loop.
+   *
+   * @returns {void}
+   */
+
+
+  stopEffect() {
+    this._videoFrameTimerWorker.postMessage({
+      id: CLEAR_INTERVAL
+    });
+
+    this._videoFrameTimerWorker.terminate();
+  }
+
+}
