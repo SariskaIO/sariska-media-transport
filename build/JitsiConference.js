@@ -3497,3 +3497,23 @@ JitsiConference.prototype.getLocalUser = function () {
     return this.user;
   }
 };
+
+
+JitsiConference.prototype.startLocalRecording = function (format, ) {
+  if (this.user) {
+    return this.user;
+  }
+};
+
+JitsiConference.prototype.switchFormat = function (format, ) {
+  if (this.user) {
+    return this.user;
+  }
+};
+
+
+JitsiConference.prototype.startAnalytics = function () {
+  if (this.user) {
+    return this.user;
+  }
+};
