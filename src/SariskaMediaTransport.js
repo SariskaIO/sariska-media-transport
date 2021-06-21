@@ -143,6 +143,9 @@ export default _mergeNamespaceAndModule({
     logLevels: Logger.levels,
     mediaDevices: JitsiMediaDevices,
     analytics: Statistics.analytics,
+    initialize(options = {}) {
+        this.init(options); 
+    },
     init(options = {}) {
         options = {...initSDKConfig, ...options};
         Settings.init(options.externalStorage);
