@@ -132,6 +132,10 @@ export default _mergeNamespaceAndModule({
   mediaDevices: JitsiMediaDevices,
   analytics: Statistics.analytics,
 
+  initialize(options = {}) {
+    this.init(options);
+  },
+
   init(options = {}) {
     options = { ...initSDKConfig,
       ...options
