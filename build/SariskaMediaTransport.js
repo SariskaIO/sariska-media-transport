@@ -34,7 +34,7 @@ import * as MediaType from './service/RTC/MediaType';
 import * as ConnectionQualityEvents from './service/connectivity/ConnectionQualityEvents';
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
-import { sdkDefaultOptions } from './config';
+import { initSDKConfig } from './config';
 const logger = Logger.getLogger(__filename);
 /**
  * The amount of time to wait until firing
@@ -133,7 +133,7 @@ export default _mergeNamespaceAndModule({
   analytics: Statistics.analytics,
 
   init(options = {}) {
-    options = { ...sdkDefaultOptions,
+    options = { ...initSDKConfig,
       ...options
     };
     Settings.init(options.externalStorage);
