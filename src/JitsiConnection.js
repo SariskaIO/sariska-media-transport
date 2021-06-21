@@ -7,7 +7,7 @@ import {
     createConnectionFailedEvent
 } from './service/statistics/AnalyticsEvents';
 
-import {connectionDefaultOptions, conferenceDefaultOptions} from './config';
+import {connectionConfig, conferenceConfig} from './config';
 
 /**
  * Creates a new connection object for the Jitsi Meet server side video
@@ -19,7 +19,9 @@ import {connectionDefaultOptions, conferenceDefaultOptions} from './config';
  * the server.
  * @constructor
  */
-export default function JitsiConnection(token, options) {
+export default function JitsiConnection(token, options={}) {
+    options = {...connectionConfig, ...options};
+
     this.token = token;
     const jwt = this.parseJwt(token);
     this.name = jwt ? jwt.room : null;
@@ -121,8 +123,8 @@ JitsiConnection.prototype.setToken = function(token) {
  * that will be created.
  * @returns {JitsiConference} returns the new conference object.
  */
-JitsiConnection.prototype.initJitsiConference = function(options) {
-    options = {...conferenceDefaultOptions, ...options};
+JitsiConnection.prototype.initJitsiConference = function(options={}) {
+    options = {...conferenceConfig, ...options};
     const name  = this.name;
     return new JitsiConference({
         name,
