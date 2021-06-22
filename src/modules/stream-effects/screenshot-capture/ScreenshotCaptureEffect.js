@@ -2,7 +2,6 @@
 
 import pixelmatch from 'pixelmatch';
 
-import { getCurrentConference } from '../../base/conference';
 
 import {
     CLEAR_INTERVAL,
@@ -11,7 +10,6 @@ import {
     POLL_INTERVAL,
     SET_INTERVAL
 } from './constants';
-import { processScreenshot } from './processScreenshot';
 import { timerWorkerScript } from './worker';
 
 declare var interfaceConfig: Object;
@@ -21,7 +19,7 @@ declare var interfaceConfig: Object;
  * Manipulates the original desktop stream and performs custom processing operations, if implemented.
  */
 export default class ScreenshotCaptureEffect {
-    _state: Object;
+     callback: Function;
     _currentCanvas: HTMLCanvasElement;
     _currentCanvasContext: CanvasRenderingContext2D;
     _videoElement: HTMLVideoElement;
@@ -35,10 +33,9 @@ export default class ScreenshotCaptureEffect {
     /**
      * Initializes a new {@code ScreenshotCaptureEffect} instance.
      *
-     * @param {Object} state - The redux state.
      */
-    constructor(state: Object) {
-        this._state = state;
+    constructor(callback: Function) {
+        this.callback = callback;
         this._currentCanvas = document.createElement('canvas');
         this._currentCanvasContext = this._currentCanvas.getContext('2d');
         this._videoElement = document.createElement('video');
@@ -149,20 +146,8 @@ export default class ScreenshotCaptureEffect {
         const diffPixels = pixelmatch(data, this._storedImageData, null, this._streamWidth, this._streamHeight);
 
         if (this._shouldProcessScreenshot(diffPixels)) {
-            const conference = getCurrentConference(this._state);
-            const sessionId = conference.getMeetingUniqueId();
-            const { connection, timeEstablished } = this._state['features/base/connection'];
-            const jid = connection.getJid();
-            const timeLapseSeconds = timeEstablished && Math.floor((Date.now() - timeEstablished) / 1000);
-            const { jwt } = this._state['features/base/jwt'];
-
             this._storedImageData = data;
-            processScreenshot(this._currentCanvas, {
-                jid,
-                jwt,
-                sessionId,
-                timeLapseSeconds
-            });
+            this.callback(this._currentCanvas);
         }
     }
 }

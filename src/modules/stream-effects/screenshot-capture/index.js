@@ -1,7 +1,5 @@
 // @flow
 
-import { toState } from '../../base/redux';
-
 import ScreenshotCaptureEffect from './ScreenshotCaptureEffect';
 
 /**
@@ -11,10 +9,10 @@ import ScreenshotCaptureEffect from './ScreenshotCaptureEffect';
  * {@code getState} function.
  * @returns {Promise<ScreenshotCaptureEffect>}
  */
-export function createScreenshotCaptureEffect(stateful: Object | Function) {
+export function createScreenshotCaptureEffect(callback: Function) {
     if (!MediaStreamTrack.prototype.getSettings && !MediaStreamTrack.prototype.getConstraints) {
         return Promise.reject(new Error('ScreenshotCaptureEffect not supported!'));
     }
 
-    return Promise.resolve(new ScreenshotCaptureEffect(toState(stateful)));
+    return Promise.resolve(new ScreenshotCaptureEffect(callback));
 }

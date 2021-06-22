@@ -11,9 +11,9 @@ import {
  * WebWorker that does FLAC encoding using libflac.js
  */
 
-self.FLAC_SCRIPT_LOCATION = '/libs/';
+self.FLAC_SCRIPT_LOCATION = '/dist/';
 /* eslint-disable */
-importScripts('/libs/libflac4-1.3.2.min.js');
+importScripts('/dist/libflac4-1.3.2.min.js');
 /* eslint-enable */
 
 // There is a number of API calls to libflac.js, which does not conform

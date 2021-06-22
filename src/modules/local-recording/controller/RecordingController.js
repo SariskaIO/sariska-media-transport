@@ -3,6 +3,7 @@
 import Bourne from '@hapi/bourne';
 import { getLogger } from 'jitsi-meet-logger';
 const logger = getLogger(__filename);
+
 import {
     FlacAdapter,
     OggAdapter,

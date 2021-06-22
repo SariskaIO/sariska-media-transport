@@ -74,6 +74,7 @@ import {
 } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import {conferenceDefaultOptions} from './config';
+import {recordingController} from "./modules/local-recording";
 const logger = getLogger(__filename);
 
 /**
@@ -286,85 +287,11 @@ export default function JitsiConference(options) {
 
         this._e2eEncryption = new E2EEncryption(this);
     }
-    
-    let lastMessage = {};
+    this.bindSubtitleEvent();
 
-    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, json) => {
-    
-        const JSON_TYPE_TRANSCRIPTION_RESULT = 'transcription-result';
-        const JSON_TYPE_TRANSLATION_RESULT = 'translation-result';
-        const P_NAME_REQUESTING_TRANSCRIPTION = 'requestingTranscription';
-        const P_NAME_TRANSLATION_LANGUAGE = 'translation_language';
-
-        if (!(json && (json.type === JSON_TYPE_TRANSCRIPTION_RESULT || json.type === JSON_TYPE_TRANSLATION_RESULT))) {
-            return;
-        }
-
-        const translationLanguage = this.getLocalParticipantProperty("translation_language");
-
-        try {
-            const transcriptMessageID = json.message_id;
-            const participantName = json.participant.name;
-            let newTranscriptMessage = {};
-
-            if (json.type === JSON_TYPE_TRANSLATION_RESULT && json.language === translationLanguage) {
-                // Displays final results in the target language if translation is
-                // enabled.
-
-                newTranscriptMessage = {
-                    final: json.text,
-                    participantName
-                };
-
-            } else if (json.type === JSON_TYPE_TRANSCRIPTION_RESULT  && !translationLanguage) {
-                // Displays interim and final results without any translation if
-                // translations are disabled.
-
-                const { text } = json.transcript[0];
-
-                // We update the previous transcript message with the same
-                // message ID or adds a new transcript message if it does not
-                // exist in the map.
-
-                newTranscriptMessage = {};
-
-                if (lastMessage[transcriptMessageID]) {
-                   
-                   newTranscriptMessage = lastMessage;
-                
-                }  else {
-
-                   newTranscriptMessage = {participantName}
-
-                }
-
-                // If this is final result, update the state as a final result
-                // and start a count down to remove the subtitle from the state
-                if (!json.is_interim) {
-                    newTranscriptMessage.final = text;
-
-                } else if (json.stability > 0.85) {
-                    // If the message has a high stability, we can update the
-                    // stable field of the state and remove the previously
-                    // unstable results
-                    newTranscriptMessage.stable = text;
-                    newTranscriptMessage.unstable = undefined;
-
-                } else {
-                    // Otherwise, this result has an unstable result, which we
-                    // add to the state. The unstable result will be appended
-                    // after the stable part.
-                    newTranscriptMessage.unstable = text;
-                }
-
-            }
-
-            lastMessage = { transcriptMessageID, newTranscriptMessage};
-
-        } catch (error) {
-            logger.error('Error occurred while updating transcriptions\n', error);
-        }
-    });
+    if (config.enableLocalRecording) {
+        this.enableLocalRecording();
+    }
 }
 
 // FIXME convert JitsiConference to ES6 - ASAP !
@@ -4082,8 +4009,111 @@ JitsiConference.prototype.getLocalUser = function() {
     }
 };
 
+JitsiConference.prototype.bindSubtitleEvent = function() {
+    
+    let lastMessage = {};
 
+    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, json) => {
+    
+        const JSON_TYPE_TRANSCRIPTION_RESULT = 'transcription-result';
+        const JSON_TYPE_TRANSLATION_RESULT = 'translation-result';
+        const P_NAME_REQUESTING_TRANSCRIPTION = 'requestingTranscription';
+        const P_NAME_TRANSLATION_LANGUAGE = 'translation_language';
 
+        if (!(json && (json.type === JSON_TYPE_TRANSCRIPTION_RESULT || json.type === JSON_TYPE_TRANSLATION_RESULT))) {
+            return;
+        }
+
+        const translationLanguage = this.getLocalParticipantProperty("translation_language");
+
+        try {
+            const transcriptMessageID = json.message_id;
+            const participantName = json.participant.name;
+            let newTranscriptMessage = {};
+
+            if (json.type === JSON_TYPE_TRANSLATION_RESULT && json.language === translationLanguage) {
+                // Displays final results in the target language if translation is
+                // enabled.
+
+                newTranscriptMessage = {
+                    final: json.text,
+                    participantName
+                };
+
+            } else if (json.type === JSON_TYPE_TRANSCRIPTION_RESULT  && !translationLanguage) {
+                // Displays interim and final results without any translation if
+                // translations are disabled.
+
+                const { text } = json.transcript[0];
+
+                // We update the previous transcript message with the same
+                // message ID or adds a new transcript message if it does not
+                // exist in the map.
+
+                newTranscriptMessage = {};
+
+                if (lastMessage[transcriptMessageID]) {
+                   
+                   newTranscriptMessage = lastMessage;
+                
+                }  else {
+
+                   newTranscriptMessage = {participantName}
+
+                }
+
+                // If this is final result, update the state as a final result
+                // and start a count down to remove the subtitle from the state
+                if (!json.is_interim) {
+                    newTranscriptMessage.final = text;
+
+                } else if (json.stability > 0.85) {
+                    // If the message has a high stability, we can update the
+                    // stable field of the state and remove the previously
+                    // unstable results
+                    newTranscriptMessage.stable = text;
+                    newTranscriptMessage.unstable = undefined;
+
+                } else {
+                    // Otherwise, this result has an unstable result, which we
+                    // add to the state. The unstable result will be appended
+                    // after the stable part.
+                    newTranscriptMessage.unstable = text;
+                }
+
+            }
+
+            lastMessage = { transcriptMessageID, newTranscriptMessage};
+
+        } catch (error) {
+            logger.error('Error occurred while updating transcriptions\n', error);
+        }
+    });
+}
+
+JitsiConference.prototype.enableLocalRecording = function() {
+   recordingController.registerEvents(this);
+}
+
+JitsiConference.prototype.startLocalRecording = function(format) {
+   recordingController.startRecording(format);
+}
+
+JitsiConference.prototype.stopLocalRecording = function() {
+   recordingController.stopRecording();
+}
+
+JitsiConference.prototype.switchFormat = function() {
+   recordingController.switchFormat(format);
+}
+
+JitsiConference.prototype.setMuted = function(muted) {
+   recordingController.setMuted(muted);
+}
+
+JitsiConference.prototype.setMicDevice = function(micDeviceId) {
+   recordingController.setMicDevice(micDeviceId);
+}
 
 
 
