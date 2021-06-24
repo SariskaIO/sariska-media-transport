@@ -235,15 +235,15 @@ export default function JitsiConference(options) {
 
   this.handleSubtitles();
 
-  if (config.enableLocalRecording) {
+  if (options.enableLocalRecording) {
     this.enableLocalRecording();
   }
 
-  if (config.enableNoiseCancellation) {
+  if (options.enableNoiseCancellation) {
     this.enableVirtualBackground();
   }
 
-  if (config.enableVirtualBackground) {
+  if (options.enableVirtualBackground) {
     this.enableVirtualBackground();
   }
 
