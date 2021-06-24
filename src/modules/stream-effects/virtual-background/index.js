@@ -1,14 +1,12 @@
 // @flow
 
 import * as wasmCheck from 'wasm-check';
-
 import JitsiStreamBackgroundEffect from './JitsiStreamBackgroundEffect';
-import createTFLiteModule from './vendor/tflite/tflite';
-import createTFLiteSIMDModule from './vendor/tflite/tflite-simd';
+import { ScriptUtil } from '../../util/ScriptUtil';
 
 const models = {
-    model96: 'libs/segm_lite_v681.tflite',
-    model144: 'libs/segm_full_v679.tflite'
+    model96: 'https://sdk.sariska.io/segm_lite_v681.tflite',
+    model144: 'https://sdk.sariska.io/segm_full_v679.tflite'
 };
 
 const segmentationDimensions = {
@@ -62,3 +60,10 @@ export async function createVirtualBackgroundEffect(virtualBackground: Object) {
 
     return new JitsiStreamBackgroundEffect(tflite, options);
 }
+
+export async function loadModelFiles() {
+    ScriptUtil.loadScript('https://sdk.sariska.io/tflite');
+    ScriptUtil.loadScript('https://sdk.sariska.io/tflite-simd');
+}
+
+

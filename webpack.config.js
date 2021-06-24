@@ -15,13 +15,11 @@ module.exports = [
     }),
     Object.assign({}, config, {
         entry: {
-            'flacEncodeWorker': './react/features/local-recording/recording/flac/flacEncodeWorker.js'
+            'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
         },
         plugins: [
             ...config.plugins,
-            ...getBundleAnalyzerPlugin('flacEncodeWorker')
-        ],
-        performance: getPerformanceHints(5 * 1024)
+        ]
     }),
     {
         entry: {
@@ -30,7 +28,7 @@ module.exports = [
         mode: 'production',
         output: {
             filename: 'sariska-media-transport.e2ee-worker.js',
-            path: path.resolve(__dirname, 'dist')
+            path: path.resolve(__dirname, 'libs')
         },
         optimization: {
             minimize: false

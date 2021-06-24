@@ -16,7 +16,7 @@ transpile:
 	npm run transpile
 
 compile:
-	$(webpack) -p
+	npm run build
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -31,10 +31,9 @@ deploy-init:
 
 deploy-app:
 	cp \
-		sariska-media-transport.e2ee-worker.js \
-		sariska-media-transport.min.js \
-		src/modules/modules/browser/capabilities.json \
-
+		${LIBS_DIR}/sariska-media-transport.e2ee-worker.js \
+		${LIBS_DIR}/sariska-media-transport.min.js \
+		src/modules/browser/capabilities.json \
 		$(DEPLOY_DIR)
 
 deploy-appbundle:
@@ -61,7 +60,7 @@ deploy-olm:
 deploy-tflite:
 	cp \
 		$(TFLITE_WASM)/*.wasm \
-		$(DEPLOY_DIR)		
+		$(DEPLOY_DIR)
 
 deploy-tflite-models:
 	cp \

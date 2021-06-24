@@ -10,6 +10,15 @@ sariska-media-transport which possibliy covers any of your use cases.
 
 NOTE: you need Node.js >= 12 and npm >= 6
 
+To build 
+
+```shell
+
+make 
+
+```
+
+
 To install library, just type:
 
 ```shell
