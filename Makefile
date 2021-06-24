@@ -1,5 +1,6 @@
 LIBS_DIR = libs
 DEPLOY_DIR = dist
+BUILD_DIR = build
 NPM = npm
 WEBPACK = ./node_modules/.bin/webpack
 
@@ -10,7 +11,7 @@ RNNOISE_WASM_DIR = node_modules/rnnoise-wasm/dist/
 TFLITE_WASM = libs/vendor/tflite
 MEET_MODELS_DIR  = libs/vendor/models/
 
-all: transpile compile deploy clean
+all: clean transpile compile deploy
 
 transpile:
 	npm run transpile
@@ -20,8 +21,8 @@ compile:
 
 clean:
 	rm -rf $(BUILD_DIR)
-
-
+	mkdir -p $(BUILD_DIR)
+	
 deploy: deploy-init deploy-app deploy-appbundle deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
 
 

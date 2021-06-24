@@ -170,7 +170,7 @@ export default class LocalTracksDuration {
         localTracksDuration
       } = FINAL_STATE;
 
-      if (localTracksDuration.conference.startedTime === -1 || action.mediaType === 'presenter') {
+      if (localTracksDuration.conference.startedTime === -1) {
         // We don't want to track the media duration if the conference is not joined yet because otherwise we won't
         // be able to compare them with the conference duration (from conference join to conference will leave).
         // Also, do not track media duration for presenter tracks.
