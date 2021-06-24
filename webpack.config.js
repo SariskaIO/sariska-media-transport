@@ -13,6 +13,16 @@ module.exports = [
             libraryTarget: 'umd'
         })
     }),
+    Object.assign({}, config, {
+        entry: {
+            'flacEncodeWorker': './react/features/local-recording/recording/flac/flacEncodeWorker.js'
+        },
+        plugins: [
+            ...config.plugins,
+            ...getBundleAnalyzerPlugin('flacEncodeWorker')
+        ],
+        performance: getPerformanceHints(5 * 1024)
+    }),
     {
         entry: {
             worker: './src/modules/e2ee/Worker.js'
@@ -27,3 +37,5 @@ module.exports = [
         }
     }
 ];
+
+

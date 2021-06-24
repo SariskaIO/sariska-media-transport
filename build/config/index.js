@@ -22,6 +22,13 @@ export const connectionConfig = {
 
 };
 export const conferenceConfig = {
+  enableAnalytics: true,
+  enableLocalRecording: true,
+  enableNoiseCancellation: true,
+  rtcstatsServer: "",
+  enableTalkWhileMuted: true,
+  enableNoAudioDetection: true,
+  enableNoisyMicDetection: true,
   openBridgeChannel: 'websocket',
   //- Enables/disables bridge channel. Values can be "datachannel", "websocket", true (treat it as "datachannel"), undefined (treat it as "datachannel") and false (don't open any channel). NOTE: we recommend to set that option to true
   // recordingType - the type of recording to be used

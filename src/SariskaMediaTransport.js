@@ -557,6 +557,13 @@ export default _mergeNamespaceAndModule({
      * otherwise.
      */
     setNetworkInfo({ isOnline }) {
+        sendAnalytics(
+            createNetworkInfoEvent({
+                isOnline: action.isOnline,
+                details: action.details,
+                networkType: action.networkType
+        }));
+
         NetworkInfo.updateNetworkInfo({ isOnline });
     },
 

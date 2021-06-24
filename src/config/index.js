@@ -24,7 +24,14 @@ export const connectionConfig = {
 };
 
 export const conferenceConfig = {
-     openBridgeChannel: 'websocket', //- Enables/disables bridge channel. Values can be "datachannel", "websocket", true (treat it as "datachannel"), undefined (treat it as "datachannel") and false (don't open any channel). NOTE: we recommend to set that option to true
+    enableAnalytics: true,
+    enableLocalRecording: true,
+    enableNoiseCancellation: true,
+    rtcstatsServer: "",
+    enableTalkWhileMuted: true,
+    enableNoAudioDetection: true, 
+    enableNoisyMicDetection: true,
+    openBridgeChannel: 'websocket', //- Enables/disables bridge channel. Values can be "datachannel", "websocket", true (treat it as "datachannel"), undefined (treat it as "datachannel") and false (don't open any channel). NOTE: we recommend to set that option to true
     // recordingType - the type of recording to be used
     // callStatsID - callstats credentials
     // callStatsSecret - callstats credentials
@@ -58,10 +65,10 @@ export const conferenceConfig = {
     // getStatsInterval
     // analyticsInterval
     // stunServers
-     e2eping:{
+    e2eping:{
         pingInterval: -1,
      // analyticsInterval: 60000,
-     },
+    },
     // pingInterval
     // abTesting - A/B testing related options
     // enableSuspendVideoTest
@@ -70,6 +77,7 @@ export const conferenceConfig = {
     // p2pTestMode
     // octo
     // probability
+
     p2p: {
         // Enables peer to peer mode. When enabled the system will try to
         // establish a direct connection when there are exactly 2 participants
@@ -105,14 +113,5 @@ export const conferenceConfig = {
         // backToP2PDelay: 5
     }
 };
-
-
-
-
-
-
-
-
-
 
 

@@ -442,3 +442,7 @@ export const BREAKOUT_ROOMS_MOVE_TO_ROOM = 'conference.breakout-rooms.move-to-ro
  * Event fired when the breakout rooms data was updated.
  */
 export const BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated';
+
+export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
+
+export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';

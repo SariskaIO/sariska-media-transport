@@ -1,4 +1,4 @@
-import SariskaMediaTransport from '../../SariskaMediaTransport';
+import SariskaMediaTransport from '../../../SariskaMediaTransport';
 
 /**
  * Base class for recording backends.

@@ -35,6 +35,7 @@ import * as ConnectionQualityEvents from './service/connectivity/ConnectionQuali
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import { initSDKConfig } from './config';
+import { AudioMixerEffect, JitsiStreamPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
 const logger = Logger.getLogger(__filename);
 /**
  * The amount of time to wait until firing
@@ -105,6 +106,13 @@ export default _mergeNamespaceAndModule({
    * it is advised against.
    */
   ProxyConnectionService,
+  effects: {
+    AudioMixerEffect,
+    JitsiStreamPresenterEffect,
+    createRnnoiseProcessor,
+    createScreenshotCaptureEffect,
+    createVirtualBackgroundEffect
+  },
   constants: {
     participantConnectionStatus: ParticipantConnectionStatus,
     recording: recordingConstants,
@@ -512,6 +520,11 @@ export default _mergeNamespaceAndModule({
   setNetworkInfo({
     isOnline
   }) {
+    sendAnalytics(createNetworkInfoEvent({
+      isOnline: action.isOnline,
+      details: action.details,
+      networkType: action.networkType
+    }));
     NetworkInfo.updateNetworkInfo({
       isOnline
     });
