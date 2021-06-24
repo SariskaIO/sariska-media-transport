@@ -114,7 +114,7 @@ type RecordingStats = {
  * multiple participants.
  * Current implementation requires that there is only one moderator in a room.
  */
-class RecordingController {
+export default class RecordingController {
 
     /**
      * For each recording session, there is a separate @{code RecordingAdapter}
@@ -681,8 +681,3 @@ class RecordingController {
         }
     }
 }
-
-/**
- * Global singleton of {@code RecordingController}.
- */
-export const recordingController = new RecordingController();

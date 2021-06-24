@@ -1,18 +1,5 @@
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
-import SariskaMediaTransport from "../../SariskaMediaTransport";
-
-function sendAnalytics(event) {
-  try {
-    analytics.sendEvent(event);
-  } catch (e) {
-    logger.warn(`Error sending analytics event: ${e}`);
-  }
-}
-
-function resetAnalytics() {
-  analytics.reset();
-}
-
+import Statistics from "./statistics";
 const INITIAL_STATE = {
   localTracksDuration: {
     audio: {
@@ -206,7 +193,7 @@ export default class LocalTracksDuration {
           value: Date.now() - localTracksDuration.conference.startedTime
         }
       };
-      sendAnalytics(createLocalTracksDurationEvent(newLocalTracksDuration));
+      Statistics.sendAnalytics(createLocalTracksDurationEvent(newLocalTracksDuration));
     });
   }
 

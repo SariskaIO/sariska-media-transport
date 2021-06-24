@@ -48,7 +48,10 @@ import VideoType from './service/RTC/VideoType';
 import { ACTION_JINGLE_RESTART, ACTION_JINGLE_SI_RECEIVED, ACTION_JINGLE_SI_TIMEOUT, ACTION_JINGLE_TERMINATE, ACTION_P2P_DECLINED, ACTION_P2P_ESTABLISHED, ACTION_P2P_FAILED, ACTION_P2P_SWITCH_TO_JVB, ICE_ESTABLISHMENT_DURATION_DIFF, createConferenceEvent, createJingleEvent, createP2PEvent } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import { conferenceDefaultOptions } from './config';
-import { recordingController } from "./modules/local-recording";
+import { RecordingController } from "./modules/local-recording";
+import { loadModelFiles } from "./modules/stream-effects/virtual-background";
+import { loadRnnoiseFile } from "./modules/stream-effects/rnnoise";
+import { loadLocalRecordingFiles } from "./modules/local-recording";
 const logger = getLogger(__filename);
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
@@ -236,8 +239,12 @@ export default function JitsiConference(options) {
     this.enableLocalRecording();
   }
 
-  if (config.rtcstatsServer) {
-    this.sendRTCstats();
+  if (config.enableNoiseCancellation) {
+    this.enableVirtualBackground();
+  }
+
+  if (config.enableVirtualBackground) {
+    this.enableVirtualBackground();
   }
 
   this.localTracksDuration = new LocalTracksDuration(this);
@@ -3601,35 +3608,37 @@ JitsiConference.prototype.handleSubtitles = function () {
 
 
 JitsiConference.prototype.enableLocalRecording = function () {
-  recordingController.registerEvents(this);
+  loadLocalRecordingFiles();
 };
 
 JitsiConference.prototype.startLocalRecording = function (format) {
-  recordingController.startRecording(format);
+  this.recordingController = new RecordingController();
+  this.recordingController.registerEvents(this);
+  this.recordingController.startRecording(format);
 };
 
 JitsiConference.prototype.stopLocalRecording = function () {
-  recordingController.stopRecording();
+  this.recordingController.stopRecording();
 };
 
 JitsiConference.prototype.switchFormat = function () {
-  recordingController.switchFormat(format);
+  this.recordingController.switchFormat(format);
 };
 
 JitsiConference.prototype.setMuted = function (muted) {
-  recordingController.setMuted(muted);
+  this.recordingController.setMuted(muted);
 };
 
 JitsiConference.prototype.setMicDevice = function (micDeviceId) {
-  recordingController.setMicDevice(micDeviceId);
+  this.recordingController.setMicDevice(micDeviceId);
+}; //enable virtual background
+
+
+JitsiConference.prototype.enableVirtualBackground = function (micDeviceId) {
+  loadModelFiles();
 }; // noiseCancellation
 
 
-JitsiConference.prototype.startNoiseCancellation = function (micDeviceId) {
-  recordingController.setMicDevice(micDeviceId);
-}; // rtcstats
-
-
-JitsiConference.prototype.sendRTCstats = function (micDeviceId) {
-  recordingController.setMicDevice(micDeviceId);
+JitsiConference.prototype.enableNoiseCancellation = function (micDeviceId) {
+  loadRnnoiseFile();
 };

@@ -75,7 +75,7 @@ import {
 } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import {conferenceDefaultOptions} from './config';
-import {recordingController} from "./modules/local-recording";
+import {RecordingController} from "./modules/local-recording";
 import {loadModelFiles} from "./modules/stream-effects/virtual-background";
 import {loadRnnoiseFile} from "./modules/stream-effects/rnnoise";
 import {loadLocalRecordingFiles} from "./modules/local-recording";
@@ -4117,24 +4117,25 @@ JitsiConference.prototype.enableLocalRecording = function() {
 }
 
 JitsiConference.prototype.startLocalRecording = function(format) {
-   recordingController.registerEvents(this);
-   recordingController.startRecording(format);
+   this.recordingController = new RecordingController()
+   this.recordingController.registerEvents(this);
+   this.recordingController.startRecording(format);
 }
 
 JitsiConference.prototype.stopLocalRecording = function() {
-   recordingController.stopRecording();
+   this.recordingController.stopRecording();
 }
 
 JitsiConference.prototype.switchFormat = function() {
-   recordingController.switchFormat(format);
+   this.recordingController.switchFormat(format);
 }
 
 JitsiConference.prototype.setMuted = function(muted) {
-   recordingController.setMuted(muted);
+   this.recordingController.setMuted(muted);
 }
 
 JitsiConference.prototype.setMicDevice = function(micDeviceId) {
-   recordingController.setMicDevice(micDeviceId);
+   this.recordingController.setMicDevice(micDeviceId);
 }
 
 //enable virtual background
