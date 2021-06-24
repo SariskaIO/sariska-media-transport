@@ -23,5 +23,5 @@ export function createRnnoiseProcessor() {
 }
 
 export function loadRnnoiseFile() {
-    ScriptUtil.loadScript('https://sdk.sariska.io/vendor/tflite/tflite');
+    ScriptUtil.loadScript('https://sdk.sariska.io/index.js');
 }

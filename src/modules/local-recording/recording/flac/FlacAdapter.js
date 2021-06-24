@@ -250,11 +250,11 @@ export class FlacAdapter extends AbstractAudioContextAdapter {
         // only when flac recording is in use.
         try {
             // try load the minified version first
-            this._encoder = new Worker('/libs/flacEncodeWorker.min.js', { name: 'FLAC encoder worker' });
+            this._encoder = new Worker('https://sdk.sariska.io/flacEncodeWorker.min.js', { name: 'FLAC encoder worker' });
         } catch (exception1) {
             // if failed, try unminified version
             try {
-                this._encoder = new Worker('/libs/flacEncodeWorker.js', { name: 'FLAC encoder worker' });
+                this._encoder = new Worker('https://sdk.sariska.io/flacEncodeWorker.js', { name: 'FLAC encoder worker' });
             } catch (exception2) {
                 throw new Error('Failed to load flacEncodeWorker.');
             }

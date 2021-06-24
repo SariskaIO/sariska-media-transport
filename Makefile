@@ -43,7 +43,7 @@ deploy-appbundle:
 
 deploy-rnnoise-binary:
 	cp \
-		$(RNNOISE_WASM_DIR)/rnnoise.wasm \
+		$(RNNOISE_WASM_DIR)/* \
 		$(DEPLOY_DIR)
 
 deploy-libflac:

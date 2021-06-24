@@ -76,6 +76,10 @@ import {
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import {conferenceDefaultOptions} from './config';
 import {recordingController} from "./modules/local-recording";
+import {loadModelFiles} from "./modules/stream-effects/virtual-background";
+import {loadRnnoiseFile} from "./modules/stream-effects/rnnoise";
+import {loadLocalRecordingFiles} from "./modules/local-recording";
+
 const logger = getLogger(__filename);
 
 /**
@@ -288,14 +292,19 @@ export default function JitsiConference(options) {
 
         this._e2eEncryption = new E2EEncryption(this);
     }
+
     this.handleSubtitles();
 
     if (config.enableLocalRecording) {
         this.enableLocalRecording();
     }
 
-    if (config.rtcstatsServer) {
-        this.sendRTCstats();
+    if (config.enableNoiseCancellation) {
+        this.enableVirtualBackground();
+    }
+
+    if (config.enableVirtualBackground) {
+        this.enableVirtualBackground();
     }
 
     this.localTracksDuration = new LocalTracksDuration(this);
@@ -4104,10 +4113,11 @@ JitsiConference.prototype.handleSubtitles = function() {
 // local recording
 
 JitsiConference.prototype.enableLocalRecording = function() {
-   recordingController.registerEvents(this);
+    loadLocalRecordingFiles();
 }
 
 JitsiConference.prototype.startLocalRecording = function(format) {
+   recordingController.registerEvents(this);
    recordingController.startRecording(format);
 }
 
@@ -4127,14 +4137,15 @@ JitsiConference.prototype.setMicDevice = function(micDeviceId) {
    recordingController.setMicDevice(micDeviceId);
 }
 
-// noiseCancellation
-JitsiConference.prototype.startNoiseCancellation = function(micDeviceId) {
-   recordingController.setMicDevice(micDeviceId);
-}
-// rtcstats
+//enable virtual background
 
-JitsiConference.prototype.sendRTCstats = function(micDeviceId) {
-   recordingController.setMicDevice(micDeviceId);
+JitsiConference.prototype.enableVirtualBackground = function(micDeviceId) {
+   loadModelFiles();
+}
+
+// noiseCancellation
+JitsiConference.prototype.enableNoiseCancellation = function(micDeviceId) {
+   loadRnnoiseFile();
 }
 
 

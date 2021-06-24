@@ -18,5 +18,5 @@ export function createRnnoiseProcessor() {
   return rnnoiseModule.then(mod => new RnnoiseProcessor(mod));
 }
 export function loadRnnoiseFile() {
-  ScriptUtil.loadScript('https://sdk.sariska.io/vendor/tflite/tflite');
+  ScriptUtil.loadScript('https://sdk.sariska.io/index.js');
 }
