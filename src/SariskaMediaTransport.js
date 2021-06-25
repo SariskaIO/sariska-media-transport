@@ -119,7 +119,7 @@ export default _mergeNamespaceAndModule({
     ProxyConnectionService,
     effects: {
         AudioMixerEffect,
-        JitsiStreamPresenterEffect,
+        createPresenterEffect,
         createRnnoiseProcessor,
         createScreenshotCaptureEffect,
         createVirtualBackgroundEffect

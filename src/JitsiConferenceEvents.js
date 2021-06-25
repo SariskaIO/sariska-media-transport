@@ -445,4 +445,7 @@ export const BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated';
 
 export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
 
+
 export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';
+
+export const TRACK_UPDATED = 'conference.track.updated';

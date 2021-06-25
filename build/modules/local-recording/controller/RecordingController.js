@@ -85,7 +85,7 @@ const ControllerState = Object.freeze({
  * multiple participants.
  * Current implementation requires that there is only one moderator in a room.
  */
-export default class RecordingController {
+export class RecordingController {
   /**
    * For each recording session, there is a separate @{code RecordingAdapter}
    * instance so that encoded bits from the previous sessions can still be
