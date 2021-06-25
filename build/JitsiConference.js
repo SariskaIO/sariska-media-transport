@@ -52,6 +52,7 @@ import { RecordingController } from "./modules/local-recording";
 import { loadModelFiles } from "./modules/stream-effects/virtual-background";
 import { loadRnnoiseFile } from "./modules/stream-effects/rnnoise";
 import { loadLocalRecordingAssets } from "./modules/local-recording";
+import { conferenceConfig } from './config';
 const logger = getLogger(__filename);
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
@@ -100,6 +101,10 @@ const JINGLE_SI_TIMEOUT = 5000;
  */
 
 export default function JitsiConference(options) {
+  options = { ...conferenceConfig,
+    ...options
+  };
+
   if (!options.name || options.name.toLowerCase() !== options.name) {
     const errmsg = 'Invalid conference name (no conference name passed or it ' + 'contains invalid characters like capital letters)!';
     logger.error(errmsg);
@@ -3604,11 +3609,21 @@ JitsiConference.prototype.handleSubtitles = function () {
       logger.error('Error occurred while updating transcriptions\n', error);
     }
   });
-}; // local recording
+}; // load assets related to local recording
 
 
 JitsiConference.prototype.enableLocalRecording = function () {
   loadLocalRecordingAssets();
+}; // load assets related to virtual background
+
+
+JitsiConference.prototype.enableVirtualBackground = function (micDeviceId) {
+  loadModelFiles();
+}; // load assets related to noiseCancellation
+
+
+JitsiConference.prototype.enableNoiseCancellation = function (micDeviceId) {
+  loadRnnoiseFile();
 };
 
 JitsiConference.prototype.startLocalRecording = function (format) {
@@ -3631,14 +3646,4 @@ JitsiConference.prototype.setMuted = function (muted) {
 
 JitsiConference.prototype.setMicDevice = function (micDeviceId) {
   this.recordingController.setMicDevice(micDeviceId);
-}; //enable virtual background
-
-
-JitsiConference.prototype.enableVirtualBackground = function (micDeviceId) {
-  loadModelFiles();
-}; // noiseCancellation
-
-
-JitsiConference.prototype.enableNoiseCancellation = function (micDeviceId) {
-  loadRnnoiseFile();
 };
