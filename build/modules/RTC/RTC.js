@@ -308,6 +308,16 @@ export default class RTC extends Listenable {
     }
   }
   /**
+   * Sets the capture frame rate to be used for desktop tracks.
+   *
+   * @param {number} maxFps framerate to be used for desktop track capture.
+   */
+
+
+  setDesktopSharingFrameRate(maxFps) {
+    RTCUtils.setDesktopSharingFrameRate(maxFps);
+  }
+  /**
    * Sets the receiver video constraints that determine how bitrate is allocated to each of the video streams
    * requested from the bridge. The constraints are cached and sent through the bridge channel once the channel
    * is established.

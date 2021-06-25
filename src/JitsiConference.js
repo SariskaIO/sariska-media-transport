@@ -4134,7 +4134,7 @@ JitsiConference.prototype.enableNoiseCancellation = function(micDeviceId) {
 
 // enable analytics
 JitsiConference.prototype.enableAnalytics = function() {
-   this.statistics.addAnalyticsEventListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, (eventName, payload)=>{
+   this.statistics.addAnalyticsEventListener((eventName, payload)=>{
         let name  = '', body = {};
         if ( typeof eventName === "string" ) {
             name = eventName;
