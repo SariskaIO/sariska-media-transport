@@ -828,7 +828,7 @@ Statistics.sendAnalyticsAndLog = function(event, properties = {}) {
  * @param {Object} properties properties to attach to the event
  */
 
-Statistics.sendAnalytics = function(eventName, properties = {}) {
+Statistics.prototype.sendAnalytics = function(eventName, properties = {}) {
     this.analytics.sendEvent(eventName, properties);
     this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, eventName, properties);
 };

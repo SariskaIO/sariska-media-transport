@@ -805,7 +805,7 @@ Statistics.sendAnalyticsAndLog = function (event, properties = {}) {
  */
 
 
-Statistics.sendAnalytics = function (eventName, properties = {}) {
+Statistics.prototype.sendAnalytics = function (eventName, properties = {}) {
   this.analytics.sendEvent(eventName, properties);
   this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, eventName, properties);
 };
