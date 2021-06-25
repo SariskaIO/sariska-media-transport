@@ -806,5 +806,6 @@ Statistics.sendAnalyticsAndLog = function (event, properties = {}) {
 
 
 Statistics.sendAnalytics = function (eventName, properties = {}) {
+  console.log(eventName, properties);
   this.analytics.sendEvent(eventName, properties);
 };

@@ -51,7 +51,7 @@ import { conferenceDefaultOptions } from './config';
 import { RecordingController } from "./modules/local-recording";
 import { loadModelFiles } from "./modules/stream-effects/virtual-background";
 import { loadRnnoiseFile } from "./modules/stream-effects/rnnoise";
-import { loadLocalRecordingFiles } from "./modules/local-recording";
+import { loadLocalRecordingAssets } from "./modules/local-recording";
 const logger = getLogger(__filename);
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
@@ -3608,7 +3608,7 @@ JitsiConference.prototype.handleSubtitles = function () {
 
 
 JitsiConference.prototype.enableLocalRecording = function () {
-  loadLocalRecordingFiles();
+  loadLocalRecordingAssets();
 };
 
 JitsiConference.prototype.startLocalRecording = function (format) {

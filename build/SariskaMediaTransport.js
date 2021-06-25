@@ -28,6 +28,7 @@ import Statistics from './modules/statistics/statistics';
 import AuthUtil from './modules/util/AuthUtil';
 import GlobalOnErrorHandler from './modules/util/GlobalOnErrorHandler';
 import ScriptUtil from './modules/util/ScriptUtil';
+import * as createAnalyticsEvent from './modules/util/createAnalyticsEvent';
 import * as VideoSIPGWConstants from './modules/videosipgw/VideoSIPGWConstants';
 import AudioMixer from './modules/webaudio/AudioMixer';
 import * as MediaType from './service/RTC/MediaType';
@@ -35,7 +36,7 @@ import * as ConnectionQualityEvents from './service/connectivity/ConnectionQuali
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import { initSDKConfig } from './config';
-import { AudioMixerEffect, JitsiStreamPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
+import { AudioMixerEffect, createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
 const logger = Logger.getLogger(__filename);
 /**
  * The amount of time to wait until firing
@@ -520,7 +521,7 @@ export default _mergeNamespaceAndModule({
   setNetworkInfo({
     isOnline
   }) {
-    sendAnalytics(createNetworkInfoEvent({
+    Statistics.sendAnalytics(createAnalyticsEvent.createNetworkInfoEvent({
       isOnline: action.isOnline
     }));
     NetworkInfo.updateNetworkInfo({

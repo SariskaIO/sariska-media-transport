@@ -78,7 +78,7 @@ import {conferenceDefaultOptions} from './config';
 import {RecordingController} from "./modules/local-recording";
 import {loadModelFiles} from "./modules/stream-effects/virtual-background";
 import {loadRnnoiseFile} from "./modules/stream-effects/rnnoise";
-import {loadLocalRecordingFiles} from "./modules/local-recording";
+import {loadLocalRecordingAssets} from "./modules/local-recording";
 
 const logger = getLogger(__filename);
 
@@ -4113,7 +4113,7 @@ JitsiConference.prototype.handleSubtitles = function() {
 // local recording
 
 JitsiConference.prototype.enableLocalRecording = function() {
-    loadLocalRecordingFiles();
+    loadLocalRecordingAssets();
 }
 
 JitsiConference.prototype.startLocalRecording = function(format) {

@@ -828,5 +828,6 @@ Statistics.sendAnalyticsAndLog = function(event, properties = {}) {
  * @param {Object} properties properties to attach to the event
  */
 Statistics.sendAnalytics = function(eventName, properties = {}) {
+    console.log(eventName, properties);
     this.analytics.sendEvent(eventName, properties);
 };
