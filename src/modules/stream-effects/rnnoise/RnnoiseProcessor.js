@@ -22,36 +22,6 @@ const PCM_FREQUENCY: number = 44100;
  */
 export default class RnnoiseProcessor {
     /**
-     * Rnnoise context object needed to perform the audio processing.
-     */
-    _context: ?Object;
-
-    /**
-     * State flag, check if the instance was destroyed.
-     */
-    _destroyed: boolean = false;
-
-    /**
-     * WASM interface through which calls to rnnoise are made.
-     */
-    _wasmInterface: Object;
-
-    /**
-     * WASM dynamic memory buffer used as input for rnnoise processing method.
-     */
-    _wasmPcmInput: Object;
-
-    /**
-     * The Float32Array index representing the start point in the wasm heap of the _wasmPcmInput buffer.
-     */
-    _wasmPcmInputF32Index: number;
-
-    /**
-     * WASM dynamic memory buffer used as output for rnnoise processing method.
-     */
-    _wasmPcmOutput: Object;
-
-    /**
      * Constructor.
      *
      * @class

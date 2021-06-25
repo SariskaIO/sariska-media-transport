@@ -36,7 +36,7 @@ import * as ConnectionQualityEvents from './service/connectivity/ConnectionQuali
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import { initSDKConfig } from './config';
-import { AudioMixerEffect, createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
+import { createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
 const logger = Logger.getLogger(__filename);
 /**
  * The amount of time to wait until firing
@@ -108,7 +108,6 @@ export default _mergeNamespaceAndModule({
    */
   ProxyConnectionService,
   effects: {
-    AudioMixerEffect,
     createPresenterEffect,
     createRnnoiseProcessor,
     createScreenshotCaptureEffect,

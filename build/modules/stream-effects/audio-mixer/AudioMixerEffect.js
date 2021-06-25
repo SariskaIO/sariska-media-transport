@@ -1,5 +1,3 @@
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 import SariskaMediaTransport from '../../../SariskaMediaTransport';
 /**
  * Class Implementing the effect interface expected by a JitsiLocalTrack.
@@ -8,48 +6,7 @@ import SariskaMediaTransport from '../../../SariskaMediaTransport';
  */
 
 export class AudioMixerEffect {
-  /**
-   * JitsiLocalTrack that is going to be mixed into the track that uses this effect.
-   */
-
-  /**
-   * MediaStream resulted from mixing.
-   */
-
-  /**
-   * MediaStreamTrack obtained from mixed stream.
-   */
-
-  /**
-   * Original MediaStream from the JitsiLocalTrack that uses this effect.
-   */
-
-  /**
-   * MediaStreamTrack obtained from the original MediaStream.
-   */
-
-  /**
-   * lib-jitsi-meet AudioMixer.
-   */
-
-  /**
-   * Creates AudioMixerEffect.
-   *
-   * @param {JitsiLocalTrack} mixAudio - JitsiLocalTrack which will be mixed with the original track.
-   */
   constructor(mixAudio) {
-    _defineProperty(this, "_mixAudio", void 0);
-
-    _defineProperty(this, "_mixedMediaStream", void 0);
-
-    _defineProperty(this, "_mixedMediaTrack", void 0);
-
-    _defineProperty(this, "_originalStream", void 0);
-
-    _defineProperty(this, "_originalTrack", void 0);
-
-    _defineProperty(this, "_audioMixer", void 0);
-
     if (mixAudio.getType() !== "audio") {
       throw new Error('AudioMixerEffect only supports audio JitsiLocalTracks; effect will not work!');
     }

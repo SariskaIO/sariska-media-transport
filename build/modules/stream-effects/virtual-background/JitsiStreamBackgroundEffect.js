@@ -1,5 +1,3 @@
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 import { VIRTUAL_BACKGROUND_TYPE } from './constants';
 import { CLEAR_TIMEOUT, TIMEOUT_TICK, SET_TIMEOUT, timerWorkerScript } from './TimerWorker';
 /**
@@ -17,42 +15,6 @@ export default class JitsiStreamBackgroundEffect {
    * @param {Object} options - Segmentation dimensions.
    */
   constructor(model, options) {
-    _defineProperty(this, "_model", void 0);
-
-    _defineProperty(this, "_options", void 0);
-
-    _defineProperty(this, "_desktopShareDimensions", void 0);
-
-    _defineProperty(this, "_segmentationPixelCount", void 0);
-
-    _defineProperty(this, "_inputVideoElement", void 0);
-
-    _defineProperty(this, "_onMaskFrameTimer", void 0);
-
-    _defineProperty(this, "_maskFrameTimerWorker", void 0);
-
-    _defineProperty(this, "_outputCanvasElement", void 0);
-
-    _defineProperty(this, "_outputCanvasCtx", void 0);
-
-    _defineProperty(this, "_segmentationMaskCtx", void 0);
-
-    _defineProperty(this, "_segmentationMask", void 0);
-
-    _defineProperty(this, "_segmentationMaskCanvas", void 0);
-
-    _defineProperty(this, "_renderMask", void 0);
-
-    _defineProperty(this, "_virtualImage", void 0);
-
-    _defineProperty(this, "_virtualVideo", void 0);
-
-    _defineProperty(this, "isEnabled", void 0);
-
-    _defineProperty(this, "startEffect", void 0);
-
-    _defineProperty(this, "stopEffect", void 0);
-
     this._options = options;
 
     if (this._options.virtualBackground.backgroundType === VIRTUAL_BACKGROUND_TYPE.IMAGE) {

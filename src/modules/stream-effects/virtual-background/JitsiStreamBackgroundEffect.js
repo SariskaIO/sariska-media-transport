@@ -15,25 +15,6 @@ import {
  * video stream.
  */
 export default class JitsiStreamBackgroundEffect {
-    _model: Object;
-    _options: Object;
-    _desktopShareDimensions: Object;
-    _segmentationPixelCount: number;
-    _inputVideoElement: HTMLVideoElement;
-    _onMaskFrameTimer: Function;
-    _maskFrameTimerWorker: Worker;
-    _outputCanvasElement: HTMLCanvasElement;
-    _outputCanvasCtx: Object;
-    _segmentationMaskCtx: Object;
-    _segmentationMask: Object;
-    _segmentationMaskCanvas: Object;
-    _renderMask: Function;
-    _virtualImage: HTMLImageElement;
-    _virtualVideo: HTMLVideoElement;
-    isEnabled: Function;
-    startEffect: Function;
-    stopEffect: Function;
-
     /**
      * Represents a modified video MediaStream track.
      *

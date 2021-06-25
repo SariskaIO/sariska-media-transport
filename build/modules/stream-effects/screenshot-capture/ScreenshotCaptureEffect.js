@@ -1,5 +1,3 @@
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 import pixelmatch from 'pixelmatch';
 import { CLEAR_INTERVAL, INTERVAL_TIMEOUT, PIXEL_LOWER_BOUND, POLL_INTERVAL, SET_INTERVAL } from './constants';
 import { timerWorkerScript } from './worker';
@@ -14,26 +12,6 @@ export default class ScreenshotCaptureEffect {
    *
    */
   constructor(callback) {
-    _defineProperty(this, "callback", void 0);
-
-    _defineProperty(this, "_currentCanvas", void 0);
-
-    _defineProperty(this, "_currentCanvasContext", void 0);
-
-    _defineProperty(this, "_videoElement", void 0);
-
-    _defineProperty(this, "_handleWorkerAction", void 0);
-
-    _defineProperty(this, "_initScreenshotCapture", void 0);
-
-    _defineProperty(this, "_streamWorker", void 0);
-
-    _defineProperty(this, "_streamHeight", void 0);
-
-    _defineProperty(this, "_streamWidth", void 0);
-
-    _defineProperty(this, "_storedImageData", void 0);
-
     this.callback = callback;
     this._currentCanvas = document.createElement('canvas');
     this._currentCanvasContext = this._currentCanvas.getContext('2d');

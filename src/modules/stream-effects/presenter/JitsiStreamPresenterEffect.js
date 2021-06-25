@@ -13,20 +13,6 @@ import {
  * desktop stream.
  */
 export default class JitsiStreamPresenterEffect {
-    _canvas: HTMLCanvasElement;
-    _ctx: CanvasRenderingContext2D;
-    _desktopElement: HTMLVideoElement;
-    _desktopStream: MediaStream;
-    _frameRate: number;
-    _onVideoFrameTimer: Function;
-    _onVideoFrameTimerWorker: Function;
-    _renderVideo: Function;
-    _videoFrameTimerWorker: Worker;
-    _videoElement: HTMLVideoElement;
-    isEnabled: Function;
-    startEffect: Function;
-    stopEffect: Function;
-
     /**
      * Represents a modified MediaStream that adds a camera track at the
      * bottom right corner of the desktop track using a HTML canvas.

@@ -7,41 +7,6 @@ import SariskaMediaTransport from '../../../SariskaMediaTransport';
  * provided at the moment of creation, second is provided through the effect interface.
  */
 export class AudioMixerEffect {
-    /**
-     * JitsiLocalTrack that is going to be mixed into the track that uses this effect.
-     */
-    _mixAudio: Object;
-
-    /**
-     * MediaStream resulted from mixing.
-     */
-    _mixedMediaStream: Object;
-
-    /**
-     * MediaStreamTrack obtained from mixed stream.
-     */
-    _mixedMediaTrack: Object;
-
-    /**
-     * Original MediaStream from the JitsiLocalTrack that uses this effect.
-     */
-    _originalStream: Object;
-
-    /**
-     * MediaStreamTrack obtained from the original MediaStream.
-     */
-    _originalTrack: Object;
-
-    /**
-     * lib-jitsi-meet AudioMixer.
-     */
-    _audioMixer: Object;
-
-    /**
-     * Creates AudioMixerEffect.
-     *
-     * @param {JitsiLocalTrack} mixAudio - JitsiLocalTrack which will be mixed with the original track.
-     */
     constructor(mixAudio: Object) {
         if (mixAudio.getType() !== "audio") {
             throw new Error('AudioMixerEffect only supports audio JitsiLocalTracks; effect will not work!');

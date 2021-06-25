@@ -1,5 +1,3 @@
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 import { CLEAR_INTERVAL, INTERVAL_TIMEOUT, SET_INTERVAL, timerWorkerScript } from './TimeWorker';
 /**
  * Represents a modified MediaStream that adds video as pip on a desktop stream.
@@ -19,32 +17,6 @@ export default class JitsiStreamPresenterEffect {
    */
   constructor(videoStream) {
     var _firstVideoTrack$getS;
-
-    _defineProperty(this, "_canvas", void 0);
-
-    _defineProperty(this, "_ctx", void 0);
-
-    _defineProperty(this, "_desktopElement", void 0);
-
-    _defineProperty(this, "_desktopStream", void 0);
-
-    _defineProperty(this, "_frameRate", void 0);
-
-    _defineProperty(this, "_onVideoFrameTimer", void 0);
-
-    _defineProperty(this, "_onVideoFrameTimerWorker", void 0);
-
-    _defineProperty(this, "_renderVideo", void 0);
-
-    _defineProperty(this, "_videoFrameTimerWorker", void 0);
-
-    _defineProperty(this, "_videoElement", void 0);
-
-    _defineProperty(this, "isEnabled", void 0);
-
-    _defineProperty(this, "startEffect", void 0);
-
-    _defineProperty(this, "stopEffect", void 0);
 
     const videoDiv = document.createElement('div');
     const firstVideoTrack = videoStream.getVideoTracks()[0];

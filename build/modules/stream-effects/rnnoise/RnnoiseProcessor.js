@@ -1,5 +1,3 @@
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 /**
  * Constant. Rnnoise default sample size, samples of different size won't work.
  */
@@ -22,48 +20,12 @@ const PCM_FREQUENCY = 44100;
 
 export default class RnnoiseProcessor {
   /**
-   * Rnnoise context object needed to perform the audio processing.
-   */
-
-  /**
-   * State flag, check if the instance was destroyed.
-   */
-
-  /**
-   * WASM interface through which calls to rnnoise are made.
-   */
-
-  /**
-   * WASM dynamic memory buffer used as input for rnnoise processing method.
-   */
-
-  /**
-   * The Float32Array index representing the start point in the wasm heap of the _wasmPcmInput buffer.
-   */
-
-  /**
-   * WASM dynamic memory buffer used as output for rnnoise processing method.
-   */
-
-  /**
    * Constructor.
    *
    * @class
    * @param {Object} wasmInterface - WebAssembly module interface that exposes rnnoise functionality.
    */
   constructor(wasmInterface) {
-    _defineProperty(this, "_context", void 0);
-
-    _defineProperty(this, "_destroyed", false);
-
-    _defineProperty(this, "_wasmInterface", void 0);
-
-    _defineProperty(this, "_wasmPcmInput", void 0);
-
-    _defineProperty(this, "_wasmPcmInputF32Index", void 0);
-
-    _defineProperty(this, "_wasmPcmOutput", void 0);
-
     // Considering that we deal with dynamic allocated memory employ exception safety strong guarantee
     // i.e. in case of exception there are no side effects.
     try {

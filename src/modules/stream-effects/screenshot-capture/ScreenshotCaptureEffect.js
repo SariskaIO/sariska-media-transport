@@ -19,17 +19,6 @@ declare var interfaceConfig: Object;
  * Manipulates the original desktop stream and performs custom processing operations, if implemented.
  */
 export default class ScreenshotCaptureEffect {
-     callback: Function;
-    _currentCanvas: HTMLCanvasElement;
-    _currentCanvasContext: CanvasRenderingContext2D;
-    _videoElement: HTMLVideoElement;
-    _handleWorkerAction: Function;
-    _initScreenshotCapture: Function;
-    _streamWorker: Worker;
-    _streamHeight: any;
-    _streamWidth: any;
-    _storedImageData: Uint8ClampedArray;
-
     /**
      * Initializes a new {@code ScreenshotCaptureEffect} instance.
      *
