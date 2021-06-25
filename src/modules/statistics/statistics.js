@@ -198,6 +198,8 @@ Statistics.audioLevelsInterval = 200;
 Statistics.pcStatsInterval = 10000;
 Statistics.disableThirdPartyRequests = false;
 Statistics.analytics = analytics;
+Statistics.analyticsEventEmitter = new EventEmitter();
+
 
 Object.defineProperty(Statistics, 'instances', {
     /**
@@ -828,19 +830,19 @@ Statistics.sendAnalyticsAndLog = function(event, properties = {}) {
  * @param {Object} properties properties to attach to the event
  */
 
-Statistics.prototype.sendAnalytics = function(eventName, properties = {}) {
+Statistics.sendAnalytics = function(eventName, properties = {}) {
     this.analytics.sendEvent(eventName, properties);
-    this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, eventName, properties);
+    Statistics.analyticsEventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, eventName, properties);
 };
 
 
 Statistics.prototype.addAnalyticsEventListener = function(listener) {
-    this.eventEmitter.on(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
+    Statistics.analyticsEventEmitter.on(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
 };
 
 
 Statistics.prototype.removeAnalyticsEventListener = function(listener) {
-    this.eventEmitter.removeListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
+    Statistics.analyticsEventEmitter.removeListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
 };
 
 
