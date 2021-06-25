@@ -560,7 +560,7 @@ export default _mergeNamespaceAndModule({
     setNetworkInfo({ isOnline }) {
         Statistics.sendAnalytics(
             createAnalyticsEvent.createNetworkInfoEvent({
-                isOnline: action.isOnline
+                isOnline
         }));
         NetworkInfo.updateNetworkInfo({ isOnline });
     },
