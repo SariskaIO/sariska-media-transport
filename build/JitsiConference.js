@@ -252,6 +252,10 @@ export default function JitsiConference(options) {
     this.enableVirtualBackground();
   }
 
+  if (options.enableAnalytics) {
+    this.enableAnalytics();
+  }
+
   this.localTracksDuration = new LocalTracksDuration(this);
 } // FIXME convert JitsiConference to ES6 - ASAP !
 
@@ -3624,6 +3628,31 @@ JitsiConference.prototype.enableVirtualBackground = function (micDeviceId) {
 
 JitsiConference.prototype.enableNoiseCancellation = function (micDeviceId) {
   loadRnnoiseFile();
+}; // enable analytics
+
+
+JitsiConference.prototype.enableAnalytics = function () {
+  this.statistics.addAnalyticsEventListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, (eventName, payload) => {
+    let name = '',
+        body = {};
+
+    if (typeof eventName === "string") {
+      name = eventName;
+      body = payload;
+    } else if (typeof eventName === "object") {
+      name = eventName.name;
+      body = eventName;
+    }
+
+    const finalPaylaod = {
+      name,
+      action: body.action ? body.action : '',
+      actionSubject: body.actionSubject ? body.actionSubject : '',
+      source: body.source ? body.source : '',
+      attributes: JSON.stringify(payload)
+    };
+    this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, finalPaylaod);
+  });
 };
 
 JitsiConference.prototype.startLocalRecording = function (format) {

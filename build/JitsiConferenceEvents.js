@@ -393,3 +393,4 @@ export const AV_MODERATION_CHANGED = 'conference.av_moderation.changed';
 export const AV_MODERATION_PARTICIPANT_APPROVED = 'conference.av_moderation.participant.approved';
 export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
 export const TRACK_UPDATED = 'conference.track.updated';
+export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';

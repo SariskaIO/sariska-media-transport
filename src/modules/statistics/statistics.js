@@ -151,7 +151,7 @@ Statistics.init = function(options) {
  * @param {StatisticsOptions} options - The options to use creating the
  * Statistics.
  */
-export default function Statistics(xmpp, options) {
+export default function Statistics(xmpp, options)  {
     /**
      * {@link RTPStats} mapped by {@link TraceablePeerConnection.id} which
      * collect RTP statistics for each peerconnection.
@@ -827,7 +827,30 @@ Statistics.sendAnalyticsAndLog = function(event, properties = {}) {
  * represents the entire event.
  * @param {Object} properties properties to attach to the event
  */
+
 Statistics.sendAnalytics = function(eventName, properties = {}) {
-    console.log(eventName, properties);
     this.analytics.sendEvent(eventName, properties);
+    this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, eventName, properties);
 };
+
+
+Statistics.prototype.addAnalyticsEventListener = function(listener) {
+    this.eventEmitter.on(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
+};
+
+
+Statistics.prototype.removeAnalyticsEventListener = function(listener) {
+    this.eventEmitter.removeListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
+};
+
+
+
+
+
+
+
+
+
+
+
+

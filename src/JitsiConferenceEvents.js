@@ -449,3 +449,5 @@ export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
 export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';
 
 export const TRACK_UPDATED = 'conference.track.updated';
+
+export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';

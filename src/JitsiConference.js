@@ -130,7 +130,7 @@ const JINGLE_SI_TIMEOUT = 5000;
  */
 export default function JitsiConference(options) {
     options = {...conferenceConfig, ...options};
-    
+
     if (!options.name || options.name.toLowerCase() !== options.name) {
         const errmsg
             = 'Invalid conference name (no conference name passed or it '
@@ -308,6 +308,10 @@ export default function JitsiConference(options) {
 
     if (options.enableVirtualBackground) {
         this.enableVirtualBackground();
+    }
+
+    if (options.enableAnalytics) {
+        this.enableAnalytics();
     }
 
     this.localTracksDuration = new LocalTracksDuration(this);
@@ -4128,6 +4132,29 @@ JitsiConference.prototype.enableNoiseCancellation = function(micDeviceId) {
    loadRnnoiseFile();
 }
 
+// enable analytics
+JitsiConference.prototype.enableAnalytics = function() {
+   this.statistics.addAnalyticsEventListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, (eventName, payload)=>{
+        let name  = '', body = {};
+        if ( typeof eventName === "string" ) {
+            name = eventName;
+            body = payload;
+        } else if (typeof eventName === "object"){
+            name  = eventName.name;
+            body = eventName
+        }
+
+        const finalPaylaod  = {
+            name,
+            action: body.action ? body.action : '',
+            actionSubject: body.actionSubject ? body.actionSubject : '',
+            source:body.source ? body.source : '',
+            attributes: JSON.stringify(payload)
+        };
+        this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, finalPaylaod);
+   });
+}
+
 JitsiConference.prototype.startLocalRecording = function(format) {
    this.recordingController = new RecordingController()
    this.recordingController.registerEvents(this);
@@ -4149,8 +4176,6 @@ JitsiConference.prototype.setMuted = function(muted) {
 JitsiConference.prototype.setMicDevice = function(micDeviceId) {
    this.recordingController.setMicDevice(micDeviceId);
 }
-
-
 
 
 

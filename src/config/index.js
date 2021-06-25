@@ -24,7 +24,7 @@ export const connectionConfig = {
 };
 
 export const conferenceConfig = {
-    enableAnalytics: false,
+    enableAnalytics: true,
     enableLocalRecording: false,
     enableVirtualBackground: false,
     enableNoiseCancellation: false,
