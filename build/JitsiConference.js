@@ -52,7 +52,6 @@ import { RecordingController } from "./modules/local-recording";
 import { loadModelFiles } from "./modules/stream-effects/virtual-background";
 import { loadRnnoiseFile } from "./modules/stream-effects/rnnoise";
 import { loadLocalRecordingAssets } from "./modules/local-recording";
-import { conferenceConfig } from './config';
 const logger = getLogger(__filename);
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
@@ -101,10 +100,6 @@ const JINGLE_SI_TIMEOUT = 5000;
  */
 
 export default function JitsiConference(options) {
-  options = { ...conferenceConfig,
-    ...options
-  };
-
   if (!options.name || options.name.toLowerCase() !== options.name) {
     const errmsg = 'Invalid conference name (no conference name passed or it ' + 'contains invalid characters like capital letters)!';
     logger.error(errmsg);
