@@ -130,7 +130,7 @@ JitsiConnection.prototype.initJitsiConference = function (options = {}) {
   const name = this.name;
   return new JitsiConference({
     name,
-    config: this.options,
+    config: options,
     connection: this,
     user: this.user
   });
