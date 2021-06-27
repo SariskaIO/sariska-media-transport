@@ -295,19 +295,19 @@ export default function JitsiConference(options) {
 
     this.handleSubtitles();
 
-    if (options.enableLocalRecording) {
+    if (options.config.enableLocalRecording) {
         this.enableLocalRecording();
     }
 
-    if (options.enableNoiseCancellation) {
+    if (options.config.enableNoiseCancellation) {
+        this.enableNoiseCancellation();
+    }
+
+    if (options.config.enableVirtualBackground) {
         this.enableVirtualBackground();
     }
 
-    if (options.enableVirtualBackground) {
-        this.enableVirtualBackground();
-    }
-
-    if (options.enableAnalytics) {
+    if (options.config.enableAnalytics) {
         this.enableAnalytics();
     }
 
