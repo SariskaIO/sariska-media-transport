@@ -15,6 +15,8 @@ const segmentationDimensions = {
     width: 256
   }
 };
+let createTFLiteSIMDModule;
+let createTFLiteModule;
 /**
  * Creates a new instance of JitsiStreamBackgroundEffect. This loads the Meet background model that is used to
  * extract person segmentation.
@@ -30,6 +32,14 @@ export async function createVirtualBackgroundEffect(virtualBackground) {
   }
 
   let tflite;
+
+  if (!createTFLiteSIMDModule && wasmCheck.feature.simd) {
+    createTFLiteSIMDModule = await fetch('https://sdk.sariska.io/tflite-simd.wasm');
+  }
+
+  if (!createTFLiteModule && !wasmCheck.feature.simd) {
+    createTFLiteSIMDModule = await fetch('https://sdk.sariska.io/tflite.wasm');
+  }
 
   if (wasmCheck.feature.simd) {
     tflite = await createTFLiteSIMDModule();
@@ -54,8 +64,4 @@ export async function createVirtualBackgroundEffect(virtualBackground) {
     virtualBackground
   };
   return new JitsiStreamBackgroundEffect(tflite, options);
-}
-export async function loadModelFiles() {
-  ScriptUtil.loadScript('https://sdk.sariska.io/tflite');
-  ScriptUtil.loadScript('https://sdk.sariska.io/tflite-simd');
 }
