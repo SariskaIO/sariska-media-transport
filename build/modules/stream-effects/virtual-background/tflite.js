@@ -1,5 +1,5 @@
 var createTFLiteModule = function () {
-  var e = void 0;
+  var e = "undefined" != typeof document && document.currentScript ? document.currentScript.src : void 0;
   return "undefined" != typeof __filename && (e = e || __filename), function (n) {
     var t,
         r,
@@ -8,12 +8,12 @@ var createTFLiteModule = function () {
       t = e, r = n;
     });
     var o,
-        s = {};
+        u = {};
 
-    for (o in a) a.hasOwnProperty(o) && (s[o] = a[o]);
+    for (o in a) a.hasOwnProperty(o) && (u[o] = a[o]);
 
-    var i,
-        u = [],
+    var s,
+        i = [],
         c = "./this.program",
         f = function (e, n) {
       throw n;
@@ -21,11 +21,21 @@ var createTFLiteModule = function () {
         p = !1,
         l = !1;
 
-    p = "object" == typeof window, l = "function" == typeof importScripts, i = "object" == typeof process && "object" == typeof process.versions && "string" == typeof process.versions.node;
+    p = "object" == typeof window, l = "function" == typeof importScripts, s = "object" == typeof process && "object" == typeof process.versions && "string" == typeof process.versions.node;
     var d,
         m,
         y = "";
-    p || i || l ? (p || l) && (l ? y = self.location.href : "undefined" != typeof document && document.currentScript && (y = document.currentScript.src), e && (y = e), y = 0 !== y.indexOf("blob:") ? y.substr(0, y.lastIndexOf("/") + 1) : "", l && (m = function (e) {
+    !p && !s && !l ? ("undefined" != typeof read && function (e) {
+      return read(e);
+    }, m = function (e) {
+      var n, t;
+      return "function" == typeof readbuffer ? new Uint8Array(readbuffer(e)) : (n = read(e, "binary"), "object" == typeof n || U("Assertion failed: " + t), n);
+    }, "undefined" != typeof scriptArgs ? i = scriptArgs : void 0 !== arguments && (i = arguments), "function" == typeof quit && (f = function (e) {
+      quit(e);
+    }), "undefined" != typeof print && ("undefined" == typeof console && (console = {}), console.log = print, console.warn = console.error = "undefined" != typeof printErr ? printErr : print)) : (p || l) && (l ? y = self.location.href : "undefined" != typeof document && document.currentScript && (y = document.currentScript.src), e && (y = e), y = 0 !== y.indexOf("blob:") ? y.substr(0, y.lastIndexOf("/") + 1) : "", function (e) {
+      var n = new XMLHttpRequest();
+      return n.open("GET", e, !1), n.send(null), n.responseText;
+    }, l && (m = function (e) {
       var n = new XMLHttpRequest();
       return n.open("GET", e, !1), n.responseType = "arraybuffer", n.send(null), new Uint8Array(n.response);
     }), d = function (e, n, t) {
@@ -33,27 +43,23 @@ var createTFLiteModule = function () {
       r.open("GET", e, !0), r.responseType = "arraybuffer", r.onload = function () {
         200 == r.status || 0 == r.status && r.response ? n(r.response) : t();
       }, r.onerror = t, r.send(null);
-    }) : (m = function (e) {
-      var n;
-      return "function" == typeof readbuffer ? new Uint8Array(readbuffer(e)) : ("object" == typeof (n = read(e, "binary")) || F("Assertion failed: " + void 0), n);
-    }, "undefined" != typeof scriptArgs ? u = scriptArgs : void 0 !== arguments && (u = arguments), "function" == typeof quit && (f = function (e) {
-      quit(e);
-    }), "undefined" != typeof print && ("undefined" == typeof console && (console = {}), console.log = print, console.warn = console.error = "undefined" != typeof printErr ? printErr : print));
+    });
     var g,
         h,
         v,
         w = a.print || console.log.bind(console),
         b = a.printErr || console.warn.bind(console);
 
-    for (o in s) s.hasOwnProperty(o) && (a[o] = s[o]);
+    for (o in u) u.hasOwnProperty(o) && (a[o] = u[o]);
 
-    s = null, a.arguments && (u = a.arguments), a.thisProgram && (c = a.thisProgram), a.quit && (f = a.quit), a.wasmBinary && (g = a.wasmBinary), a.noExitRuntime && (h = a.noExitRuntime), "object" != typeof WebAssembly && F("no native wasm support detected");
+    u = null, a.arguments && (i = a.arguments), a.thisProgram && (c = a.thisProgram), a.quit && (f = a.quit), a.wasmBinary && (g = a.wasmBinary), a.noExitRuntime && (h = a.noExitRuntime), "object" != typeof WebAssembly && U("no native wasm support detected");
 
-    var _,
-        A,
+    var _ = !1;
+
+    var A,
         E,
+        R,
         I,
-        R = !1,
         M = "undefined" != typeof TextDecoder ? new TextDecoder("utf8") : void 0;
 
     function O(e, n, t) {
@@ -62,26 +68,26 @@ var createTFLiteModule = function () {
       if (a - n > 16 && e.subarray && M) return M.decode(e.subarray(n, a));
 
       for (var o = ""; n < a;) {
-        var s = e[n++];
+        var u = e[n++];
 
-        if (128 & s) {
-          var i = 63 & e[n++];
+        if (128 & u) {
+          var s = 63 & e[n++];
 
-          if (192 != (224 & s)) {
-            var u = 63 & e[n++];
-            if ((s = 224 == (240 & s) ? (15 & s) << 12 | i << 6 | u : (7 & s) << 18 | i << 12 | u << 6 | 63 & e[n++]) < 65536) o += String.fromCharCode(s);else {
-              var c = s - 65536;
+          if (192 != (224 & u)) {
+            var i = 63 & e[n++];
+            if ((u = 224 == (240 & u) ? (15 & u) << 12 | s << 6 | i : (7 & u) << 18 | s << 12 | i << 6 | 63 & e[n++]) < 65536) o += String.fromCharCode(u);else {
+              var c = u - 65536;
               o += String.fromCharCode(55296 | c >> 10, 56320 | 1023 & c);
             }
-          } else o += String.fromCharCode((31 & s) << 6 | i);
-        } else o += String.fromCharCode(s);
+          } else o += String.fromCharCode((31 & u) << 6 | s);
+        } else o += String.fromCharCode(u);
       }
 
       return o;
     }
 
     function C(e) {
-      _ = e, a.HEAP8 = A = new Int8Array(e), a.HEAP16 = new Int16Array(e), a.HEAP32 = I = new Int32Array(e), a.HEAPU8 = E = new Uint8Array(e), a.HEAPU16 = new Uint16Array(e), a.HEAPU32 = new Uint32Array(e), a.HEAPF32 = new Float32Array(e), a.HEAPF64 = new Float64Array(e);
+      A = e, a.HEAP8 = E = new Int8Array(e), a.HEAP16 = new Int16Array(e), a.HEAP32 = I = new Int32Array(e), a.HEAPU8 = R = new Uint8Array(e), a.HEAPU16 = new Uint16Array(e), a.HEAPU32 = new Uint32Array(e), a.HEAPF32 = new Float32Array(e), a.HEAPF64 = new Float64Array(e);
     }
 
     a.INITIAL_MEMORY;
@@ -99,44 +105,43 @@ var createTFLiteModule = function () {
         L = null,
         k = null;
 
-    function F(e) {
-      a.onAbort && a.onAbort(e), b(e += ""), R = !0, e = "abort(" + e + "). Build with -s ASSERTIONS=1 for more info.";
+    function U(e) {
+      a.onAbort && a.onAbort(e), b(e += ""), _ = !0, 1, e = "abort(" + e + "). Build with -s ASSERTIONS=1 for more info.";
       var n = new WebAssembly.RuntimeError(e);
       throw r(n), n;
     }
 
-    function U(e, n) {
+    function j(e, n) {
       return String.prototype.startsWith ? e.startsWith(n) : 0 === e.indexOf(n);
     }
 
     a.preloadedImages = {}, a.preloadedAudios = {};
-    var j = "data:application/octet-stream;base64,";
+    var F = "data:application/octet-stream;base64,";
 
     function D(e) {
-      return U(e, j);
+      return j(e, F);
     }
 
-    var B = "file://";
+    var q = "file://";
 
-    function q(e) {
-      return U(e, B);
+    function B(e) {
+      return j(e, q);
     }
 
     var N,
-        G,
-        z = "https://sdk.sariska.io/tflite.wasm";
+        G = "https://sdk.sariska.io/tflite.wasm";
 
-    function X(e) {
+    function z(e) {
       try {
-        if (e == z && g) return new Uint8Array(g);
+        if (e == G && g) return new Uint8Array(g);
         if (m) return m(e);
         throw "both async and sync fetching of the wasm failed";
       } catch (e) {
-        F(e);
+        U(e);
       }
     }
 
-    function Y(e) {
+    function X(e) {
       for (; e.length > 0;) {
         var n = e.shift();
 
@@ -147,22 +152,24 @@ var createTFLiteModule = function () {
       }
     }
 
+    D(G) || (G = G), N = s ? function () {
+      var e = process.hrtime();
+      return 1e3 * e[0] + e[1] / 1e6;
+    } : "undefined" != typeof dateNow ? dateNow : function () {
+      return performance.now();
+    };
+    var Y = !0;
+
     function J(e) {
       return I[te() >> 2] = e, e;
     }
 
     function K(e) {
       try {
-        return v.grow(e - _.byteLength + 65535 >>> 16), C(v.buffer), 1;
+        return v.grow(e - A.byteLength + 65535 >>> 16), C(v.buffer), 1;
       } catch (e) {}
     }
 
-    D(z) || (N = z, z = a.locateFile ? a.locateFile(N, y) : y + N), G = i ? function () {
-      var e = process.hrtime();
-      return 1e3 * e[0] + e[1] / 1e6;
-    } : "undefined" != typeof dateNow ? dateNow : function () {
-      return performance.now();
-    };
     var Q = {};
 
     function V() {
@@ -189,71 +196,71 @@ var createTFLiteModule = function () {
       return V.strings;
     }
 
-    var Z,
-        $ = {
+    var Z = {
       mappings: {},
       buffers: [null, [], []],
       printChar: function (e, n) {
-        var t = $.buffers[e];
+        var t = Z.buffers[e];
         0 === n || 10 === n ? ((1 === e ? w : b)(O(t, 0)), t.length = 0) : t.push(n);
       },
       varargs: void 0,
       get: function () {
-        return $.varargs += 4, I[$.varargs - 4 >> 2];
+        return Z.varargs += 4, I[Z.varargs - 4 >> 2];
       },
       getStr: function (e) {
         return function (e, n) {
-          return e ? O(E, e, void 0) : "";
+          return e ? O(R, e, n) : "";
         }(e);
       },
       get64: function (e, n) {
         return e;
       }
-    },
+    };
+    var $,
         ee = {
       a: function () {
-        F();
+        U();
       },
       n: function (e, n) {
         var t;
         if (0 === e) t = Date.now();else {
-          if (1 !== e && 4 !== e) return J(28), -1;
-          t = G();
+          if (1 !== e && 4 !== e || !Y) return J(28), -1;
+          t = N();
         }
         return I[n >> 2] = t / 1e3 | 0, I[n + 4 >> 2] = t % 1e3 * 1e3 * 1e3 | 0, 0;
       },
       i: function (e, n) {
-        F("To use dlopen, you need to use Emscripten's linking support, see https://github.com/emscripten-core/emscripten/wiki/Linking");
+        U("To use dlopen, you need to use Emscripten's linking support, see https://github.com/emscripten-core/emscripten/wiki/Linking");
       },
       e: function (e, n) {
-        F("To use dlopen, you need to use Emscripten's linking support, see https://github.com/emscripten-core/emscripten/wiki/Linking");
+        U("To use dlopen, you need to use Emscripten's linking support, see https://github.com/emscripten-core/emscripten/wiki/Linking");
       },
       l: function (e, n, t) {
-        E.copyWithin(e, n, n + t);
+        R.copyWithin(e, n, n + t);
       },
       m: function (e) {
         e >>>= 0;
-        var n = E.length;
+        var n = R.length;
         if (e > 2147483648) return !1;
 
-        for (var t, r = 1; r <= 4; r *= 2) {
-          var a = n * (1 + .2 / r);
-          if (a = Math.min(a, e + 100663296), K(Math.min(2147483648, ((t = Math.max(16777216, e, a)) % 65536 > 0 && (t += 65536 - t % 65536), t)))) return !0;
+        for (var t, r, a = 1; a <= 4; a *= 2) {
+          var o = n * (1 + .2 / a);
+          if (o = Math.min(o, e + 100663296), K(Math.min(2147483648, ((t = Math.max(16777216, e, o)) % (r = 65536) > 0 && (t += r - t % r), t)))) return !0;
         }
 
         return !1;
       },
       o: function (e) {
-        for (var n = G(); G() - n < e;);
+        for (var n = N(); N() - n < e;);
       },
       p: function (e, n) {
         var t = 0;
         return V().forEach(function (r, a) {
           var o = n + t;
           I[e + 4 * a >> 2] = o, function (e, n, t) {
-            for (var r = 0; r < e.length; ++r) A[n++ >> 0] = e.charCodeAt(r);
+            for (var r = 0; r < e.length; ++r) E[n++ >> 0] = e.charCodeAt(r);
 
-            A[n >> 0] = 0;
+            t || (E[n >> 0] = 0);
           }(r, o), t += r.length + 1;
         }), 0;
       },
@@ -267,7 +274,7 @@ var createTFLiteModule = function () {
       },
       j: function (e) {
         !function (e, n) {
-          h || (a.onExit && a.onExit(e), R = !0), f(e, new re(e));
+          n && h && 0 === e || (h || (e, !0, a.onExit && a.onExit(e), _ = !0), f(e, new re(e)));
         }(e);
       },
       h: function (e) {
@@ -276,9 +283,9 @@ var createTFLiteModule = function () {
       k: function (e, n, t, r, a) {},
       c: function (e, n, t, r) {
         for (var a = 0, o = 0; o < t; o++) {
-          for (var s = I[n + 8 * o >> 2], i = I[n + (8 * o + 4) >> 2], u = 0; u < i; u++) $.printChar(e, E[s + u]);
+          for (var u = I[n + 8 * o >> 2], s = I[n + (8 * o + 4) >> 2], i = 0; i < s; i++) Z.printChar(e, R[u + i]);
 
-          a += i;
+          a += s;
         }
 
         return I[r >> 2] = a, 0;
@@ -494,28 +501,28 @@ var createTFLiteModule = function () {
       function o(n) {
         return function () {
           if (!g && (p || l)) {
-            if ("function" == typeof fetch && !q(z)) return fetch(z, {
+            if ("function" == typeof fetch && !B(G)) return fetch(G, {
               credentials: "same-origin"
             }).then(function (e) {
-              if (!e.ok) throw "failed to load wasm binary file at '" + z + "'";
+              if (!e.ok) throw "failed to load wasm binary file at '" + G + "'";
               return e.arrayBuffer();
             }).catch(function () {
-              return X(z);
+              return z(G);
             });
             if (d) return new Promise(function (e, n) {
-              d(z, function (n) {
+              d(G, function (n) {
                 e(new Uint8Array(n));
               }, n);
             });
           }
 
           return Promise.resolve().then(function () {
-            return X(z);
+            return z(G);
           });
         }().then(function (n) {
           return WebAssembly.instantiate(n, e);
         }).then(n, function (e) {
-          b("failed to asynchronously prepare wasm: " + e), F(e);
+          b("failed to asynchronously prepare wasm: " + e), U(e);
         });
       }
 
@@ -524,7 +531,7 @@ var createTFLiteModule = function () {
       } catch (e) {
         return b("Module.instantiateWasm callback failed with error: " + e), !1;
       }
-      (g || "function" != typeof WebAssembly.instantiateStreaming || D(z) || q(z) || "function" != typeof fetch ? o(t) : fetch(z, {
+      (g || "function" != typeof WebAssembly.instantiateStreaming || D(G) || B(G) || "function" != typeof fetch ? o(t) : fetch(G, {
         credentials: "same-origin"
       }).then(function (n) {
         return WebAssembly.instantiateStreaming(n, e).then(t, function (e) {
@@ -566,17 +573,17 @@ var createTFLiteModule = function () {
 
     function ae(e) {
       function n() {
-        Z || (Z = !0, a.calledRun = !0, R || (Y(x), Y(P), t(a), a.onRuntimeInitialized && a.onRuntimeInitialized(), function () {
+        $ || ($ = !0, a.calledRun = !0, _ || (!0, X(x), X(P), t(a), a.onRuntimeInitialized && a.onRuntimeInitialized(), function () {
           if (a.postRun) for ("function" == typeof a.postRun && (a.postRun = [a.postRun]); a.postRun.length;) e = a.postRun.shift(), H.unshift(e);
           var e;
-          Y(H);
+          X(H);
         }()));
       }
 
-      e = e || u, W > 0 || (function () {
+      e = e || i, W > 0 || (!function () {
         if (a.preRun) for ("function" == typeof a.preRun && (a.preRun = [a.preRun]); a.preRun.length;) e = a.preRun.shift(), T.unshift(e);
         var e;
-        Y(T);
+        X(T);
       }(), W > 0 || (a.setStatus ? (a.setStatus("Running..."), setTimeout(function () {
         setTimeout(function () {
           a.setStatus("");
@@ -585,7 +592,7 @@ var createTFLiteModule = function () {
     }
 
     if (k = function e() {
-      Z || ae(), Z || (k = e);
+      $ || ae(), $ || (k = e);
     }, a.run = ae, a.preInit) for ("function" == typeof a.preInit && (a.preInit = [a.preInit]); a.preInit.length > 0;) a.preInit.pop()();
     return h = !0, ae(), n.ready;
   };
