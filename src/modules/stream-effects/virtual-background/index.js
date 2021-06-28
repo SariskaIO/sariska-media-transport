@@ -1,9 +1,7 @@
 // @flow
-
-import * as wasmCheck from 'wasm-check';
 import JitsiStreamBackgroundEffect from './JitsiStreamBackgroundEffect';
-import { ScriptUtil } from '../../util/ScriptUtil';
-
+import createTFLiteModule from './tflite';
+import createTFLiteSIMDModule from './tflite-simd';
 const models = {
     model96: 'https://sdk.sariska.io/segm_lite_v681.tflite',
     model144: 'https://sdk.sariska.io/segm_full_v679.tflite'
@@ -20,38 +18,35 @@ const segmentationDimensions = {
     }
 };
 
-let createTFLiteSIMDModule;
-
-let createTFLiteModule;
-
 /**
  * Creates a new instance of JitsiStreamBackgroundEffect. This loads the Meet background model that is used to
  * extract person segmentation.
  *
  * @param {Object} virtualBackground - The virtual object that contains the background image source and
  * the isVirtualBackground flag that indicates if virtual image is activated.
+ * @param {Function} dispatch - The Redux dispatch function.
  * @returns {Promise<JitsiStreamBackgroundEffect>}
  */
-export async function createVirtualBackgroundEffect(virtualBackground: Object) {
+export async function createVirtualBackgroundEffect(virtualBackground: Object, dispatch: Function) {
     if (!MediaStreamTrack.prototype.getSettings && !MediaStreamTrack.prototype.getConstraints) {
         throw new Error('JitsiStreamBackgroundEffect not supported!');
     }
-    
     let tflite;
+    let wasmCheck;
 
-    if (!createTFLiteSIMDModule && wasmCheck.feature.simd ) {
-        createTFLiteSIMDModule  = await fetch('https://sdk.sariska.io/tflite-simd.wasm');
-    }
+    // Checks if WebAssembly feature is supported or enabled by/in the browser.
+    // Conditional import of wasm-check package is done to prevent
+    // the browser from crashing when the user opens the app.
 
-    if (!createTFLiteModule && !wasmCheck.feature.simd ) {
-        createTFLiteSIMDModule = await fetch('https://sdk.sariska.io/tflite.wasm');
-    }
-
-
-    if (wasmCheck.feature.simd) {
-        tflite = await createTFLiteSIMDModule();
-    } else {
-        tflite = await createTFLiteModule();
+    try {
+        wasmCheck = require('wasm-check');
+        if (wasmCheck?.feature?.simd) {
+            tflite = await createTFLiteSIMDModule();
+        } else {
+            tflite = await createTFLiteModule();
+        }
+    } catch (err) {
+        return;
     }
 
     const modelBufferOffset = tflite._getModelBufferMemoryOffset();
@@ -74,6 +69,3 @@ export async function createVirtualBackgroundEffect(virtualBackground: Object) {
 
     return new JitsiStreamBackgroundEffect(tflite, options);
 }
-
-
-
