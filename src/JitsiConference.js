@@ -4127,7 +4127,7 @@ JitsiConference.prototype.enableAnalytics = function() {
    });
 }
 
-JitsiConference.prototype.startLocalRecording = function(format) {
+JitsiConference.prototype.startLocalRecording = function(format="ogg") {
    this.recordingController.startRecording(format);
 }
 

@@ -65,7 +65,7 @@ export class RecordingAdapter {
      * @returns {Promise}
      */
     _getAudioStream(micDeviceId) {
-        return JitsiMeetJS.createLocalTracks({
+        return SariskaMediaTransport.createLocalTracks({
             devices: [ 'audio' ],
             micDeviceId
         }).then(result => {
