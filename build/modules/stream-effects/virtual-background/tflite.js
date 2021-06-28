@@ -147,13 +147,6 @@ var createTFLiteModule = function () {
       }
     }
 
-    D(z) || (N = z, z = a.locateFile ? a.locateFile(N, y) : y + N), G = i ? function () {
-      var e = process.hrtime();
-      return 1e3 * e[0] + e[1] / 1e6;
-    } : "undefined" != typeof dateNow ? dateNow : function () {
-      return performance.now();
-    };
-
     function J(e) {
       return I[te() >> 2] = e, e;
     }
@@ -164,6 +157,12 @@ var createTFLiteModule = function () {
       } catch (e) {}
     }
 
+    D(z) || (N = z, z = a.locateFile ? a.locateFile(N, y) : y + N), G = i ? function () {
+      var e = process.hrtime();
+      return 1e3 * e[0] + e[1] / 1e6;
+    } : "undefined" != typeof dateNow ? dateNow : function () {
+      return performance.now();
+    };
     var Q = {};
 
     function V() {
