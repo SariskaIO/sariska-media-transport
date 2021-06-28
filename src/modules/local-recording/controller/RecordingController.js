@@ -179,31 +179,7 @@ export class RecordingController {
      */
     _registered = false;
 
-    /**
-     * FIXME: callback function for the {@code RecordingController} to notify
-     * UI it wants to display a notice. Keeps {@code RecordingController}
-     * decoupled from UI.
-     */
-    _onNotify: ?(messageKey: string, messageParams?: Object) => void;
 
-    /**
-     * FIXME: callback function for the {@code RecordingController} to notify
-     * UI it wants to display a warning. Keeps {@code RecordingController}
-     * decoupled from UI.
-     */
-    _onWarning: ?(messageKey: string, messageParams?: Object) => void;
-
-    /**
-     * FIXME: callback function for the {@code RecordingController} to notify
-     * UI that the local recording state has changed.
-     */
-    _onStateChanged: ?(boolean) => void;
-
-    /**
-     * Constructor.
-     *
-     * @returns {void}
-     */
     constructor() {
         this.registerEvents = this.registerEvents.bind(this);
         this.getParticipantsStats = this.getParticipantsStats.bind(this);
@@ -215,9 +191,6 @@ export class RecordingController {
         this._updateStats = this._updateStats.bind(this);
         this._switchToNewSession = this._switchToNewSession.bind(this);
     }
-
-    registerEvents: () => void;
-
     /**
      * Registers listeners for XMPP events.
      *
@@ -414,9 +387,6 @@ export class RecordingController {
             recordedLength: 0
         };
     }
-
-    getParticipantsStats: () => *;
-
     /**
      * Returns the remote participants' local recording stats.
      *
@@ -452,9 +422,6 @@ export class RecordingController {
 
         return result;
     }
-
-    _changeState: (Symbol) => void;
-
     /**
      * Changes the current state of {@code RecordingController}.
      *
@@ -469,9 +436,6 @@ export class RecordingController {
             this._state = newState;
         }
     }
-
-    _updateStats: () => void;
-
     /**
      * Sends out updates about the local recording stats via XMPP.
      *
@@ -484,9 +448,6 @@ export class RecordingController {
                 JSON.stringify(this.getLocalStats()));
         }
     }
-
-    _onStartCommand: (*) => void;
-
     /**
      * Callback function for XMPP event.
      *
@@ -514,9 +475,6 @@ export class RecordingController {
             });
         }
     }
-
-    _onStopCommand: (*) => void;
-
     /**
      * Callback function for XMPP event.
      *
@@ -531,9 +489,6 @@ export class RecordingController {
             this._doStopRecording();
         }
     }
-
-    _onPingCommand: () => void;
-
     /**
      * Callback function for XMPP event.
      *
@@ -556,9 +511,6 @@ export class RecordingController {
     _getRandomToken() {
         return Math.floor(Math.random() * 100000000) + 1;
     }
-
-    _doStartRecording: () => void;
-
     /**
      * Starts the recording locally.
      *
@@ -591,9 +543,6 @@ export class RecordingController {
         }
 
     }
-
-    _doStopRecording: () => Promise<void>;
-
     /**
      * Stops the recording locally.
      *
@@ -639,9 +588,6 @@ export class RecordingController {
         /* eslint-enable */
 
     }
-
-    _switchToNewSession: (string, string) => void;
-
     /**
      * Switches to a new local recording session.
      *

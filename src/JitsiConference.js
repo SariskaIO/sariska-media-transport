@@ -76,9 +76,6 @@ import {
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import {conferenceDefaultOptions} from './config';
 import {RecordingController} from "./modules/local-recording";
-import {loadModelFiles} from "./modules/stream-effects/virtual-background";
-import {loadRnnoiseFile} from "./modules/stream-effects/rnnoise";
-import {loadLocalRecordingAssets} from "./modules/local-recording";
 
 const logger = getLogger(__filename);
 
@@ -296,15 +293,8 @@ export default function JitsiConference(options) {
     this.handleSubtitles();
 
     if (options.config.enableLocalRecording) {
-        this.enableLocalRecording();
-    }
-
-    if (options.config.enableNoiseCancellation) {
-        this.enableNoiseCancellation();
-    }
-
-    if (options.config.enableVirtualBackground) {
-        this.enableVirtualBackground();
+        this.recordingController = new RecordingController()
+        this.recordingController.registerEvents(this);
     }
 
     if (options.config.enableAnalytics) {
@@ -4114,21 +4104,6 @@ JitsiConference.prototype.handleSubtitles = function() {
     });
 }
 
-// load assets related to local recording
-JitsiConference.prototype.enableLocalRecording = function() {
-    loadLocalRecordingAssets();
-}
-
-// load assets related to virtual background
-JitsiConference.prototype.enableVirtualBackground = function(micDeviceId) {
-   loadModelFiles();
-}
-
-// load assets related to noiseCancellation
-JitsiConference.prototype.enableNoiseCancellation = function(micDeviceId) {
-   loadRnnoiseFile();
-}
-
 // enable analytics
 JitsiConference.prototype.enableAnalytics = function() {
    this.statistics.addAnalyticsEventListener((eventName, payload)=>{
@@ -4153,8 +4128,6 @@ JitsiConference.prototype.enableAnalytics = function() {
 }
 
 JitsiConference.prototype.startLocalRecording = function(format) {
-   this.recordingController = new RecordingController()
-   this.recordingController.registerEvents(this);
    this.recordingController.startRecording(format);
 }
 

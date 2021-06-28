@@ -140,29 +140,6 @@ export class RecordingController {
    *
    * @private
    */
-
-  /**
-   * FIXME: callback function for the {@code RecordingController} to notify
-   * UI it wants to display a notice. Keeps {@code RecordingController}
-   * decoupled from UI.
-   */
-
-  /**
-   * FIXME: callback function for the {@code RecordingController} to notify
-   * UI it wants to display a warning. Keeps {@code RecordingController}
-   * decoupled from UI.
-   */
-
-  /**
-   * FIXME: callback function for the {@code RecordingController} to notify
-   * UI that the local recording state has changed.
-   */
-
-  /**
-   * Constructor.
-   *
-   * @returns {void}
-   */
   constructor() {
     _defineProperty(this, "_adapters", {});
 
@@ -180,32 +157,6 @@ export class RecordingController {
 
     _defineProperty(this, "_registered", false);
 
-    _defineProperty(this, "_onNotify", void 0);
-
-    _defineProperty(this, "_onWarning", void 0);
-
-    _defineProperty(this, "_onStateChanged", void 0);
-
-    _defineProperty(this, "registerEvents", void 0);
-
-    _defineProperty(this, "getParticipantsStats", void 0);
-
-    _defineProperty(this, "_changeState", void 0);
-
-    _defineProperty(this, "_updateStats", void 0);
-
-    _defineProperty(this, "_onStartCommand", void 0);
-
-    _defineProperty(this, "_onStopCommand", void 0);
-
-    _defineProperty(this, "_onPingCommand", void 0);
-
-    _defineProperty(this, "_doStartRecording", void 0);
-
-    _defineProperty(this, "_doStopRecording", void 0);
-
-    _defineProperty(this, "_switchToNewSession", void 0);
-
     this.registerEvents = this.registerEvents.bind(this);
     this.getParticipantsStats = this.getParticipantsStats.bind(this);
     this._onStartCommand = this._onStartCommand.bind(this);
@@ -216,13 +167,14 @@ export class RecordingController {
     this._updateStats = this._updateStats.bind(this);
     this._switchToNewSession = this._switchToNewSession.bind(this);
   }
-
   /**
    * Registers listeners for XMPP events.
    *
    * @param {JitsiConference} conference - A {@code JitsiConference} instance.
    * @returns {void}
    */
+
+
   registerEvents(conference) {
     if (!this._registered) {
       this._conference = conference;
@@ -420,12 +372,13 @@ export class RecordingController {
       recordedLength: 0
     };
   }
-
   /**
    * Returns the remote participants' local recording stats.
    *
    * @returns {*}
    */
+
+
   getParticipantsStats() {
     const members = this._conference.getParticipants().map(member => {
       return {
@@ -453,7 +406,6 @@ export class RecordingController {
     };
     return result;
   }
-
   /**
    * Changes the current state of {@code RecordingController}.
    *
@@ -461,25 +413,27 @@ export class RecordingController {
    * @param {Symbol} newState - The new state.
    * @returns {void}
    */
+
+
   _changeState(newState) {
     if (this._state !== newState) {
       logger.log(`state change: ${this._state.toString()} -> ` + `${newState.toString()}`);
       this._state = newState;
     }
   }
-
   /**
    * Sends out updates about the local recording stats via XMPP.
    *
    * @private
    * @returns {void}
    */
+
+
   _updateStats() {
     if (this._conference) {
       this._conference.setLocalParticipantProperty(PROPERTY_STATS, JSON.stringify(this.getLocalStats()));
     }
   }
-
   /**
    * Callback function for XMPP event.
    *
@@ -487,6 +441,8 @@ export class RecordingController {
    * @param {*} value - The event args.
    * @returns {void}
    */
+
+
   _onStartCommand(value) {
     const {
       sessionToken,
@@ -514,7 +470,6 @@ export class RecordingController {
       });
     }
   }
-
   /**
    * Callback function for XMPP event.
    *
@@ -522,6 +477,8 @@ export class RecordingController {
    * @param {*} value - The event args.
    * @returns {void}
    */
+
+
   _onStopCommand(value) {
     if (this._state === ControllerState.RECORDING && this._currentSessionToken === value.attributes.sessionToken) {
       this._changeState(ControllerState.STOPPING);
@@ -529,13 +486,14 @@ export class RecordingController {
       this._doStopRecording();
     }
   }
-
   /**
    * Callback function for XMPP event.
    *
    * @private
    * @returns {void}
    */
+
+
   _onPingCommand() {
     if (this._conference.isModerator()) {
       logger.log('Received ping, sending pong.');
@@ -554,13 +512,14 @@ export class RecordingController {
   _getRandomToken() {
     return Math.floor(Math.random() * 100000000) + 1;
   }
-
   /**
    * Starts the recording locally.
    *
    * @private
    * @returns {void}
    */
+
+
   _doStartRecording() {
     if (this._state === ControllerState.STARTING) {
       const delegate = this._adapters[this._currentSessionToken];
@@ -586,13 +545,14 @@ export class RecordingController {
       });
     }
   }
-
   /**
    * Stops the recording locally.
    *
    * @private
    * @returns {Promise<void>}
    */
+
+
   _doStopRecording() {
     if (this._state === ControllerState.STOPPING) {
       const token = this._currentSessionToken;
@@ -627,7 +587,6 @@ export class RecordingController {
 
     /* eslint-enable */
   }
-
   /**
    * Switches to a new local recording session.
    *
@@ -635,6 +594,8 @@ export class RecordingController {
    * @param {string} format - The recording format for the session.
    * @returns {void}
    */
+
+
   _switchToNewSession(sessionToken, format) {
     this._format = format;
     this._currentSessionToken = sessionToken;
