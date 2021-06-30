@@ -252,26 +252,13 @@ export class FlacAdapter extends AbstractAudioContextAdapter {
 
 
   _loadWebWorker() {
-    // FIXME: Workaround for different file names in development/
-    // production environments.
-    // We cannot import flacEncodeWorker as a webpack module,
-    // because it is in a different bundle and should be lazy-loaded
-    // only when flac recording is in use.
-    try {
-      // try load the minified version first
-      this._encoder = new Worker('https://sdk.sariska.io/flacEncodeWorker.min.js', {
-        name: 'FLAC encoder worker'
-      });
-    } catch (exception1) {
-      // if failed, try unminified version
-      try {
-        this._encoder = new Worker('https://sdk.sariska.io/flacEncodeWorker.min.js', {
-          name: 'FLAC encoder worker'
-        });
-      } catch (exception2) {
-        throw new Error('Failed to load flacEncodeWorker.');
-      }
-    }
+    const blob = new Blob(["importScripts('https://sdk.sariska.io/flacEncodeWorker.min.js');"], {
+      "type": 'application/javascript'
+    });
+    const url = window.URL || window.webkitURL;
+    const blobUrl = url.createObjectURL(blob);
+    this._encoder = new Worker(blobUrl);
+    URL.revokeObjectURL(blobUrl);
   }
 
 }
