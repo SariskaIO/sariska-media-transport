@@ -13,14 +13,6 @@ module.exports = [
             libraryTarget: 'umd'
         })
     }),
-    Object.assign({}, config, {
-        entry: {
-            'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
-        },
-        plugins: [
-            ...config.plugins,
-        ]
-    }),
     {
         entry: {
             worker: './src/modules/e2ee/Worker.js'
@@ -28,7 +20,7 @@ module.exports = [
         mode: 'production',
         output: {
             filename: 'sariska-media-transport.e2ee-worker.js',
-            path: path.resolve(__dirname, 'libs')
+            path: path.resolve(__dirname, 'dist')
         },
         optimization: {
             minimize: false

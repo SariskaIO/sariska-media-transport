@@ -23,7 +23,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)
 	
-deploy: deploy-init deploy-app deploy-appbundle deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
+deploy: deploy-init deploy-app deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
 
 
 deploy-init:
@@ -32,14 +32,7 @@ deploy-init:
 
 deploy-app:
 	cp \
-		${LIBS_DIR}/sariska-media-transport.e2ee-worker.js \
-		${LIBS_DIR}/sariska-media-transport.min.js \
 		src/modules/browser/capabilities.json \
-		$(DEPLOY_DIR)
-
-deploy-appbundle:
-	cp \
-		$(LIBS_DIR)/flacEncodeWorker.min.js \
 		$(DEPLOY_DIR)
 
 deploy-rnnoise-binary:
