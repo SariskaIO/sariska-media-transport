@@ -1,6 +1,6 @@
 
 var Module = (function() {
-  var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
+  var _scriptDir = "https://sdk.sariska.io/";
   
   return (
 function(Module) {
