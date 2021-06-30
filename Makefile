@@ -13,22 +13,20 @@ MEET_MODELS_DIR  = libs/vendor/models/
 
 all: clean transpile compile deploy
 
+clean:
+	rm -fr $(DEPLOY_DIR)
+	mkdir -p $(DEPLOY_DIR)
+
+
 transpile:
 	npm run transpile
 
 compile:
 	npm run build
 
-clean:
-	rm -rf $(BUILD_DIR)
-	mkdir -p $(BUILD_DIR)
 	
-deploy: deploy-init deploy-app deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
+deploy: deploy-app deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
 
-
-deploy-init:
-	rm -fr $(DEPLOY_DIR)
-	mkdir -p $(DEPLOY_DIR)
 
 deploy-app:
 	cp \
