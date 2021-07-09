@@ -302,8 +302,8 @@ export default function JitsiConference(options) {
     }
 
     if (options.config.iAmRecorder) {
-        this.commands.removeCommand("userinfo");
-        this.commands.sendCommand(
+        this.removeCommand("userinfo");
+        this.sendCommand(
             "userinfo",
             {
                 attributes: {

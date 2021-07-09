@@ -242,8 +242,8 @@ export default function JitsiConference(options) {
   }
 
   if (options.config.iAmRecorder) {
-    this.commands.removeCommand("userinfo");
-    this.commands.sendCommand("userinfo", {
+    this.removeCommand("userinfo");
+    this.sendCommand("userinfo", {
       attributes: {
         xmlns: 'http://jitsi.org/jitmeet/userinfo',
         robot: true
