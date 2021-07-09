@@ -99,11 +99,13 @@ export default class VADAudioAnalyser extends EventEmitter {
 
 
   _startVADEmitter() {
-    this._vadEmitter.on(VAD_SCORE_PUBLISHED, this._processVADScore);
+    if (this._vadEmitter) {
+      this._vadEmitter.on(VAD_SCORE_PUBLISHED, this._processVADScore);
 
-    this._vadEmitter.start();
+      this._vadEmitter.start();
 
-    this._isVADEmitterRunning = true;
+      this._isVADEmitterRunning = true;
+    }
   }
   /**
    * Stop the {@link TrackVADEmitter} and detach the event listener.
@@ -112,9 +114,11 @@ export default class VADAudioAnalyser extends EventEmitter {
 
 
   _stopVADEmitter() {
-    this._vadEmitter.removeListener(VAD_SCORE_PUBLISHED, this._processVADScore);
+    if (this._vadEmitter) {
+      this._vadEmitter.removeListener(VAD_SCORE_PUBLISHED, this._processVADScore);
 
-    this._vadEmitter.stop();
+      this._vadEmitter.stop();
+    }
 
     this._isVADEmitterRunning = false;
   }

@@ -5,10 +5,22 @@
  */
 export class MockPeerConnection {
   /**
+   * Constructor.
+   *
+   * @param {string} id RTC id
+   * @param {boolean} usesUnifiedPlan
+   */
+  constructor(id, usesUnifiedPlan) {
+    this.id = id;
+    this._usesUnifiedPlan = usesUnifiedPlan;
+  }
+  /**
    * {@link TraceablePeerConnection.localDescription}.
    *
    * @returns {Object}
    */
+
+
   get localDescription() {
     return {
       sdp: ''
@@ -71,6 +83,14 @@ export class MockPeerConnection {
 
   setVideoTransferActive() {
     return false;
+  }
+  /**
+   * {@link TraceablePeerConnection.usesUnifiedPlan}.
+   */
+
+
+  usesUnifiedPlan() {
+    return this._usesUnifiedPlan;
   }
 
 }

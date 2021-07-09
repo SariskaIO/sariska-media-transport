@@ -1880,8 +1880,8 @@ TraceablePeerConnection.prototype.findSenderForTrack = function (track) {
 TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
   if (this._usesUnifiedPlan) {
     logger.debug(`${this} TPC.replaceTrack using unified plan`);
-    return this.tpcUtils.replaceTrack(oldTrack, newTrack) // renegotiate when SDP is used for simulcast munging
-    .then(() => this.isSimulcastOn() && browser.usesSdpMungingForSimulcast());
+    return this.tpcUtils.replaceTrack(oldTrack, newTrack) // Renegotiate when SDP is used for simulcast munging or when in p2p mode.
+    .then(() => this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() || this.isP2P);
   }
 
   logger.debug(`${this} TPC.replaceTrack using plan B`);
@@ -2899,6 +2899,16 @@ TraceablePeerConnection.prototype.generateNewStreamSSRCInfo = function (track) {
   ssrcInfo.msid = track.storedMSID;
   this.localSSRCs.set(rtcId, ssrcInfo);
   return ssrcInfo;
+};
+/**
+ * Returns if the peer connection uses Unified plan implementation.
+ *
+ * @returns {boolean} True if the pc uses Unified plan, false otherwise.
+ */
+
+
+TraceablePeerConnection.prototype.usesUnifiedPlan = function () {
+  return this._usesUnifiedPlan;
 };
 /**
  * Creates a text representation of this <tt>TraceablePeerConnection</tt>

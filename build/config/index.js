@@ -1,4 +1,5 @@
-// enable/disable different features by changing this configuration file
+import { parseURLParams } from "../modules/util/parseURLParams"; // enable/disable different features by changing this configuration file
+
 export const initSDKConfig = {
   disableAudioLevels: true // useIPv6 - boolean property
   // disableSimulcast: true //boolean property. Enables/disables simulcast.
@@ -21,7 +22,7 @@ export const connectionConfig = {
   clientNode: 'https://www.sariska.io' // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
 
 };
-export const conferenceConfig = {
+const conferenceConfig = {
   enableAnalytics: true,
   enableLocalRecording: true,
   enableVirtualBackground: false,
@@ -106,3 +107,5 @@ export const conferenceConfig = {
 
   }
 };
+const params = parseURLParams();
+console.log("params", params);

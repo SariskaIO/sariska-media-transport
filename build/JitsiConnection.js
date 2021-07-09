@@ -4,6 +4,7 @@ import Statistics from './modules/statistics/statistics';
 import XMPP from './modules/xmpp/xmpp';
 import { CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED, createConnectionFailedEvent } from './service/statistics/AnalyticsEvents';
 import { connectionConfig, conferenceConfig } from './config';
+export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 /**
  * Creates a new connection object for the Jitsi Meet server side video
  * conferencing service. Provides access to the JitsiConference interface.
@@ -128,6 +129,11 @@ JitsiConnection.prototype.initJitsiConference = function (options = {}) {
     ...options
   };
   const name = this.name;
+
+  if (options.iAmRecorder) {
+    this.addFeature(DISCO_JIBRI_FEATURE);
+  }
+
   return new JitsiConference({
     name,
     config: options,

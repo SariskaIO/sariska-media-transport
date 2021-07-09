@@ -241,6 +241,16 @@ export default function JitsiConference(options) {
     this.enableAnalytics();
   }
 
+  if (options.config.iAmRecorder) {
+    this.commands.removeCommand("userinfo");
+    this.commands.sendCommand("userinfo", {
+      attributes: {
+        xmlns: 'http://jitsi.org/jitmeet/userinfo',
+        robot: true
+      }
+    });
+  }
+
   this.localTracksDuration = new LocalTracksDuration(this);
 } // FIXME convert JitsiConference to ES6 - ASAP !
 
