@@ -917,6 +917,14 @@ JitsiConference.prototype.getTranscriptionStatus = function () {
 
 
 JitsiConference.prototype.addTrack = function (track) {
+  if (track.isAudioTrack() && this.options.config.startAudioMuted) {
+    track.mute();
+  }
+
+  if (track.isVideoTrack() && this.options.config.startVideoMuted) {
+    track.mute();
+  }
+
   const mediaType = track.getType();
   const localTracks = this.rtc.getLocalTracks(mediaType); // Ensure there's exactly 1 local track of each media type in the conference.
 
