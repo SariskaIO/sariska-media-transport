@@ -8,6 +8,7 @@ import {
 } from './service/statistics/AnalyticsEvents';
 
 import {connectionConfig, conferenceConfig} from './config';
+export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 
 /**
  * Creates a new connection object for the Jitsi Meet server side video
@@ -127,6 +128,9 @@ JitsiConnection.prototype.setToken = function(token) {
 JitsiConnection.prototype.initJitsiConference = function(options={}) {
     options = {...conferenceConfig, ...options};
     const name  = this.name;
+    if (options.iAmRecorder) {
+        this.addFeature(DISCO_JIBRI_FEATURE);
+    }
     return new JitsiConference({
         name,
         config: options,

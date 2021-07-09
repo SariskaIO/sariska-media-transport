@@ -1,3 +1,5 @@
+import {parseURLParams} from "../modules/util/parseURLParams";
+
 // enable/disable different features by changing this configuration file
 export const initSDKConfig = {
     disableAudioLevels: true,
@@ -23,7 +25,7 @@ export const connectionConfig = {
     // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
 };
 
-export const conferenceConfig = {
+const conferenceConfig = {
     enableAnalytics: true,
     enableLocalRecording: true,
     enableVirtualBackground: false,
@@ -114,5 +116,10 @@ export const conferenceConfig = {
         // backToP2PDelay: 5
     }
 };
+
+const params = parseURLParams();
+
+
+console.log("params", params);
 
 
