@@ -8,6 +8,7 @@ import {
 } from './service/statistics/AnalyticsEvents';
 
 import {connectionConfig, conferenceConfig} from './config';
+import {syncWithURL} from "./modules/util/parseURLParams";
 export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 
 /**
@@ -127,6 +128,7 @@ JitsiConnection.prototype.setToken = function(token) {
  */
 JitsiConnection.prototype.initJitsiConference = function(options={}) {
     options = {...conferenceConfig, ...options};
+    options  = syncWithURL(options);
     const name  = this.name;
     if (options.iAmRecorder) {
         this.addFeature(DISCO_JIBRI_FEATURE);

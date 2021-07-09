@@ -4032,7 +4032,7 @@ JitsiConference.prototype.getLocalUser = function() {
 };
 
 JitsiConference.prototype.handleSubtitles = function() {
-    
+
     let pastMessage = {};
     const JSON_TYPE_TRANSCRIPTION_RESULT = 'transcription-result';
     const JSON_TYPE_TRANSLATION_RESULT = 'translation-result';

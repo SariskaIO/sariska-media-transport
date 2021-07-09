@@ -1,11 +1,10 @@
-/* @flow */
-
 import Bourne from '@hapi/bourne';
 
 /**
  * A list if keys to ignore when parsing.
  * @type {string[]}
  */
+
 const blacklist = [ '__proto__', 'constructor', 'prototype' ];
 
 /**
@@ -19,13 +18,14 @@ const blacklist = [ '__proto__', 'constructor', 'prototype' ];
  * of {@code url.search}; otherwise, out of {@code url.hash}.
  * @returns {Object}
  */
-export function parseURLParams() {
-    const paramStr = source === 'search' ? url.search : url.hash;
-    const params = {};
-    const paramParts = (paramStr && paramStr.substr(1).split('&')) || [];
 
-    // Detect and ignore hash params for hash routers.
-    if (source === 'hash' && paramParts.length === 1) {
+export function parseURLParams(dontParse = true) {
+    const paramStr = location.search ? location.search : location.hash;
+    const params = {};
+    const paramParts = paramStr && paramStr.substr(1)
+        .split('&') || []; // Detect and ignore hash params for hash routers.
+
+    if (location.hash && paramParts.length === 1) {
         const firstParam = paramParts[0];
 
         if (firstParam.startsWith('/') && firstParam.split('&').length === 1) {
@@ -47,22 +47,44 @@ export function parseURLParams() {
             value = param[1];
 
             if (!dontParse) {
-                const decoded = decodeURIComponent(value).replace(/\\&/, '&');
-
+                const decoded = decodeURIComponent(value)
+                    .replace(/\\&/, '&');
                 value = decoded === 'undefined' ? undefined : Bourne.parse(decoded);
             }
         } catch (e) {
             console.log(`Failed to parse URL parameter value: ${String(value)}`);
             return;
         }
+
         params[key] = value;
     });
-
     return params;
 }
 
 
-
+export function syncWithURL(conferenceConfig) {
+    const params = parseURLParams();
+    Object.keys(params)
+        .forEach(param => {
+            const key = param.replace('.config', '');
+            switch (key) {
+                case 'analytics.disabled':
+                    conferenceConfig.analytics.disabled = params[param];
+                    break;
+                case 'startWithAudioMuted':
+                    conferenceConfig.startAudioMuted = params[param];
+                    break;
+                case 'startWithVideoMuted':
+                    conferenceConfig.startVideoMuted = params[param];
+                    break;
+                case 'p2p.enabled':
+                    conferenceConfig.p2p.enabled = params[param];
+                    break;
+                default:
+                    conferenceConfig[key] = params[param];
+                }
+        });
+}
 
 
 
