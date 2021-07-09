@@ -66,7 +66,7 @@ export function syncWithURL(conferenceConfig) {
     const params = parseURLParams();
     Object.keys(params)
         .forEach(param => {
-            const key = param.replace('.config', '');
+            const key = param.replace('config.', '');
             switch (key) {
                 case 'analytics.disabled':
                     conferenceConfig.analytics.disabled = params[param];
