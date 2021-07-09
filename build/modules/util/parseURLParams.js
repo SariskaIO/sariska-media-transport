@@ -82,4 +82,5 @@ export function syncWithURL(conferenceConfig) {
         conferenceConfig[key] = params[param];
     }
   });
+  return conferenceConfig;
 }
