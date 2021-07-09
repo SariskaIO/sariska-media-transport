@@ -1066,6 +1066,12 @@ JitsiConference.prototype.getTranscriptionStatus = function() {
  * another video track in the conference.
  */
 JitsiConference.prototype.addTrack = function(track) {
+    if (track.isAudioTrack() && this.options.config.startAudioMuted) {
+        track.mute();
+    }
+    if (track.isVideoTrack() && this.options.config.startVideoMuted) {
+        track.mute();
+    }
     const mediaType = track.getType();
     const localTracks = this.rtc.getLocalTracks(mediaType);
 
