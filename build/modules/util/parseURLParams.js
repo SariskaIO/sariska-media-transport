@@ -17,12 +17,12 @@ const blacklist = ['__proto__', 'constructor', 'prototype'];
  * @returns {Object}
  */
 
-export function parseURLParams() {
-  const paramStr = source === 'search' ? url.search : url.hash;
+export function parseURLParams(dontParse = true) {
+  const paramStr = location.search ? location.search : location.hash;
   const params = {};
   const paramParts = paramStr && paramStr.substr(1).split('&') || []; // Detect and ignore hash params for hash routers.
 
-  if (source === 'hash' && paramParts.length === 1) {
+  if (location.hash && paramParts.length === 1) {
     const firstParam = paramParts[0];
 
     if (firstParam.startsWith('/') && firstParam.split('&').length === 1) {
@@ -55,4 +55,31 @@ export function parseURLParams() {
     params[key] = value;
   });
   return params;
+}
+export function syncWithURL(conferenceConfig) {
+  const params = parseURLParams();
+  Object.keys(params).forEach(param => {
+    const key = param.replace('.config', '');
+
+    switch (key) {
+      case 'analytics.disabled':
+        conferenceConfig.analytics.disabled = params[param];
+        break;
+
+      case 'startWithAudioMuted':
+        conferenceConfig.startAudioMuted = params[param];
+        break;
+
+      case 'startWithVideoMuted':
+        conferenceConfig.startVideoMuted = params[param];
+        break;
+
+      case 'p2p.enabled':
+        conferenceConfig.p2p.enabled = params[param];
+        break;
+
+      default:
+        conferenceConfig[key] = params[param];
+    }
+  });
 }

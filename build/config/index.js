@@ -1,5 +1,4 @@
-import { parseURLParams } from "../modules/util/parseURLParams"; // enable/disable different features by changing this configuration file
-
+// enable/disable different features by changing this configuration file
 export const initSDKConfig = {
   disableAudioLevels: true // useIPv6 - boolean property
   // disableSimulcast: true //boolean property. Enables/disables simulcast.
@@ -22,12 +21,10 @@ export const connectionConfig = {
   clientNode: 'https://www.sariska.io' // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
 
 };
-const conferenceConfig = {
-  enableAnalytics: true,
+export const conferenceConfig = {
   enableLocalRecording: true,
   enableVirtualBackground: false,
   enableNoiseCancellation: false,
-  rtcstatsServer: "",
   enableTalkWhileMuted: true,
   enableNoAudioDetection: true,
   enableNoisyMicDetection: true,
@@ -70,6 +67,16 @@ const conferenceConfig = {
     pingInterval: -1 // analyticsInterval: 60000,
 
   },
+  analytics: {
+    disabled: false // rtcstatsEnabled: true,
+    // In order to enable rtcstats one needs to provide a endpoint url.
+    // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
+    // The interval at which rtcstats will poll getStats, defaults to 1000ms.
+    // If the value is set to 0 getStats won't be polled and the rtcstats client
+    // will only send data related to RTCPeerConnection events.
+    // rtcstatsPolIInterval: 1000,
+
+  },
   // pingInterval
   // abTesting - A/B testing related options
   // enableSuspendVideoTest
@@ -107,5 +114,3 @@ const conferenceConfig = {
 
   }
 };
-const params = parseURLParams();
-console.log("params", params);
