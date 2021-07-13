@@ -313,6 +313,8 @@ export default function JitsiConference(options) {
             });
     }
 
+    window.APP = { conference: { _room: this }};
+
     this.localTracksDuration = new LocalTracksDuration(this);
 }
 
