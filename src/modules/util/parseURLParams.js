@@ -68,21 +68,21 @@ export function syncWithURL(conferenceConfig) {
         .forEach(param => {
             const key = param.replace('config.', '');
             switch (key) {
-                case 'analytics.disabled':
-                    conferenceConfig.analytics.disabled = params[param];
-                    break;
-                case 'startWithAudioMuted':
-                    conferenceConfig.startAudioMuted = params[param];
-                    break;
-                case 'startWithVideoMuted':
-                    conferenceConfig.startVideoMuted = params[param];
-                    break;
-                case 'p2p.enabled':
-                    conferenceConfig.p2p.enabled = params[param];
-                    break;
-                default:
-                    conferenceConfig[key] = params[param];
-                }
+            case 'analytics.disabled':
+                conferenceConfig.analytics.disabled = params[param];
+                break;
+            case 'startWithAudioMuted':
+                conferenceConfig.startAudioMuted = params[param];
+                break;
+            case 'startWithVideoMuted':
+                conferenceConfig.startVideoMuted = params[param];
+                break;
+            case 'p2p.enabled':
+                conferenceConfig.p2p.enabled = params[param];
+                break;
+            default:
+                conferenceConfig[key] = params[param];
+            }
         });
     return conferenceConfig;
 }
