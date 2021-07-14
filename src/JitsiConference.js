@@ -144,6 +144,7 @@ export default function JitsiConference(options) {
         logger.error(errmsg);
         throw new Error(errmsg);
     }
+    this.sessions = {};
     this.user = options.user;
     this.eventEmitter = new EventEmitter();
     this.options = options;
@@ -4166,5 +4167,19 @@ JitsiConference.prototype.setMicDevice = function(micDeviceId) {
    this.recordingController.setMicDevice(micDeviceId);
 }
 
+JitsiConference.prototype.startSIPVideoCall = function(sipAddress, displayName) {
+    if (this.sessions[sipAddress])  {
+        return;
+    }
+    const session = this.createVideoSIPGWSession(sipAddress, displayName);
+    this.sessions[sipAddress] = session;
+    this.session.start();
+}
 
-
+JitsiConference.prototype.stopSIPVideoCall = function(sipAddress) {
+    if (!this.sessions[sipAddress])  {
+        return;
+     }
+     this.sessions[sipAddress].stop();
+     delete this.sessions[sipAddress];
+}
