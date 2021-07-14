@@ -284,7 +284,7 @@ export default class JingleSessionPC extends JingleSession {
 
 
   doInitialize(options) {
-    var _options$p2p;
+    var _options$p2p$enableUn, _options$p2p, _options$enableUnifie;
 
     this.failICE = Boolean(options.failICE);
     this.lasticecandidate = false;
@@ -317,7 +317,7 @@ export default class JingleSessionPC extends JingleSession {
     pcOptions.forceTurnRelay = options.forceTurnRelay;
     pcOptions.audioQuality = options.audioQuality;
     pcOptions.usesUnifiedPlan = this.usesUnifiedPlan = browser.supportsUnifiedPlan() && (browser.isFirefox() || browser.isWebKitBased() || (browser.isChromiumBased() // Provide a way to control the behavior for jvb and p2p connections independently.
-    && this.isP2P ? (_options$p2p = options.p2p) === null || _options$p2p === void 0 ? void 0 : _options$p2p.enableUnifiedOnChrome : options.enableUnifiedOnChrome));
+    && this.isP2P ? (_options$p2p$enableUn = (_options$p2p = options.p2p) === null || _options$p2p === void 0 ? void 0 : _options$p2p.enableUnifiedOnChrome) !== null && _options$p2p$enableUn !== void 0 ? _options$p2p$enableUn : true : (_options$enableUnifie = options.enableUnifiedOnChrome) !== null && _options$enableUnifie !== void 0 ? _options$enableUnifie : true));
 
     if (this.isP2P) {
       // simulcast needs to be disabled for P2P (121) calls
@@ -1430,7 +1430,7 @@ export default class JingleSessionPC extends JingleSession {
           return this.getAttribute('ssrc');
         }).get();
 
-        if (ssrcs.length && !currentRemoteSdp.containsSSRC(ssrcs[0])) {
+        if (ssrcs.length) {
           lines += `a=ssrc-group:${semantics} ${ssrcs.join(' ')}\r\n`;
         }
       }); // handles both >source and >description>source

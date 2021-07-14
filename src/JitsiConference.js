@@ -4173,7 +4173,7 @@ JitsiConference.prototype.startSIPVideoCall = function(sipAddress, displayName) 
     }
     const session = this.createVideoSIPGWSession(sipAddress, displayName);
     this.sessions[sipAddress] = session;
-    this.session.start();
+    session.start();
 }
 
 JitsiConference.prototype.stopSIPVideoCall = function(sipAddress) {
