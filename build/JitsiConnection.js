@@ -4,6 +4,7 @@ import Statistics from './modules/statistics/statistics';
 import XMPP from './modules/xmpp/xmpp';
 import { CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED, createConnectionFailedEvent } from './service/statistics/AnalyticsEvents';
 import { connectionConfig, conferenceConfig } from './config';
+import { jitsiLocalStorage } from '@jitsi/js-utils';
 import { syncWithURL } from "./modules/util/parseURLParams";
 export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 /**
@@ -69,6 +70,17 @@ JitsiConnection.prototype.parseJwt = function (token) {
 
 
 JitsiConnection.prototype.connect = function (options = {}) {
+  const usernameOverride = jitsiLocalStorage.getItem('xmpp_username_override');
+  const passwordOverride = jitsiLocalStorage.getItem('xmpp_password_override');
+
+  if (usernameOverride && usernameOverride.length > 0) {
+    options.id = usernameOverride; // eslint-disable-line no-param-reassign
+  }
+
+  if (passwordOverride && passwordOverride.length > 0) {
+    options.password = passwordOverride; // eslint-disable-line no-param-reassign
+  }
+
   this.xmpp.connect(options.id, options.password);
 };
 /**
