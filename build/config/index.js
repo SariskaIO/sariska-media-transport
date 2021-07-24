@@ -50,7 +50,7 @@ export const conferenceConfig = {
   // startBitrate
   // stereo
   // forceJVB121Ratio - "Math.random() < forceJVB121Ratio" will determine whether a 2 people conference should be moved to the JVB instead of P2P. The decision is made on the responder side, after ICE succeeds on the P2P connection.
-  hiddenDomain: ["recorder.sariska.io", "io,pricing.sariska.io"],
+  hiddenDomain: ["recorder.sariska.io", "pricing.sariska.io"],
   // startAudioMuted
   // startVideoMuted
   // enableLayerSuspension - if set to 'true', we will cap the video send bitrate when we are told we have not been selected by any endpoints (and therefore the non-thumbnail streams are not in use).
