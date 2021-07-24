@@ -299,10 +299,10 @@ export default _mergeNamespaceAndModule({
      */
     createLocalTracks(options = {}, oldfirePermissionPromptIsShownEvent) {
 
-        if (!(window.location.href.indexOf("iAmRecorder") >= 0)) {
+        if (window.location.href.indexOf("iAmRecorder") >= 0) {
            return [];
         }
-        
+
         let promiseFulfilled = false;
 
         const { firePermissionPromptIsShownEvent, fireSlowPromiseEvent, ...restOptions } = options;
