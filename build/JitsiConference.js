@@ -1253,7 +1253,7 @@ JitsiConference.prototype.isHidden = function () {
     return null;
   }
 
-  return Strophe.getDomainFromJid(this.connection.getJid()) === this.options.config.hiddenDomain;
+  return this.options.config.hiddenDomain.indexOf(Strophe.getDomainFromJid(this.connection.getJid())) >= 0;
 };
 /**
  * Check if local user is moderator.
