@@ -79,6 +79,11 @@ import {RecordingController} from "./modules/local-recording";
 
 const logger = getLogger(__filename);
 
+window.APP = { 
+    conference: {
+    }
+};
+
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
  * {@link ACTION_JINGLE_SI_TIMEOUT} analytics event is sent (in ms).

@@ -253,10 +253,16 @@ export default function JitsiConference(options) {
   }
 
   window.APP = {
-    conference: {
-      _room: this
-    }
-  };
+      conference: {
+          isJoined: function() {
+            return self.isJoined();
+          }, 
+          get membersCount() {
+            return self.getParticipants().length + 1;
+          },
+          _room: this      
+      }
+  }
   this.localTracksDuration = new LocalTracksDuration(this);
 } // FIXME convert JitsiConference to ES6 - ASAP !
 
@@ -1250,7 +1256,7 @@ JitsiConference.prototype.isHidden = function () {
     return null;
   }
 
-  return Strophe.getDomainFromJid(this.connection.getJid()) === this.options.config.hiddenDomain;
+  return this.options.config.hiddenDomain.indexOf(Strophe.getDomainFromJid(this.connection.getJid())) >=0;
 };
 /**
  * Check if local user is moderator.
