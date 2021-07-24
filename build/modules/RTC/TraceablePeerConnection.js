@@ -2675,7 +2675,7 @@ TraceablePeerConnection.prototype._createOfferOrAnswer = function (isOffer, cons
 
       const localVideoTrack = this.getLocalVideoTrack(); // Configure simulcast for camera tracks and for desktop tracks that need simulcast.
 
-      if (this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() && ((localVideoTrack === null || localVideoTrack === void 0 ? void 0 : localVideoTrack.getVideoType()) === VideoType.CAMERA || !this._isSharingLowFpsScreen())) {
+      if (this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() && ((localVideoTrack === null || localVideoTrack === void 0 ? void 0 : localVideoTrack.getVideoType()) === VideoType.CAMERA || this._usesUnifiedPlan || !this._isSharingLowFpsScreen())) {
         // eslint-disable-next-line no-param-reassign
         resultSdp = this.simulcast.mungeLocalDescription(resultSdp);
         this.trace(`create${logName}` + 'OnSuccess::postTransform (simulcast)', dumpSDP(resultSdp));

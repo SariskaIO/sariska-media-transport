@@ -284,7 +284,7 @@ export default class JingleSessionPC extends JingleSession {
 
 
   doInitialize(options) {
-    var _options$p2p, _options$enableUnifie;
+    var _options$p2p$enableUn, _options$p2p, _options$enableUnifie;
 
     this.failICE = Boolean(options.failICE);
     this.lasticecandidate = false;
@@ -317,7 +317,7 @@ export default class JingleSessionPC extends JingleSession {
     pcOptions.forceTurnRelay = options.forceTurnRelay;
     pcOptions.audioQuality = options.audioQuality;
     pcOptions.usesUnifiedPlan = this.usesUnifiedPlan = browser.supportsUnifiedPlan() && (browser.isFirefox() || browser.isWebKitBased() || (browser.isChromiumBased() // Provide a way to control the behavior for jvb and p2p connections independently.
-    && this.isP2P ? (_options$p2p = options.p2p) === null || _options$p2p === void 0 ? void 0 : _options$p2p.enableUnifiedOnChrome : (_options$enableUnifie = options.enableUnifiedOnChrome) !== null && _options$enableUnifie !== void 0 ? _options$enableUnifie : true));
+    && this.isP2P ? (_options$p2p$enableUn = (_options$p2p = options.p2p) === null || _options$p2p === void 0 ? void 0 : _options$p2p.enableUnifiedOnChrome) !== null && _options$p2p$enableUn !== void 0 ? _options$p2p$enableUn : true : (_options$enableUnifie = options.enableUnifiedOnChrome) !== null && _options$enableUnifie !== void 0 ? _options$enableUnifie : true));
 
     if (this.isP2P) {
       // simulcast needs to be disabled for P2P (121) calls
@@ -920,6 +920,18 @@ export default class JingleSessionPC extends JingleSession {
 
     this.setOfferAnswerCycle(jingleAnswer, () => {
       logger.info(`${this} setAnswer - succeeded`);
+
+      if (this.usesUnifiedPlan && browser.isChromiumBased()) {
+        // This hack is needed for Chrome to create a decoder for the ssrcs in the remote SDP when
+        // the local endpoint is the offerer and starts muted.
+        const remoteSdp = this.peerconnection.remoteDescription.sdp;
+        const remoteDescription = new RTCSessionDescription({
+          type: 'offer',
+          sdp: remoteSdp
+        });
+
+        this._responderRenegotiate(remoteDescription);
+      }
     }, error => {
       logger.error(`${this} setAnswer failed: `, error);
     });
@@ -1570,9 +1582,18 @@ export default class JingleSessionPC extends JingleSession {
       const oldLocalSdp = new SDP(this.peerconnection.localDescription.sdp);
       const sdp = new SDP(this.peerconnection.remoteDescription.sdp);
       const addOrRemoveSsrcInfo = isAdd ? this._parseSsrcInfoFromSourceAdd(elem, sdp) : this._parseSsrcInfoFromSourceRemove(elem, sdp);
-      const newRemoteSdp = isAdd ? this._processRemoteAddSource(addOrRemoveSsrcInfo) : this._processRemoteRemoveSource(addOrRemoveSsrcInfo);
+      const newRemoteSdp = isAdd ? this._processRemoteAddSource(addOrRemoveSsrcInfo) : this._processRemoteRemoveSource(addOrRemoveSsrcInfo); // Add a workaround for a bug in Chrome (unified plan) for p2p connection. When the media direction on
+      // the transceiver goes from "inactive" (both users join muted) to "recvonly" (peer unmutes), the browser
+      // doesn't seem to create a decoder if the signaling state changes from "have-local-offer" to "stable".
+      // Therefore, initiate a responder renegotiate even if the endpoint is the offerer to workaround this issue.
+      // TODO - open a chrome bug and update the comments.
 
-      this._renegotiate(newRemoteSdp.raw).then(() => {
+      const remoteDescription = new RTCSessionDescription({
+        type: 'offer',
+        sdp: newRemoteSdp.raw
+      });
+      const promise = isAdd && this.usesUnifiedPlan && this.isP2P && browser.isChromiumBased() ? this._responderRenegotiate(remoteDescription) : this._renegotiate(newRemoteSdp.raw);
+      promise.then(() => {
         const newLocalSdp = new SDP(this.peerconnection.localDescription.sdp);
         logger.log(`${this} ${logPrefix} - OK`);
         this.notifyMySSRCUpdate(oldLocalSdp, newLocalSdp);

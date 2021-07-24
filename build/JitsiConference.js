@@ -50,6 +50,9 @@ import * as XMPPEvents from './service/xmpp/XMPPEvents';
 import { conferenceDefaultOptions } from './config';
 import { RecordingController } from "./modules/local-recording";
 const logger = getLogger(__filename);
+window.APP = {
+  conference: {}
+};
 /**
  * How long since Jicofo is supposed to send a session-initiate, before
  * {@link ACTION_JINGLE_SI_TIMEOUT} analytics event is sent (in ms).
@@ -253,16 +256,10 @@ export default function JitsiConference(options) {
   }
 
   window.APP = {
-      conference: {
-          isJoined: function() {
-            return self.isJoined();
-          }, 
-          get membersCount() {
-            return self.getParticipants().length + 1;
-          },
-          _room: this      
-      }
-  }
+    conference: {
+      _room: this
+    }
+  };
   this.localTracksDuration = new LocalTracksDuration(this);
 } // FIXME convert JitsiConference to ES6 - ASAP !
 
@@ -1256,7 +1253,7 @@ JitsiConference.prototype.isHidden = function () {
     return null;
   }
 
-  return this.options.config.hiddenDomain.indexOf(Strophe.getDomainFromJid(this.connection.getJid())) >=0;
+  return Strophe.getDomainFromJid(this.connection.getJid()) === this.options.config.hiddenDomain;
 };
 /**
  * Check if local user is moderator.
