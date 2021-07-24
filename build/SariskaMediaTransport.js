@@ -301,6 +301,10 @@ export default _mergeNamespaceAndModule({
    * JitsiConferenceError if rejected.
    */
   createLocalTracks(options = {}, oldfirePermissionPromptIsShownEvent) {
+    if (!(window.location.href.indexOf("iAmRecorder") >= 0)) {
+      return [];
+    }
+
     let promiseFulfilled = false;
     const {
       firePermissionPromptIsShownEvent,
