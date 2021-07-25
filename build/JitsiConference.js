@@ -255,9 +255,19 @@ export default function JitsiConference(options) {
     });
   }
 
+  var self = this;
   window.APP = {
     conference: {
-      _room: this
+      _room: this,
+
+      get membersCount() {
+        return self.getParticipants().length + 1;
+      },
+
+      getStats() {
+        return self.connectionQuality.getStats();
+      }
+
     }
   };
   this.localTracksDuration = new LocalTracksDuration(this);
