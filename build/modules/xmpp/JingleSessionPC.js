@@ -900,7 +900,7 @@ export default class JingleSessionPC extends JingleSession {
     });
     new SDP(offerSdp).toJingle(init, this.isInitiator ? 'initiator' : 'responder');
     init = init.tree();
-    logger.info(`${this} Session-initiate: `, init);
+    logger.debug(`${this} Session-initiate: `, init);
     this.connection.sendIQ(init, () => {
       logger.info(`${this} Got RESULT for "session-initiate"`);
     }, error => {
@@ -1112,7 +1112,7 @@ export default class JingleSessionPC extends JingleSession {
     // NOTE: since we're just reading from it, we don't need to be within
     //  the modification queue to access the local description
     const localSDP = new SDP(this.peerconnection.localDescription.sdp);
-    let accept = $iq({
+    const accept = $iq({
       to: this.remoteJid,
       type: 'set'
     }).c('jingle', {
@@ -1135,10 +1135,9 @@ export default class JingleSessionPC extends JingleSession {
       localSDP.failICE = true;
     }
 
-    localSDP.toJingle(accept, this.initiatorJid === this.localJid ? 'initiator' : 'responder'); // Calling tree() to print something useful
-
-    accept = accept.tree();
-    logger.info(`${this} Sending session-accept`, accept);
+    localSDP.toJingle(accept, this.initiatorJid === this.localJid ? 'initiator' : 'responder');
+    logger.info(`${this} Sending session-accept`);
+    logger.debug(accept.tree());
     this.connection.sendIQ(accept, success, this.newJingleErrorHandler(accept, error => {
       failure(error); // 'session-accept' is a critical timeout and we'll
       // have to restart
@@ -1194,6 +1193,7 @@ export default class JingleSessionPC extends JingleSession {
     }
 
     logger.info(`${this} sending content-modify, video senders: ${senders}, max frame height: ${maxFrameHeight}`);
+    logger.debug(sessionModify.tree());
     this.connection.sendIQ(sessionModify, null, this.newJingleErrorHandler(sessionModify), IQ_TIMEOUT);
   }
   /**
@@ -1231,7 +1231,7 @@ export default class JingleSessionPC extends JingleSession {
 
 
   sendTransportAccept(localSDP, success, failure) {
-    let transportAccept = $iq({
+    const transportAccept = $iq({
       to: this.remoteJid,
       type: 'set'
     }).c('jingle', {
@@ -1248,10 +1248,9 @@ export default class JingleSessionPC extends JingleSession {
       });
       localSDP.transportToJingle(idx, transportAccept);
       transportAccept.up();
-    }); // Calling tree() to print something useful to the logger
-
-    transportAccept = transportAccept.tree();
-    logger.info(`${this} Sending transport-accept: `, transportAccept);
+    });
+    logger.info(`${this} Sending transport-accept`);
+    logger.debug(transportAccept.tree());
     this.connection.sendIQ(transportAccept, success, this.newJingleErrorHandler(transportAccept, failure), IQ_TIMEOUT);
   }
   /**
@@ -1270,7 +1269,7 @@ export default class JingleSessionPC extends JingleSession {
   sendTransportReject(success, failure) {
     // Send 'transport-reject', so that the focus will
     // know that we've failed
-    let transportReject = $iq({
+    const transportReject = $iq({
       to: this.remoteJid,
       type: 'set'
     }).c('jingle', {
@@ -1279,8 +1278,8 @@ export default class JingleSessionPC extends JingleSession {
       initiator: this.initiatorJid,
       sid: this.sid
     });
-    transportReject = transportReject.tree();
-    logger.info(`${this} Sending 'transport-reject'`, transportReject);
+    logger.info(`${this} Sending 'transport-reject'`);
+    logger.debug(transportReject.tree());
     this.connection.sendIQ(transportReject, success, this.newJingleErrorHandler(transportReject, failure), IQ_TIMEOUT);
   }
   /**
@@ -1347,7 +1346,7 @@ export default class JingleSessionPC extends JingleSession {
     }
 
     if (!options || Boolean(options.sendSessionTerminate)) {
-      let sessionTerminate = $iq({
+      const sessionTerminate = $iq({
         to: this.remoteJid,
         type: 'set'
       }).c('jingle', {
@@ -1367,10 +1366,9 @@ export default class JingleSessionPC extends JingleSession {
         xmlns: 'http://jitsi.org/protocol/focus',
         id: this._bridgeSessionId,
         restart: options && options.requestRestart === true
-      }).up(); // Calling tree() to print something useful
-
-      sessionTerminate = sessionTerminate.tree();
-      logger.info(`${this} Sending session-terminate`, sessionTerminate);
+      }).up();
+      logger.info(`${this} Sending session-terminate`);
+      logger.debug(sessionTerminate.tree());
       this.connection.sendIQ(sessionTerminate, success, this.newJingleErrorHandler(sessionTerminate, failure), IQ_TIMEOUT);
     } else {
       logger.info(`${this} Skipped sending session-terminate`);
@@ -2244,7 +2242,8 @@ export default class JingleSessionPC extends JingleSession {
     const removedAnySSRCs = sdpDiffer.toJingle(remove);
 
     if (removedAnySSRCs) {
-      logger.info(`${this} Sending source-remove`, remove.tree());
+      logger.info(`${this} Sending source-remove`);
+      logger.debug(remove.tree());
       this.connection.sendIQ(remove, null, this.newJingleErrorHandler(remove), IQ_TIMEOUT);
     } // send source-add IQ.
 
@@ -2262,7 +2261,8 @@ export default class JingleSessionPC extends JingleSession {
     const containsNewSSRCs = sdpDiffer.toJingle(add);
 
     if (containsNewSSRCs) {
-      logger.info(`${this} Sending source-add`, add.tree());
+      logger.info(`${this} Sending source-add`);
+      logger.debug(add.tree());
       this.connection.sendIQ(add, null, this.newJingleErrorHandler(add), IQ_TIMEOUT);
     }
   }

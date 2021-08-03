@@ -230,7 +230,7 @@ export default class BrowserCapabilities extends BrowserDetection {
 
 
   supportsInsertableStreams() {
-    if (!(typeof window.RTCRtpSender !== 'undefined' && (window.RTCRtpSender.prototype.createEncodedStreams || window.RTCRtpSender.prototype.createEncodedVideoStreams))) {
+    if (!(typeof window.RTCRtpSender !== 'undefined' && window.RTCRtpSender.prototype.createEncodedStreams)) {
       return false;
     } // Feature-detect transferable streams which we need to operate in a worker.
     // See https://groups.google.com/a/chromium.org/g/blink-dev/c/1LStSgBt6AM/m/hj0odB8pCAAJ

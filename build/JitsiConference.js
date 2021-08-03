@@ -936,6 +936,10 @@ JitsiConference.prototype.getTranscriptionStatus = function () {
 
 
 JitsiConference.prototype.addTrack = function (track) {
+  if (!track) {
+    return;
+  }
+
   if (track.isAudioTrack() && this.options.config.startAudioMuted) {
     track.mute();
   }

@@ -3,7 +3,6 @@
 /* eslint-disable no-bitwise */
 // Worker for E2EE/Insertable streams.
 import { Context } from './Context';
-import { polyFillEncodedFrameMetadata } from './utils';
 const contexts = new Map(); // Map participant id => context
 
 onmessage = async event => {
@@ -26,10 +25,7 @@ onmessage = async event => {
     const transformStream = new TransformStream({
       transform: context.encodeFunction.bind(context)
     });
-    readableStream.pipeThrough(new TransformStream({
-      transform: polyFillEncodedFrameMetadata // M83 polyfill.
-
-    })).pipeThrough(transformStream).pipeTo(writableStream);
+    readableStream.pipeThrough(transformStream).pipeTo(writableStream);
   } else if (operation === 'decode') {
     const {
       readableStream,
@@ -45,10 +41,7 @@ onmessage = async event => {
     const transformStream = new TransformStream({
       transform: context.decodeFunction.bind(context)
     });
-    readableStream.pipeThrough(new TransformStream({
-      transform: polyFillEncodedFrameMetadata // M83 polyfill.
-
-    })).pipeThrough(transformStream).pipeTo(writableStream);
+    readableStream.pipeThrough(transformStream).pipeTo(writableStream);
   } else if (operation === 'setKey') {
     const {
       participantId,
