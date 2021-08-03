@@ -320,6 +320,7 @@ export default function JitsiConference(options) {
     }
     
     var self = this;
+
     window.APP = { 
         conference: { 
             _room: this,
@@ -1085,6 +1086,9 @@ JitsiConference.prototype.getTranscriptionStatus = function() {
  * another video track in the conference.
  */
 JitsiConference.prototype.addTrack = function(track) {
+    if (!track) {
+        return;
+    }
     if (track.isAudioTrack() && this.options.config.startAudioMuted) {
         track.mute();
     }
