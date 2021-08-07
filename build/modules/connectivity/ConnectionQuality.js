@@ -76,13 +76,6 @@ let startBitrate = 800;
  */
 
 function getTarget(simulcast, resolution, millisSinceStart, videoQualitySettings) {
-  // Completely ignore the bitrate in the first 5 seconds, as the first
-  // event seems to fire very early and the value is suspicious and causes
-  // false positives.
-  if (millisSinceStart < 15000) {
-    return 1;
-  }
-
   let target = 0;
   let height = Math.min(resolution.height, resolution.width); // Find the first format with height no bigger than ours.
 
@@ -145,6 +138,8 @@ export default class ConnectionQuality {
    * @param options
    */
   constructor(conference, eventEmitter, options) {
+    var _this$_options$config;
+
     this.eventEmitter = eventEmitter;
     /**
      * The owning JitsiConference.
@@ -165,6 +160,11 @@ export default class ConnectionQuality {
 
     this._lastConnectionQualityUpdate = -1;
     /**
+     * Conference options.
+     */
+
+    this._options = options;
+    /**
      * Maps a participant ID to an object holding connection quality
      * statistics received from this participant.
      */
@@ -183,8 +183,8 @@ export default class ConnectionQuality {
 
     this._timeVideoUnmuted = -1; // We assume a global startBitrate value for the sake of simplicity.
 
-    if (options.config.startBitrate && options.config.startBitrate > 0) {
-      startBitrate = options.config.startBitrate;
+    if (((_this$_options$config = this._options.config) === null || _this$_options$config === void 0 ? void 0 : _this$_options$config.startBitrate) > 0) {
+      startBitrate = this._options.config.startBitrate;
     } // TODO: consider ignoring these events and letting the user of
     // lib-jitsi-meet handle these separately.
 
@@ -311,16 +311,22 @@ export default class ConnectionQuality {
       const activeTPC = this._conference.getActivePeerConnection();
 
       if (activeTPC) {
+        var _this$_options$config2, _this$_options$config3;
+
         const isSimulcastOn = activeTPC.isSimulcastOn();
         const videoQualitySettings = activeTPC.getTargetVideoBitrates(); // Add the codec info as well.
 
         videoQualitySettings.codec = activeTPC.getConfiguredVideoCodec(); // Time since sending of video was enabled.
 
-        const millisSinceStart = window.performance.now() - Math.max(this._timeVideoUnmuted, this._timeIceConnected); // Expected sending bitrate in perfect conditions.
+        const millisSinceStart = window.performance.now() - Math.max(this._timeVideoUnmuted, this._timeIceConnected);
+        const statsInterval = (_this$_options$config2 = (_this$_options$config3 = this._options.config) === null || _this$_options$config3 === void 0 ? void 0 : _this$_options$config3.pcStatsInterval) !== null && _this$_options$config2 !== void 0 ? _this$_options$config2 : 10000; // Expected sending bitrate in perfect conditions.
 
         let target = getTarget(isSimulcastOn, resolution, millisSinceStart, videoQualitySettings);
-        target = Math.min(target, MAX_TARGET_BITRATE);
-        quality = 100 * this._localStats.bitrate.upload / target;
+        target = Math.min(target, MAX_TARGET_BITRATE); // Calculate the quality only after the stats are available (after video was enabled).
+
+        if (millisSinceStart > statsInterval) {
+          quality = 100 * this._localStats.bitrate.upload / target;
+        }
       } // Whatever the bitrate, drop early if there is significant loss
 
 

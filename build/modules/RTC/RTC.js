@@ -1,9 +1,9 @@
 /* global __filename */
 import { getLogger } from 'jitsi-meet-logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
+import BridgeVideoType from '../../service/RTC/BridgeVideoType';
 import * as MediaType from '../../service/RTC/MediaType';
 import RTCEvents from '../../service/RTC/RTCEvents';
-import VideoType from '../../service/RTC/VideoType';
 import browser from '../browser';
 import Statistics from '../statistics/statistics';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
@@ -141,7 +141,7 @@ export default class RTC extends Listenable {
     this._onDeviceListChanged = this._onDeviceListChanged.bind(this);
     this._updateAudioOutputForAudioTracks = this._updateAudioOutputForAudioTracks.bind(this); // The default video type assumed by the bridge.
 
-    this._videoType = VideoType.NONE; // Switch audio output device on all remote audio tracks. Local audio
+    this._videoType = BridgeVideoType.NONE; // Switch audio output device on all remote audio tracks. Local audio
     // tracks handle this event by themselves.
 
     if (RTCUtils.isDeviceChangeAvailable('output')) {
