@@ -25,7 +25,7 @@ npm i sariska-media-transport
 
 ```
 
-For complete explanation of all API's. Please checkout documentation [a link](https://www.sariska.io/docs/sariska-media-javascript)
+For complete explaination of all API's. Please checkout documentation [a link](https://www.sariska.io/docs/sariska-media-javascript)
 
 
 

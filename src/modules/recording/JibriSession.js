@@ -222,6 +222,8 @@ export default class JibriSession {
             type: 'set'
         })
         .c('jibri', {
+            'token': this._connection.emuc.xmpp.token,
+            'baseUrl': window.location.origin,
             'xmlns': 'http://jitsi.org/protocol/jibri',
             'action': action,
             'app_data': appData,
