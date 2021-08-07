@@ -125,7 +125,7 @@ export default class JitsiVideoSIPGWSession extends Listenable {
     const attributes = {
       'xmlns': 'http://jitsi.org/protocol/jibri',
       'action': action,
-      'token': this._connection.emuc.xmpp.token,
+      'token': this.chatRoom.connection.emuc.xmpp.token,
       'baseUrl': window.location.origin,
       sipaddress: this.sipAddress
     };
