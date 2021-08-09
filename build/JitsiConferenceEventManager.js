@@ -302,6 +302,12 @@ JitsiConferenceEventManager.prototype.setupRTCListeners = function () {
   rtc.addListener(RTCEvents.REMOTE_TRACK_ADDED, conference.onRemoteTrackAdded.bind(conference));
   rtc.addListener(RTCEvents.REMOTE_TRACK_REMOVED, conference.onRemoteTrackRemoved.bind(conference));
   rtc.addListener(RTCEvents.DOMINANT_SPEAKER_CHANGED, (dominant, previous) => {
+    var _conference$participa;
+
+    if ((_conference$participa = conference.participants[dominant]) === null || _conference$participa === void 0 ? void 0 : _conference$participa._hidden) {
+      return;
+    }
+
     if (conference.lastDominantSpeaker !== dominant && conference.room) {
       conference.lastDominantSpeaker = dominant;
       conference.eventEmitter.emit(JitsiConferenceEvents.DOMINANT_SPEAKER_CHANGED, dominant, previous);

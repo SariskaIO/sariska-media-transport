@@ -507,6 +507,11 @@ JitsiConferenceEventManager.prototype.setupRTCListeners = function() {
 
     rtc.addListener(RTCEvents.DOMINANT_SPEAKER_CHANGED,
         (dominant, previous) => {
+            
+            if (conference.participants[dominant]?._hidden) {
+                return;
+            } 
+
             if (conference.lastDominantSpeaker !== dominant && conference.room) {
                 conference.lastDominantSpeaker = dominant;
                 conference.eventEmitter.emit(
