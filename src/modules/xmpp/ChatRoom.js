@@ -470,7 +470,7 @@ export default class ChatRoom extends Listenable {
             = jid && jid.indexOf(`${this.moderator.getFocusUserJid()}/`) === 0;
         member.isHiddenDomain
             = jid && jid.indexOf('@') > 0
-                && this.options.hiddenDomain.indexOf(jid.substring(jid.indexOf('@') + 1, jid.indexOf('/'))) >= 0;
+                && this.options.hiddenDomain && this.options.hiddenDomain.indexOf(jid.substring(jid.indexOf('@') + 1, jid.indexOf('/'))) >= 0;
                    
 
         this.eventEmitter.emit(XMPPEvents.PRESENCE_RECEIVED, {
