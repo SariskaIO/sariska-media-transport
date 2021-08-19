@@ -201,7 +201,6 @@ export default class JitsiLocalTrack extends JitsiTrack {
                 RTCEvents.AUDIO_OUTPUT_DEVICE_CHANGED,
                 this._onAudioOutputDeviceChanged);
         }
-
         RTCUtils.addListener(RTCEvents.DEVICE_LIST_WILL_CHANGE, this._onDeviceListWillChange);
 
         this._initNoDataFromSourceHandlers();
