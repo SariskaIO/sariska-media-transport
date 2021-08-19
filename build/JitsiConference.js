@@ -383,7 +383,8 @@ JitsiConference.prototype._init = function (options = {}) {
       enableCallStats,
       roomName: this.options.name,
       applicationName: config.applicationName,
-      getWiFiStatsMethod: config.getWiFiStatsMethod
+      getWiFiStatsMethod: config.getWiFiStatsMethod,
+      configParams: config.callStatsConfigParams
     });
     Statistics.analytics.addPermanentProperties({
       'callstats_name': this._statsCurrentId
@@ -467,7 +468,14 @@ JitsiConference.prototype._init = function (options = {}) {
   } // Publish the codec type to presence.
 
 
-  this.setLocalParticipantProperty('codecType', this.codecSelection.getPreferredCodec());
+  this.setLocalParticipantProperty('codecType', this.codecSelection.getPreferredCodec()); // Set transcription language presence extension.
+  // In case the language config is undefined or has the default value that the transcriber uses
+  // (in our case Jigasi uses 'en-US'), don't set the participant property in order to avoid
+  // needlessly polluting the presence stanza.
+
+  if (config && config.transcriptionLanguage && config.transcriptionLanguage !== 'en-US') {
+    this.setLocalParticipantProperty('transcription_language', config.transcriptionLanguage);
+  }
 };
 /**
  * Joins the conference.

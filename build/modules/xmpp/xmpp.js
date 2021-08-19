@@ -167,7 +167,9 @@ export default class XMPP extends Listenable {
 
     this._initStrophePlugins();
 
-    this.caps = new Caps(this.connection, this.options.clientNode); // Initialize features advertised in disco-info
+    this.caps = new Caps(this.connection,
+    /* clientNode */
+    'https://jitsi.org/jitsi-meet'); // Initialize features advertised in disco-info
 
     this.initFeaturesList(); // Setup a disconnect on unload as a way to facilitate API consumers. It
     // sounds like they would want that. A problem for them though may be if

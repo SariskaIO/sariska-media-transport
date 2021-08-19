@@ -1,6 +1,6 @@
 // enable/disable different features by changing this configuration file
 export const initSDKConfig = {
-  disableAudioLevels: true // useIPv6 - boolean property
+  disableAudioLevels: false // useIPv6 - boolean property
   // disableSimulcast: true //boolean property. Enables/disables simulcast.
   // enableWindowOnErrorHandler - boolean property (default false). Enables/disables attaching global onerror handler (window.onerror).
   // disableThirdPartyRequests - if true - callstats will be disabled and the callstats API won't be included.

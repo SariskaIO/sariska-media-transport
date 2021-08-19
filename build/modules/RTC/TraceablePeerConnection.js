@@ -341,6 +341,16 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, iceConf
     }
   };
 
+  this.onconnectionstatechange = null;
+
+  this.peerconnection.onconnectionstatechange = event => {
+    this.trace('onconnectionstatechange', this.connectionState);
+
+    if (this.onconnectionstatechange !== null) {
+      this.onconnectionstatechange(event);
+    }
+  };
+
   this.ondatachannel = null;
 
   this.peerconnection.ondatachannel = event => {
@@ -1134,7 +1144,8 @@ TraceablePeerConnection.prototype._extractSSRCMap = function (desc) {
   if (this._usesUnifiedPlan) {
     media = [];
     [MediaType.AUDIO, MediaType.VIDEO].forEach(mediaType => {
-      media.push(session.media.find(m => m.type === mediaType));
+      const mLine = session.media.find(m => m.type === mediaType);
+      mLine && media.push(mLine);
     });
   }
 
@@ -1411,6 +1422,10 @@ const getters = {
 
   iceConnectionState() {
     return this.peerconnection.iceConnectionState;
+  },
+
+  connectionState() {
+    return this.peerconnection.connectionState;
   },
 
   localDescription() {
