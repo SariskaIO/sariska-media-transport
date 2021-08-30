@@ -1,4 +1,4 @@
-/* global __filename */
+/* global __filename, RTCRtpScriptTransform */
 import { getLogger } from 'jitsi-meet-logger';
 const logger = getLogger(__filename); // Flag to set on senders / receivers to avoid setting up the encryption transform
 // more than once.
@@ -75,14 +75,23 @@ export default class E2EEcontext {
     }
 
     receiver[kJitsiE2EE] = true;
-    const receiverStreams = receiver.createEncodedStreams();
 
-    this._worker.postMessage({
-      operation: 'decode',
-      readableStream: receiverStreams.readable,
-      writableStream: receiverStreams.writable,
-      participantId
-    }, [receiverStreams.readable, receiverStreams.writable]);
+    if (window.RTCRtpScriptTransform) {
+      const options = {
+        operation: 'decode',
+        participantId
+      };
+      receiver.transform = new RTCRtpScriptTransform(this._worker, options);
+    } else {
+      const receiverStreams = receiver.createEncodedStreams();
+
+      this._worker.postMessage({
+        operation: 'decode',
+        readableStream: receiverStreams.readable,
+        writableStream: receiverStreams.writable,
+        participantId
+      }, [receiverStreams.readable, receiverStreams.writable]);
+    }
   }
   /**
    * Handles the given {@code RTCRtpSender} by creating a {@code TransformStream} which will inject
@@ -100,14 +109,23 @@ export default class E2EEcontext {
     }
 
     sender[kJitsiE2EE] = true;
-    const senderStreams = sender.createEncodedStreams();
 
-    this._worker.postMessage({
-      operation: 'encode',
-      readableStream: senderStreams.readable,
-      writableStream: senderStreams.writable,
-      participantId
-    }, [senderStreams.readable, senderStreams.writable]);
+    if (window.RTCRtpScriptTransform) {
+      const options = {
+        operation: 'encode',
+        participantId
+      };
+      sender.transform = new RTCRtpScriptTransform(this._worker, options);
+    } else {
+      const senderStreams = sender.createEncodedStreams();
+
+      this._worker.postMessage({
+        operation: 'encode',
+        readableStream: senderStreams.readable,
+        writableStream: senderStreams.writable,
+        participantId
+      }, [senderStreams.readable, senderStreams.writable]);
+    }
   }
   /**
    * Set the E2EE key for the specified participant.

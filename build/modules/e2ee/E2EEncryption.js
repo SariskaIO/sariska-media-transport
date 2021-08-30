@@ -64,7 +64,7 @@ export class E2EEncryption {
 
 
   static isSupported(config) {
-    return browser.supportsInsertableStreams() && OlmAdapter.isSupported() && !(config.testing && config.testing.disableE2EE);
+    return !(config.testing && config.testing.disableE2EE) && (browser.supportsInsertableStreams() || config.enableEncodedTransformSupport && browser.supportsEncodedTransform()) && OlmAdapter.isSupported();
   }
   /**
    * Indicates whether E2EE is currently enabled or not.

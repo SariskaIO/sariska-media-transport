@@ -507,7 +507,7 @@ export default class XMPP extends Listenable {
 
     identities.forEach(i => {
       if (i.type === 'shard') {
-        this.options.deploymentInfo.shard = i.name;
+        this.options.deploymentInfo.shard = this.connection.shard = i.name;
       }
     });
 

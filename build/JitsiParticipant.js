@@ -269,7 +269,7 @@ export default class JitsiParticipant {
   }
   /**
    * Sets whether participant is being replaced by another based on jwt.
-   * @param {String} newIsReplacing - whether is being replaced.
+   * @param {boolean} newIsReplaced - whether is being replaced.
    */
 
 
