@@ -1058,7 +1058,9 @@ JitsiConference.prototype._fireMuteChangeEvent = function (track) {
 
 
 JitsiConference.prototype._getInitialLocalTracks = function () {
-  return this.getLocalTracks().filter(track => track.getType() === MediaType.AUDIO && !this.isStartAudioMuted() || track.getType() === MediaType.VIDEO && !this.isStartVideoMuted());
+  // Always add the audio track on mobile Safari because of a known issue where audio playout doesn't happen
+  // if the user joins audio and video muted.
+  return this.getLocalTracks().filter(track => track.getType() === MediaType.AUDIO && (!this.isStartAudioMuted() || browser.isIosBrowser()) || track.getType() === MediaType.VIDEO && !this.isStartVideoMuted());
 };
 /**
  * Clear JitsiLocalTrack properties and listeners.
@@ -1126,7 +1128,7 @@ JitsiConference.prototype.replaceTrack = function (oldTrack, newTrack) {
       this._sendBridgeVideoTypeMessage(newTrack);
     }
 
-    if (this.isMutedByFocus || this.isVideoMutedByFocus) {
+    if (newTrack !== null && (this.isMutedByFocus || this.isVideoMutedByFocus)) {
       this._fireMuteChangeEvent(newTrack);
     }
 
