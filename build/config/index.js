@@ -54,7 +54,8 @@ export const conferenceConfig = {
   hiddenDomain: ["recorder.sariska.io", "pricing.sariska.io"],
   // startAudioMuted
   // startVideoMuted
-  // enableLayerSuspension - if set to 'true', we will cap the video send bitrate when we are told we have not been selected by any endpoints (and therefore the non-thumbnail streams are not in use).
+  enableLayerSuspension: true,
+  // - if set to 'true', we will cap the video send bitrate when we are told we have not been selected by any endpoints (and therefore the non-thumbnail streams are not in use).
   // deploymentInfo
   // shard
   // userRegion
