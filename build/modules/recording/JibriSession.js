@@ -239,15 +239,21 @@ export default class JibriSession {
     focusMucJid,
     streamId
   }) {
+    try {
+      appData = JSON.parse(appData) || {};
+    } catch (e) {
+      appData = {};
+    }
+
+    appData["baseUrl"] = window.location.origin;
+    appData["token"] = this._connection.emuc.xmpp.token;
     return $iq({
       to: focusMucJid,
       type: 'set'
     }).c('jibri', {
-      'token': this._connection.emuc.xmpp.token,
-      'baseUrl': window.location.origin,
       'xmlns': 'http://jitsi.org/protocol/jibri',
       'action': action,
-      'app_data': appData,
+      'app_data': JSON.stringify(appData),
       'recording_mode': this._mode,
       'streamid': streamId,
       'you_tube_broadcast_id': broadcastId

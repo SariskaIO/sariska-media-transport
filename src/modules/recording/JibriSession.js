@@ -217,16 +217,14 @@ export default class JibriSession {
      * @returns Object - The XMPP IQ message.
      */
     _createIQ({ action, appData, broadcastId, focusMucJid, streamId }) {
-        let appData;
-
         try {
-            appData = JSON.parse(appData) || {};
-        } catch() {
+            appData = JSON.parse(appData)|| {};
+        } catch(e) {
             appData = {};
         }
         
         appData["baseUrl"] =  window.location.origin;
-        appData["token"] =  this._connection.emuc.xmpp.token,
+        appData["token"] =  this._connection.emuc.xmpp.token;
         
         return $iq({
             to: focusMucJid,
