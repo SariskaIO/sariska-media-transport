@@ -573,7 +573,10 @@ JitsiConference.prototype.leave = function () {
     this.statistics.dispose();
   }
 
-  this._delayedIceFailed && this._delayedIceFailed.cancel(); // Close both JVb and P2P JingleSessions
+  this._delayedIceFailed && this._delayedIceFailed.cancel();
+
+  this._maybeClearSITimeout(); // Close both JVb and P2P JingleSessions
+
 
   if (this.jvbJingleSession) {
     this.jvbJingleSession.close();
@@ -1704,11 +1707,14 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
       this.eventEmitter.emit(JitsiConferenceEvents.USER_LEFT, id, participant);
     }
 
-    this._maybeStartOrStopP2P(true
-    /* triggered by user left event */
-    );
+    if (this.room !== null) {
+      // Skip if we have left the room already.
+      this._maybeStartOrStopP2P(true
+      /* triggered by user left event */
+      );
 
-    this._maybeClearSITimeout();
+      this._maybeClearSITimeout();
+    }
   });
 };
 /* eslint-disable max-params */

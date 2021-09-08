@@ -245,7 +245,7 @@ export default class JibriSession {
       appData = {};
     }
 
-    appData["baseUrl"] = window.location.origin;
+    appData["base_url"] = window.location.origin;
     appData["token"] = this._connection.emuc.xmpp.token;
     return $iq({
       to: focusMucJid,

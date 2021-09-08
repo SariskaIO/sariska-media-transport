@@ -18,10 +18,10 @@ export class SendVideoController {
    * @param {RTC} rtc - the rtc instance that is responsible for sending the messages on the bridge channel.
    */
   constructor(conference, rtc) {
-    var _conference$options, _conference$options$c;
+    var _conference$options$c, _conference$options, _conference$options$c2;
 
     this.conference = conference;
-    this.layerSuspensionEnabled = (_conference$options = conference.options) === null || _conference$options === void 0 ? void 0 : (_conference$options$c = _conference$options.config) === null || _conference$options$c === void 0 ? void 0 : _conference$options$c.enableLayerSuspension;
+    this.layerSuspensionEnabled = (_conference$options$c = (_conference$options = conference.options) === null || _conference$options === void 0 ? void 0 : (_conference$options$c2 = _conference$options.config) === null || _conference$options$c2 === void 0 ? void 0 : _conference$options$c2.enableLayerSuspension) !== null && _conference$options$c !== void 0 ? _conference$options$c : true;
     this.rtc = rtc;
     this.conference.on(JitsiConferenceEvents._MEDIA_SESSION_STARTED, session => this._onMediaSessionStarted(session));
     this.conference.on(JitsiConferenceEvents._MEDIA_SESSION_ACTIVE_CHANGED, () => this._propagateSendMaxFrameHeight());
