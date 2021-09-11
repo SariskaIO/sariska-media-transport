@@ -1432,6 +1432,15 @@ JitsiConference.prototype.getParticipants = function () {
   return Object.values(this.participants);
 };
 /**
+ * @return Array<JitsiParticipant> an array of all participants in this
+ * conference.
+ */
+
+
+JitsiConference.prototype.getParticipantsWithoutHidden = function () {
+  return this.getParticipants().filter(participant => !participant._hidden);
+};
+/**
  * Returns the number of participants in the conference, including the local
  * participant.
  * @param countHidden {boolean} Whether or not to include hidden participants
