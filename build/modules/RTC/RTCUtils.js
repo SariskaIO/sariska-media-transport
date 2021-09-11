@@ -738,7 +738,18 @@ class RTCUtils extends Listenable {
 
 
   isDeviceChangeAvailable(deviceType) {
-    return deviceType === 'output' || deviceType === 'audiooutput' ? isAudioOutputDeviceChangeAvailable : true;
+    if (deviceType === 'output' || deviceType === 'audiooutput') {
+      return isAudioOutputDeviceChangeAvailable;
+    } // Calling getUserMedia again (for preview) kills the track returned by the first getUserMedia call because of
+    // https://bugs.webkit.org/show_bug.cgi?id=179363. Therefore, do not show microphone/camera options on mobile
+    // Safari.
+
+
+    if ((deviceType === 'audioinput' || deviceType === 'input') && browser.isIosBrowser()) {
+      return false;
+    }
+
+    return true;
   }
   /**
    * A method to handle stopping of the stream.
