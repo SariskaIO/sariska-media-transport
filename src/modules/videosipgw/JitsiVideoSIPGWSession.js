@@ -131,7 +131,7 @@ export default class JitsiVideoSIPGWSession extends Listenable {
      */
     _sendJibriIQ(action) {
         const appData = {};
-        appData["base_url"] = `${window.location.origin}${window.location.pathname}/`;
+        appData["base_url"] = `${window.location.origin}${window.location.pathname}`;
         appData["token"] =  this.chatRoom.connection.emuc.xmpp.token;
         
         const attributes = {
