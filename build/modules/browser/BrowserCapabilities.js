@@ -62,7 +62,7 @@ export default class BrowserCapabilities extends BrowserDetection {
       maxTouchPoints,
       platform
     } = navigator;
-    return userAgent.match(/iP(ad|hone|od)/i || maxTouchPoints && maxTouchPoints > 2 && /MacIntel/.test(platform));
+    return Boolean(userAgent.match(/iP(ad|hone|od)/i)) || maxTouchPoints && maxTouchPoints > 2 && /MacIntel/.test(platform);
   }
   /**
    * Checks if the current browser is WebKit based. It's either

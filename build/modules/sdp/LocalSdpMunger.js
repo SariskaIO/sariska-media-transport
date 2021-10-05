@@ -3,6 +3,7 @@ import { getLogger } from 'jitsi-meet-logger';
 import MediaDirection from '../../service/RTC/MediaDirection';
 import * as MediaType from '../../service/RTC/MediaType';
 import VideoType from '../../service/RTC/VideoType';
+import FeatureFlags from '../flags/FeatureFlags';
 import { SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);
 /**
@@ -298,18 +299,62 @@ export default class LocalSdpMunger {
 
     if (audioMLine) {
       this._transformMediaIdentifiers(audioMLine);
+
+      this._injectSourceNames(audioMLine);
     }
 
     const videoMLine = transformer.selectMedia('video');
 
     if (videoMLine) {
       this._transformMediaIdentifiers(videoMLine);
+
+      this._injectSourceNames(videoMLine);
     }
 
     return new RTCSessionDescription({
       type: sessionDesc.type,
       sdp: transformer.toRawSDP()
     });
+  }
+  /**
+   * Injects source names. Source names are need to for multiple streams per endpoint support. The final plan is to
+   * use the "mid" attribute for source names, but because the SDP to Jingle conversion still operates in the Plan-B
+   * semantics (one source name per media), a custom "name" attribute is injected into SSRC lines..
+   *
+   * @param {MLineWrap} mediaSection - The media part (audio or video) of the session description which will be
+   * modified in place.
+   * @returns {void}
+   * @private
+   */
+
+
+  _injectSourceNames(mediaSection) {
+    var _mediaSection$mLine6, _mediaSection$mLine6$, _mediaSection$mLine7;
+
+    if (!FeatureFlags.isSourceNameSignalingEnabled()) {
+      return;
+    }
+
+    const sources = [...new Set((_mediaSection$mLine6 = mediaSection.mLine) === null || _mediaSection$mLine6 === void 0 ? void 0 : (_mediaSection$mLine6$ = _mediaSection$mLine6.ssrcs) === null || _mediaSection$mLine6$ === void 0 ? void 0 : _mediaSection$mLine6$.map(s => s.id))];
+    const mediaType = (_mediaSection$mLine7 = mediaSection.mLine) === null || _mediaSection$mLine7 === void 0 ? void 0 : _mediaSection$mLine7.type;
+
+    if (!mediaType) {
+      throw new Error('_transformMediaIdentifiers - no media type in mediaSection');
+    }
+
+    for (const source of sources) {
+      const nameExists = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'name');
+
+      if (!nameExists) {
+        const firstLetterOfMediaType = mediaType.substring(0, 1); // Inject source names as a=ssrc:3124985624 name:endpointA-v0
+
+        mediaSection.ssrcs.push({
+          id: source,
+          attribute: 'name',
+          value: `${this.localEndpointId}-${firstLetterOfMediaType}0`
+        });
+      }
+    }
   }
 
 }

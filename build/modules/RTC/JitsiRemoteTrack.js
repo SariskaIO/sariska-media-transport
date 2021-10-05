@@ -14,7 +14,7 @@ let ttfmTrackerVideoAttached = false;
  * container for every event in the list.
  */
 
-const containerEvents = ['abort', 'canplay', 'canplaythrough', 'emptied', 'ended', 'error', 'loadeddata', 'loadedmetadata', 'loadstart', 'pause', 'play', 'playing', 'ratechange', 'stalled', 'suspend', 'waiting'];
+const containerEvents = ['abort', 'canplaythrough', 'ended', 'error'];
 /* eslint-disable max-params */
 
 /**
@@ -242,14 +242,12 @@ export default class JitsiRemoteTrack extends JitsiTrack {
   /**
    * Called when the track has been attached to a new container.
    *
-   * @param {HTMLElement} container the HTML container which can be 'video' or
-   * 'audio' element.
+   * @param {HTMLElement} container the HTML container which can be 'video' or 'audio' element.
    * @private
    */
 
 
   _onTrackAttach(container) {
-    logger.debug(`Track has been attached to a container: ${this}`);
     containerEvents.forEach(event => {
       container.addEventListener(event, this._containerHandlers[event]);
     });
@@ -257,14 +255,12 @@ export default class JitsiRemoteTrack extends JitsiTrack {
   /**
    * Called when the track has been detached from a container.
    *
-   * @param {HTMLElement} container the HTML container which can be 'video' or
-   * 'audio' element.
+   * @param {HTMLElement} container the HTML container which can be 'video' or 'audio' element.
    * @private
    */
 
 
   _onTrackDetach(container) {
-    logger.debug(`Track has been detached from a container: ${this}`);
     containerEvents.forEach(event => {
       container.removeEventListener(event, this._containerHandlers[event]);
     });

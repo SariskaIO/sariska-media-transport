@@ -19,6 +19,7 @@ import { ParticipantConnectionStatus } from './modules/connectivity/ParticipantC
 import getActiveAudioDevice from './modules/detection/ActiveDeviceDetector';
 import * as DetectionEvents from './modules/detection/DetectionEvents';
 import TrackVADEmitter from './modules/detection/TrackVADEmitter';
+import FeatureFlags from './modules/flags/FeatureFlags';
 import ProxyConnectionService from './modules/proxyconnection/ProxyConnectionService';
 import recordingConstants from './modules/recording/recordingConstants';
 import Settings from './modules/settings/Settings';
@@ -149,7 +150,11 @@ export default _mergeNamespaceAndModule({
       ...options
     };
     Settings.init(options.externalStorage);
-    Statistics.init(options); // Initialize global window.connectionTimes
+    Statistics.init(options); // Configure the feature flags.
+
+    FeatureFlags.init({
+      sourceNameSignaling: options.sourceNameSignaling
+    }); // Initialize global window.connectionTimes
     // FIXME do not use 'window'
 
     if (!window.connectionTimes) {

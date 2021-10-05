@@ -46,7 +46,7 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
   createRoom(jid, password, options) {
     const roomJid = Strophe.getBareJidFromJid(jid);
 
-    if (this.rooms[roomJid]) {
+    if (this.isRoomCreated(roomJid)) {
       const errmsg = 'You are already in the room!';
       logger.error(errmsg);
       throw new Error(errmsg);
@@ -55,6 +55,17 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
     this.rooms[roomJid] = new ChatRoom(this.connection, jid, password, this.xmpp, options);
     this.eventEmitter.emit(XMPPEvents.EMUC_ROOM_ADDED, this.rooms[roomJid]);
     return this.rooms[roomJid];
+  }
+  /**
+   *  Check if a room with the passed JID is already created.
+   *
+   * @param {string} roomJid - The JID of the room.
+   * @returns {boolean}
+   */
+
+
+  isRoomCreated(roomJid) {
+    return roomJid in this.rooms;
   }
   /**
    *

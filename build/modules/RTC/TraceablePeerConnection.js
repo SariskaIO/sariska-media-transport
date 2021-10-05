@@ -37,7 +37,7 @@ const SD_BITRATE = 700000;
  * @param {RTC} rtc the instance of <tt>RTC</tt> service
  * @param {number} id the peer connection id assigned by the parent RTC module.
  * @param {SignalingLayer} signalingLayer the signaling layer instance
- * @param {object} iceConfig WebRTC 'PeerConnection' ICE config
+ * @param {object} pcConfig The {@code RTCConfiguration} to use for the WebRTC peer connection.
  * @param {object} constraints WebRTC 'PeerConnection' constraints
  * @param {boolean} isP2P indicates whether or not the new instance will be used in a peer to peer connection.
  * @param {object} options <tt>TracablePeerConnection</tt> config options.
@@ -57,7 +57,7 @@ const SD_BITRATE = 700000;
  * @constructor
  */
 
-export default function TraceablePeerConnection(rtc, id, signalingLayer, iceConfig, constraints, isP2P, options) {
+export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfig, constraints, isP2P, options) {
   /**
    * Indicates whether or not this peer connection instance is actively
    * sending/receiving audio media. When set to <tt>false</tt> the SDP audio
@@ -205,7 +205,7 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, iceConf
     logger.warn('Optional param is not an array, rtcstats p2p data is omitted.');
   }
 
-  this.peerconnection = new RTCUtils.RTCPeerConnectionType(iceConfig, safeConstraints); // The standard video bitrates are used in Unified plan when switching
+  this.peerconnection = new RTCUtils.RTCPeerConnectionType(pcConfig, safeConstraints); // The standard video bitrates are used in Unified plan when switching
   // between camera/desktop tracks on the same sender.
 
   const standardVideoBitrates = {
@@ -1375,8 +1375,7 @@ TraceablePeerConnection.prototype.getLocalSSRC = function (localTrack) {
 
 TraceablePeerConnection.prototype._injectSsrcGroupForUnifiedSimulcast = function (desc) {
   const sdp = transform.parse(desc.sdp);
-  const video = sdp.media.find(mline => mline.type === 'video'); // Check if the browser supports RTX, add only the primary ssrcs to the
-  // SIM group if that is the case.
+  const video = sdp.media.find(mline => mline.type === 'video'); // Check if the browser supports RTX, add only the primary ssrcs to the SIM group if that is the case.
 
   video.ssrcGroups = video.ssrcGroups || [];
   const fidGroups = video.ssrcGroups.filter(group => group.semantics === 'FID');
@@ -1563,7 +1562,7 @@ TraceablePeerConnection.prototype._mungeCodecOrder = function (description) {
     // as soon as the browser switches to VP9.
 
 
-    if (this.codecPreference.mimeType === CodecMimeType.VP9) {
+    if (this.codecPreference.mimeType === CodecMimeType.VP9 && this.getConfiguredVideoCodec() === CodecMimeType.VP9) {
       const bitrates = this.videoBitrates.VP9 || this.videoBitrates;
       const hdBitrate = bitrates.high ? bitrates.high : HD_BITRATE;
       const limit = Math.floor((this._isSharingScreen() ? HD_BITRATE : hdBitrate) / 1000); // Use only the HD bitrate for now as there is no API available yet for configuring
