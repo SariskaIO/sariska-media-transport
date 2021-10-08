@@ -1647,7 +1647,9 @@ JitsiConference.prototype.getParticipants = function() {
  * conference.
  */
 JitsiConference.prototype.getParticipantsWithoutHidden = function() {
-    return this.getParticipants().filter(participant=>!participant._hidden);
+    let participants =  this.getParticipants().filter(participant=>!participant._hidden);
+    participants = participants.filter(participant=>!participant?._properties?.features_jigasi);
+    return participants;
 }
 
 /**
