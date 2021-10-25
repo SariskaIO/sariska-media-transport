@@ -471,8 +471,10 @@ export default class ChatRoom extends Listenable {
         member.isHiddenDomain
             = jid && jid.indexOf('@') > 0
                 && this.options.hiddenDomain && this.options.hiddenDomain.indexOf(jid.substring(jid.indexOf('@') + 1, jid.indexOf('/'))) >= 0;
-                   
-
+        const isTranscriber =  pres.getElementsByTagName('nick');
+        if (isTranscriber[0] && isTranscriber[0].innerHTML.toLowerCase() === "transcriber") {
+           member.isHiddenDomain  = true;
+        }
         this.eventEmitter.emit(XMPPEvents.PRESENCE_RECEIVED, {
             fromHiddenDomain: member.isHiddenDomain,
             presence: pres
