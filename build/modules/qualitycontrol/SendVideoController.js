@@ -51,11 +51,7 @@ export class SendVideoController {
       if (session === this.conference._getActiveMediaSession()) {
         this._propagateSendMaxFrameHeight();
       }
-    }); // Set the degradation preference on the local video track.
-
-    mediaSession.setSenderVideoDegradationPreference(); // Set the max bitrates on video sender if they are specified in config.js videoQuality settings.
-
-    mediaSession.setSenderMaxBitrates();
+    });
   }
   /**
    * Figures out the send video constraint as specified by {@link selectSendMaxFrameHeight} and sets it on all media

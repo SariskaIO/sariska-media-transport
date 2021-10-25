@@ -71,11 +71,11 @@ export class MockPeerConnection {
     return Promise.resolve();
   }
   /**
-   * {@link TraceablePeerConnection.setSenderVideoConstraint}.
+   * {@link TraceablePeerConnection.setSenderVideoConstraints}.
    */
 
 
-  setSenderVideoConstraint() {}
+  setSenderVideoConstraints() {}
   /**
    * {@link TraceablePeerConnection.setVideoTransferActive}.
    */

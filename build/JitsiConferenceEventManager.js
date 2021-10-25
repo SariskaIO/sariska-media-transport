@@ -98,6 +98,7 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
   });
   this.chatRoomForwarder.forward(XMPPEvents.SUBJECT_CHANGED, JitsiConferenceEvents.SUBJECT_CHANGED);
   this.chatRoomForwarder.forward(XMPPEvents.MUC_JOINED, JitsiConferenceEvents.CONFERENCE_JOINED);
+  this.chatRoomForwarder.forward(XMPPEvents.MUC_JOIN_IN_PROGRESS, JitsiConferenceEvents.CONFERENCE_JOIN_IN_PROGRESS);
   this.chatRoomForwarder.forward(XMPPEvents.MEETING_ID_SET, JitsiConferenceEvents.CONFERENCE_UNIQUE_ID_SET); // send some analytics events
 
   chatRoom.addListener(XMPPEvents.MUC_JOINED, () => {
@@ -216,6 +217,11 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
   chatRoom.addListener(XMPPEvents.MESSAGE_RECEIVED, // eslint-disable-next-line max-params
   (jid, txt, myJid, ts) => {
     const id = Strophe.getResourceFromJid(jid);
+
+    if (txt.indexOf("Transcript") || txt.indexOf("Fellow Jitser")) {
+      return;
+    }
+
     conference.eventEmitter.emit(JitsiConferenceEvents.MESSAGE_RECEIVED, id, txt, ts);
   });
   chatRoom.addListener(XMPPEvents.PRIVATE_MESSAGE_RECEIVED, // eslint-disable-next-line max-params

@@ -21,16 +21,16 @@ export default class BrowserCapabilities extends BrowserDetection {
     logger.info(`This appears to be ${this.getName()}, ver: ${this.getVersion()}`);
   }
   /**
-   * Tells whether or not the <tt>MediaStream/tt> is removed from
-   * the <tt>PeerConnection</tt> and disposed on video mute (in order to turn
-   * off the camera device).
-   * @return {boolean} <tt>true</tt> if the current browser supports this
-   * strategy or <tt>false</tt> otherwise.
+   * Tells whether or not the <tt>MediaStream/tt> is removed from the <tt>PeerConnection</tt> and disposed on video
+   * mute (in order to turn off the camera device). This is needed on Firefox because of the following bug
+   * https://bugzilla.mozilla.org/show_bug.cgi?id=1735951
+   *
+   * @return {boolean} <tt>true</tt> if the current browser supports this strategy or <tt>false</tt> otherwise.
    */
 
 
   doesVideoMuteByStreamRemove() {
-    return this.isChromiumBased() || this.isWebKitBased();
+    return this.isChromiumBased() || this.isWebKitBased() || this.isFirefox();
   }
   /**
    * Checks if the current browser is Chromium based, i.e., it's either Chrome / Chromium or uses it as its engine,
@@ -199,6 +199,16 @@ export default class BrowserCapabilities extends BrowserDetection {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1241066
     // For Chrome and others we rely on 'googRtt'.
     return !this.isFirefox();
+  }
+  /**
+   * Returns true if VP9 is supported by the client on the browser. VP9 is currently disabled on Firefox and Safari
+   * because of issues with rendering. Please check https://bugzilla.mozilla.org/show_bug.cgi?id=1492500,
+   * https://bugs.webkit.org/show_bug.cgi?id=231071 and https://bugs.webkit.org/show_bug.cgi?id=231074 for details.
+   */
+
+
+  supportsVP9() {
+    return this.isChromiumBased() || this.isReactNative();
   }
   /**
    * Checks if the browser uses SDP munging for turning on simulcast.

@@ -661,20 +661,39 @@ SDP.prototype.jingle2media = function (content) {
     }
   }); // XEP-0339 handle source attributes
 
+  let userSources = '';
+  let nonUserSources = '';
   desc.find('>source[xmlns="urn:xmpp:jingle:apps:rtp:ssma:0"]').each((_, source) => {
     const ssrc = source.getAttribute('ssrc');
+    let isUserSource = true;
+    let sourceStr = '';
     $(source).find('>parameter').each((__, parameter) => {
+      var _value;
+
       const name = parameter.getAttribute('name');
       let value = parameter.getAttribute('value');
       value = SDPUtil.filterSpecialChars(value);
-      sdp += `a=ssrc:${ssrc} ${name}`;
+      sourceStr += `a=ssrc:${ssrc} ${name}`;
 
       if (value && value.length) {
-        sdp += `:${value}`;
+        sourceStr += `:${value}`;
       }
 
-      sdp += '\r\n';
+      sourceStr += '\r\n';
+
+      if ((_value = value) === null || _value === void 0 ? void 0 : _value.includes('mixedmslabel')) {
+        isUserSource = false;
+      }
     });
-  });
+
+    if (isUserSource) {
+      userSources += sourceStr;
+    } else {
+      nonUserSources += sourceStr;
+    }
+  }); // The sdp-interop package is relying the mixedmslabel m line to be the first one in order to set the direction
+  // to sendrecv.
+
+  sdp += nonUserSources + userSources;
   return sdp;
 };

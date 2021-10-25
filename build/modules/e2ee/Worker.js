@@ -5,6 +5,7 @@
 import { Context } from './Context';
 const contexts = new Map(); // Map participant id => context
 
+let sharedContext;
 /**
  * Retrieves the participant {@code Context}, creating it if necessary.
  *
@@ -13,8 +14,12 @@ const contexts = new Map(); // Map participant id => context
  */
 
 function getParticipantContext(participantId) {
+  if (sharedContext) {
+    return sharedContext;
+  }
+
   if (!contexts.has(participantId)) {
-    contexts.set(participantId, new Context(participantId));
+    contexts.set(participantId, new Context());
   }
 
   return contexts.get(participantId);
@@ -46,7 +51,17 @@ onmessage = async event => {
     operation
   } = event.data;
 
-  if (operation === 'encode' || operation === 'decode') {
+  if (operation === 'initialize') {
+    const {
+      sharedKey
+    } = event.data;
+
+    if (sharedKey) {
+      sharedContext = new Context({
+        sharedKey
+      });
+    }
+  } else if (operation === 'encode' || operation === 'decode') {
     const {
       readableStream,
       writableStream,
@@ -72,6 +87,8 @@ onmessage = async event => {
       participantId
     } = event.data;
     contexts.delete(participantId);
+  } else if (operation === 'cleanupAll') {
+    contexts.clear();
   } else {
     console.error('e2ee worker', operation);
   }

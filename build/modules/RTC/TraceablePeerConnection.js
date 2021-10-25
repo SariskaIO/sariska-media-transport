@@ -20,15 +20,11 @@ import * as GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import JitsiRemoteTrack from './JitsiRemoteTrack';
 import RTC from './RTC';
 import RTCUtils from './RTCUtils';
-import { SIM_LAYER_RIDS, TPCUtils } from './TPCUtils'; // FIXME SDP tools should end up in some kind of util module
+import { HD_BITRATE, HD_SCALE_FACTOR, SIM_LAYER_RIDS, TPCUtils } from './TPCUtils'; // FIXME SDP tools should end up in some kind of util module
 
 const logger = getLogger(__filename);
 const DEGRADATION_PREFERENCE_CAMERA = 'maintain-framerate';
 const DEGRADATION_PREFERENCE_DESKTOP = 'maintain-resolution';
-const DESKTOP_SHARE_RATE = 500000;
-const HD_BITRATE = 2500000;
-const LD_BITRATE = 200000;
-const SD_BITRATE = 700000;
 /* eslint-disable max-params */
 
 /**
@@ -205,18 +201,8 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
     logger.warn('Optional param is not an array, rtcstats p2p data is omitted.');
   }
 
-  this.peerconnection = new RTCUtils.RTCPeerConnectionType(pcConfig, safeConstraints); // The standard video bitrates are used in Unified plan when switching
-  // between camera/desktop tracks on the same sender.
-
-  const standardVideoBitrates = {
-    low: LD_BITRATE,
-    standard: SD_BITRATE,
-    high: HD_BITRATE
-  }; // Check if the max. bitrates for video are specified through config.js videoQuality settings.
-  // These bitrates will be applied on all browsers for camera sources in both simulcast and p2p mode.
-
-  this.videoBitrates = this.options.videoQuality && this.options.videoQuality.maxBitratesVideo ? this.options.videoQuality.maxBitratesVideo : standardVideoBitrates;
-  this.tpcUtils = new TPCUtils(this, this.videoBitrates);
+  this.peerconnection = new RTCUtils.RTCPeerConnectionType(pcConfig, safeConstraints);
+  this.tpcUtils = new TPCUtils(this);
   this.updateLog = [];
   this.stats = {};
   this.statsinterval = null;
@@ -268,10 +254,11 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
   this.eventEmitter = rtc.eventEmitter;
   this.rtxModifier = new RtxModifier();
   /**
-   * The height constraint applied on the video sender.
+   * The height constraint applied on the video sender. The default value is 2160 (4K) when layer suspension is
+   * explicitly disabled.
    */
 
-  this.senderVideoMaxHeight = null; // override as desired
+  this._senderVideoMaxHeight = 2160; // override as desired
 
   this.trace = (what, info) => {
     logger.debug(what, info);
@@ -711,7 +698,7 @@ TraceablePeerConnection.prototype.getRemoteSourceInfoByParticipant = function (i
 
 TraceablePeerConnection.prototype.getTargetVideoBitrates = function () {
   const currentCodec = this.getConfiguredVideoCodec();
-  return this.videoBitrates[currentCodec.toUpperCase()] || this.videoBitrates;
+  return this.tpcUtils.videoBitrates[currentCodec.toUpperCase()] || this.tpcUtils.videoBitrates;
 };
 /**
  * Tries to find {@link JitsiTrack} for given SSRC number. It will search both
@@ -1507,7 +1494,7 @@ TraceablePeerConnection.prototype._getSSRC = function (rtcId) {
  */
 
 
-TraceablePeerConnection.prototype._isSharingLowFpsScreen = function () {
+TraceablePeerConnection.prototype.isSharingLowFpsScreen = function () {
   return this._isSharingScreen() && this._capScreenshareBitrate;
 };
 /**
@@ -1563,7 +1550,7 @@ TraceablePeerConnection.prototype._mungeCodecOrder = function (description) {
 
 
     if (this.codecPreference.mimeType === CodecMimeType.VP9 && this.getConfiguredVideoCodec() === CodecMimeType.VP9) {
-      const bitrates = this.videoBitrates.VP9 || this.videoBitrates;
+      const bitrates = this.tpcUtils.videoBitrates.VP9 || this.tpcUtils.videoBitrates;
       const hdBitrate = bitrates.high ? bitrates.high : HD_BITRATE;
       const limit = Math.floor((this._isSharingScreen() ? HD_BITRATE : hdBitrate) / 1000); // Use only the HD bitrate for now as there is no API available yet for configuring
       // the bitrates on the individual SVC layers.
@@ -1895,19 +1882,19 @@ TraceablePeerConnection.prototype.findSenderForTrack = function (track) {
  * <tt>oldTrack</tt> with a null <tt>newTrack</tt> effectively just removes
  * <tt>oldTrack</tt>
  *
- * @param {JitsiLocalTrack|null} oldTrack - The current track in use to be
- * replaced
- * @param {JitsiLocalTrack|null} newTrack - The new track to use
- * @returns {Promise<boolean>} - If the promise resolves with true,
- * renegotiation will be needed. Otherwise no renegotiation is needed.
+ * @param {JitsiLocalTrack|null} oldTrack - The current track in use to be replaced on the pc.
+ * @param {JitsiLocalTrack|null} newTrack - The new track to be used.
+ *
+ * @returns {Promise<boolean>} - If the promise resolves with true, renegotiation will be needed.
+ * Otherwise no renegotiation is needed.
  */
 
 
 TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
   if (this._usesUnifiedPlan) {
-    logger.debug(`${this} TPC.replaceTrack using unified plan`);
-    return this.tpcUtils.replaceTrack(oldTrack, newTrack) // Renegotiate when SDP is used for simulcast munging or when in p2p mode.
-    .then(() => this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() || this.isP2P);
+    logger.debug(`${this} TPC.replaceTrack using unified plan`); // Renegotiate only in the case of P2P. We rely on 'negotiationeeded' to be fired for JVB.
+
+    return this.tpcUtils.replaceTrack(oldTrack, newTrack).then(() => this.isP2P);
   }
 
   logger.debug(`${this} TPC.replaceTrack using plan B`);
@@ -2143,6 +2130,16 @@ TraceablePeerConnection.prototype._mungeOpus = function (description) {
     sdp: transform.write(parsedSdp)
   });
 };
+/**
+ * Configures the stream encodings depending on the video type and the bitrates configured.
+ *
+ * @returns {Promise} promise that will be resolved when the operation is successful and rejected otherwise.
+ */
+
+
+TraceablePeerConnection.prototype.configureSenderVideoEncodings = function () {
+  return this.setSenderVideoConstraints(this._senderVideoMaxHeight);
+};
 
 TraceablePeerConnection.prototype.setLocalDescription = function (description) {
   let localSdp = description;
@@ -2210,122 +2207,6 @@ TraceablePeerConnection.prototype.setAudioTransferActive = function (active) {
 
   return changed;
 };
-/**
- * Sets the degradation preference on the video sender. This setting determines if
- * resolution or framerate will be preferred when bandwidth or cpu is constrained.
- * Sets it to 'maintain-framerate' when a camera track is added to the pc, sets it
- * to 'maintain-resolution' when a desktop track is being shared instead.
- * @returns {Promise<void>}
- */
-
-
-TraceablePeerConnection.prototype.setSenderVideoDegradationPreference = function () {
-  if (!this.peerconnection.getSenders) {
-    logger.debug(`${this} Browser does not support RTCRtpSender`);
-    return Promise.resolve();
-  }
-
-  const localVideoTrack = this.getLocalVideoTrack();
-  const videoSender = this.findSenderByKind(MediaType.VIDEO);
-
-  if (!videoSender) {
-    return Promise.resolve();
-  }
-
-  const parameters = videoSender.getParameters();
-  const preference = this._isSharingLowFpsScreen() // Prefer resolution for low fps share.
-  ? DEGRADATION_PREFERENCE_DESKTOP // Prefer frame-rate for high fps share and camera.
-  : DEGRADATION_PREFERENCE_CAMERA;
-  logger.info(`${this} Setting a degradation preference [preference=${preference},track=${localVideoTrack}`);
-  parameters.degradationPreference = preference;
-  this.tpcUtils.updateEncodingsResolution(parameters);
-  return videoSender.setParameters(parameters);
-};
-/**
- * Sets the max bitrate on the RTCRtpSender so that the
- * bitrate of the enocder doesn't exceed the configured value.
- * This is needed for the desktop share until spec-complaint
- * simulcast is implemented.
- * @param {JitsiLocalTrack} localTrack - the local track whose
- * max bitrate is to be configured.
- * @returns {Promise<void>}
- */
-
-
-TraceablePeerConnection.prototype.setMaxBitRate = function () {
-  var _this$options, _this$options$videoQu, _parameters$encodings;
-
-  // For VP9, max bitrate is configured by setting b=AS value in SDP. Browsers do
-  // not yet support setting max bitrates for individual VP9 SVC layers.
-  if (this.getConfiguredVideoCodec() === CodecMimeType.VP9 || !window.RTCRtpSender) {
-    return Promise.resolve();
-  }
-
-  const localVideoTrack = this.getLocalVideoTrack();
-
-  if (!localVideoTrack) {
-    return Promise.resolve();
-  }
-
-  const videoType = localVideoTrack.getVideoType(); // Apply the maxbitrates on the video track when one of the conditions is met.
-  // 1. Max. bitrates for video are specified through videoQuality settings in config.js
-  // 2. Track is a low fps desktop track.
-  // 3. The client is running in Unified plan mode (the same sender is re-used for different types
-  // of tracks so bitrates have to be configured whenever the local tracks are replaced).
-
-  if (!(((_this$options = this.options) === null || _this$options === void 0 ? void 0 : (_this$options$videoQu = _this$options.videoQuality) === null || _this$options$videoQu === void 0 ? void 0 : _this$options$videoQu.maxBitratesVideo) || this._isSharingLowFpsScreen() || this._usesUnifiedPlan)) {
-    return Promise.resolve();
-  }
-
-  const presenterEnabled = localVideoTrack._originalStream && localVideoTrack._originalStream.id !== localVideoTrack.getStreamId();
-  const videoSender = this.findSenderByKind(MediaType.VIDEO);
-
-  if (!videoSender) {
-    return Promise.resolve();
-  }
-
-  const parameters = videoSender.getParameters();
-
-  if (!((_parameters$encodings = parameters.encodings) === null || _parameters$encodings === void 0 ? void 0 : _parameters$encodings.length)) {
-    return Promise.resolve();
-  }
-
-  if (this.isSimulcastOn()) {
-    for (const encoding in parameters.encodings) {
-      if (parameters.encodings.hasOwnProperty(encoding)) {
-        const bitrate = this._isSharingLowFpsScreen() // For low fps screensharing, set a max bitrate of 500 Kbps when presenter is not turned on.
-        // FIXME the top 'isSimulcastOn' condition is confusing for screensharing, because
-        // if capScreenshareBitrate option is enabled then simulcast is turned off for the stream.
-        ? presenterEnabled ? HD_BITRATE : DESKTOP_SHARE_RATE // For high fps screenshare, 'maxBitrate' setting must be cleared on Chrome, because if simulcast is
-        // enabled for screen and maxBitrates are set then Chrome will not send the desktop stream.
-        : videoType === VideoType.DESKTOP && browser.isChromiumBased() ? undefined : this.tpcUtils.localStreamEncodingsConfig[encoding].maxBitrate;
-        logger.info(`${this} Setting a max bitrate of ${bitrate} bps on layer ` + `${this.tpcUtils.localStreamEncodingsConfig[encoding].rid}`);
-        parameters.encodings[encoding].maxBitrate = bitrate;
-      }
-    }
-  } else {
-    var _this$getTargetVideoB;
-
-    // Do not change the max bitrate for desktop tracks in non-simulcast mode.
-    let bitrate = (_this$getTargetVideoB = this.getTargetVideoBitrates()) === null || _this$getTargetVideoB === void 0 ? void 0 : _this$getTargetVideoB.high;
-
-    if (videoType === VideoType.CAMERA) {
-      // Determine the bitrates based on the sender constraint applied for unicast tracks.
-      const scaleFactor = this.senderVideoMaxHeight ? Math.floor(localVideoTrack.resolution / this.senderVideoMaxHeight) : 1;
-      const encoding = this.tpcUtils.localStreamEncodingsConfig.find(layer => layer.scaleResolutionDownBy === scaleFactor);
-
-      if (encoding) {
-        logger.info(`${this} Setting max bitrate=${encoding.maxBitrate} bps on track=${localVideoTrack}`);
-        bitrate = encoding.maxBitrate;
-      }
-    }
-
-    parameters.encodings[0].maxBitrate = bitrate;
-  }
-
-  this.tpcUtils.updateEncodingsResolution(parameters);
-  return videoSender.setParameters(parameters);
-};
 
 TraceablePeerConnection.prototype.setRemoteDescription = function (description) {
   this.trace('setRemoteDescription::preTransform', dumpSDP(description));
@@ -2390,19 +2271,17 @@ TraceablePeerConnection.prototype.setRemoteDescription = function (description) 
   });
 };
 /**
- * Changes the resolution of the video stream that is sent to the peer based on
- * the user preferred value. If simulcast is enabled on the peerconection, all the
- * simulcast encodings that have a resolution height lower or equal to the value
- * provided will remain active. For the non-simulcast case, video constraint is
- * applied on the track.
- * @param {number} frameHeight - The user preferred max frame height.
- * @returns {Promise} promise that will be resolved when the operation is
- * successful and rejected otherwise.
+ * Changes the resolution of the video stream that is sent to the peer based on the resolution requested by the peer
+ * and user preference, sets the degradation preference on the sender based on the video type, configures the maximum
+ * bitrates on the send stream.
+ *
+ * @param {number} frameHeight - The max frame height to be imposed on the outgoing video stream.
+ * @returns {Promise} promise that will be resolved when the operation is successful and rejected otherwise.
  */
 
 
-TraceablePeerConnection.prototype.setSenderVideoConstraint = function (frameHeight = null) {
-  var _parameters$encodings2;
+TraceablePeerConnection.prototype.setSenderVideoConstraints = function (frameHeight) {
+  var _parameters$encodings;
 
   if (frameHeight < 0) {
     throw new Error(`Invalid frameHeight: ${frameHeight}`);
@@ -2411,19 +2290,9 @@ TraceablePeerConnection.prototype.setSenderVideoConstraint = function (frameHeig
 
   if (browser.isReactNative()) {
     return Promise.resolve();
-  } // Need to explicitly check for null as 0 is falsy, but a valid value
-
-
-  const newHeight = frameHeight === null ? this.senderVideoMaxHeight : frameHeight;
-  this.senderVideoMaxHeight = newHeight; // If layer suspension is disabled and sender constraint is not configured for the conference,
-  // resolve here so that the encodings stay enabled. This can happen in custom apps built using
-  // lib-jitsi-meet.
-
-  if (newHeight === null) {
-    return Promise.resolve();
   }
 
-  logger.log(`${this} senderVideoMaxHeight: ${newHeight}`);
+  this._senderVideoMaxHeight = frameHeight;
   const localVideoTrack = this.getLocalVideoTrack();
 
   if (!localVideoTrack || localVideoTrack.isMuted()) {
@@ -2438,57 +2307,69 @@ TraceablePeerConnection.prototype.setSenderVideoConstraint = function (frameHeig
 
   const parameters = videoSender.getParameters();
 
-  if (!(parameters === null || parameters === void 0 ? void 0 : (_parameters$encodings2 = parameters.encodings) === null || _parameters$encodings2 === void 0 ? void 0 : _parameters$encodings2.length)) {
+  if (!(parameters === null || parameters === void 0 ? void 0 : (_parameters$encodings = parameters.encodings) === null || _parameters$encodings === void 0 ? void 0 : _parameters$encodings.length)) {
     return Promise.resolve();
-  }
+  } // Set the degradation preference.
+
+
+  const preference = this.isSharingLowFpsScreen() ? DEGRADATION_PREFERENCE_DESKTOP // Prefer resolution for low fps share.
+  : DEGRADATION_PREFERENCE_CAMERA; // Prefer frame-rate for high fps share and camera.
+
+  parameters.degradationPreference = preference;
+  logger.info(`${this} Setting degradation preference [preference=${preference},track=${localVideoTrack}`); // Calculate the encodings active state based on the resolution requested by the bridge.
+
+  this.encodingsEnabledState = this.tpcUtils.calculateEncodingsActiveState(localVideoTrack, frameHeight);
+  const maxBitrates = this.tpcUtils.calculateEncodingsBitrates(localVideoTrack);
+  const videoType = localVideoTrack.getVideoType();
 
   if (this.isSimulcastOn()) {
-    // Determine the encodings that need to stay enabled based on the new frameHeight provided.
-    this.encodingsEnabledState = this.tpcUtils.getLocalStreamHeightConstraints(localVideoTrack.track).map(height => height <= newHeight); // Always keep the LD stream enabled, specifically when the LD stream's resolution is higher than of the
-    // requested resolution. This can happen when camera is captured at resolutions higher than 720p but the
-    // requested resolution is 180. Since getParameters doesn't give us information about the resolutions
-    // of the simulcast encodings, we have to rely on our initial config for the simulcast streams.
-
-    const ldStreamIndex = this.tpcUtils.localStreamEncodingsConfig.findIndex(layer => layer.scaleResolutionDownBy === 4.0);
-
-    if (newHeight > 0 && ldStreamIndex !== -1) {
-      this.encodingsEnabledState[ldStreamIndex] = true;
-    } // Disable the lower spatial layers for screensharing in Unified plan when low fps screensharing is in progress
-    // There is no way to enable or disable simulcast during the call since we are re-using the same sender.
-    // Safari is an exception here since it does not send the desktop stream at all if only the high resolution
-    // stream is enabled.
-
-
-    if (this._isSharingLowFpsScreen() && this._usesUnifiedPlan && !browser.isWebKitBased()) {
-      const highResolutionEncoding = browser.isFirefox() ? 0 : this.encodingsEnabledState.length - 1;
-      this.encodingsEnabledState = this.encodingsEnabledState.map((encoding, idx) => idx === highResolutionEncoding);
-    }
-
     for (const encoding in parameters.encodings) {
       if (parameters.encodings.hasOwnProperty(encoding)) {
-        parameters.encodings[encoding].active = this.encodingsEnabledState[encoding];
+        var _this$options, _this$options$videoQu;
+
+        parameters.encodings[encoding].active = this.encodingsEnabledState[encoding]; // Firefox doesn't follow the spec and lets application specify the degradation preference on the
+        // encodings.
+
+        browser.isFirefox() && (parameters.encodings[encoding].degradationPreference = preference); // Max bitrates are configured on the encodings only for VP8.
+
+        if (this.getConfiguredVideoCodec() === CodecMimeType.VP8 && (((_this$options = this.options) === null || _this$options === void 0 ? void 0 : (_this$options$videoQu = _this$options.videoQuality) === null || _this$options$videoQu === void 0 ? void 0 : _this$options$videoQu.maxBitratesVideo) || this.isSharingLowFpsScreen() || this._usesUnifiedPlan)) {
+          parameters.encodings[encoding].maxBitrate = maxBitrates[encoding];
+        }
       }
     }
 
-    this.tpcUtils.updateEncodingsResolution(parameters);
-  } else if (newHeight > 0) {
+    this.tpcUtils.updateEncodingsResolution(parameters); // For p2p and cases and where simulcast is explicitly disabled.
+  } else if (frameHeight > 0) {
+    var _this$options2, _this$options2$videoQ;
+
     // Do not scale down encodings for desktop tracks for non-simulcast case.
-    parameters.encodings[0].scaleResolutionDownBy = localVideoTrack.videoType === VideoType.DESKTOP || localVideoTrack.resolution <= newHeight ? 1 : Math.floor(localVideoTrack.resolution / newHeight);
+    const scaleFactor = videoType === VideoType.DESKTOP || localVideoTrack.resolution <= frameHeight ? HD_SCALE_FACTOR : Math.floor(localVideoTrack.resolution / frameHeight);
     parameters.encodings[0].active = true;
+    parameters.encodings[0].scaleResolutionDownBy = scaleFactor; // Firefox doesn't follow the spec and lets application specify the degradation preference on the encodings.
+
+    browser.isFirefox() && (parameters.encodings[0].degradationPreference = preference); // Configure the bitrate.
+
+    if (this.getConfiguredVideoCodec() === CodecMimeType.VP8 && ((_this$options2 = this.options) === null || _this$options2 === void 0 ? void 0 : (_this$options2$videoQ = _this$options2.videoQuality) === null || _this$options2$videoQ === void 0 ? void 0 : _this$options2$videoQ.maxBitratesVideo)) {
+      var _this$getTargetVideoB;
+
+      let bitrate = (_this$getTargetVideoB = this.getTargetVideoBitrates()) === null || _this$getTargetVideoB === void 0 ? void 0 : _this$getTargetVideoB.high;
+
+      if (videoType === VideoType.CAMERA) {
+        var _this$tpcUtils$localS, _this$tpcUtils$localS2;
+
+        bitrate = (_this$tpcUtils$localS = (_this$tpcUtils$localS2 = this.tpcUtils.localStreamEncodingsConfig.find(layer => layer.scaleResolutionDownBy === scaleFactor)) === null || _this$tpcUtils$localS2 === void 0 ? void 0 : _this$tpcUtils$localS2.maxBitrate) !== null && _this$tpcUtils$localS !== void 0 ? _this$tpcUtils$localS : bitrate;
+      }
+
+      parameters.encodings[0].maxBitrate = bitrate;
+    }
   } else {
-    parameters.encodings[0].scaleResolutionDownBy = undefined;
     parameters.encodings[0].active = false;
   }
 
-  logger.info(`${this} setting max height=${newHeight},encodings=${JSON.stringify(parameters.encodings)}`);
+  logger.info(`${this} setting max height=${frameHeight},encodings=${JSON.stringify(parameters.encodings)}`);
   return videoSender.setParameters(parameters).then(() => {
-    localVideoTrack.maxEnabledResolution = newHeight;
-    this.eventEmitter.emit(RTCEvents.LOCAL_TRACK_MAX_ENABLED_RESOLUTION_CHANGED, localVideoTrack); // Max bitrate needs to be reconfigured on the sender in p2p/non-simulcast case if needed when
-    // the send resolution changes.
-
-    if (this.isP2P || !this.isSimulcastOn()) {
-      return this.setMaxBitRate();
-    }
+    localVideoTrack.maxEnabledResolution = frameHeight;
+    this.eventEmitter.emit(RTCEvents.LOCAL_TRACK_MAX_ENABLED_RESOLUTION_CHANGED, localVideoTrack);
   });
 };
 /**
@@ -2689,7 +2570,7 @@ TraceablePeerConnection.prototype._createOfferOrAnswer = function (isOffer, cons
 
       const localVideoTrack = this.getLocalVideoTrack(); // Configure simulcast for camera tracks and for desktop tracks that need simulcast.
 
-      if (this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() && ((localVideoTrack === null || localVideoTrack === void 0 ? void 0 : localVideoTrack.getVideoType()) === VideoType.CAMERA || this._usesUnifiedPlan || !this._isSharingLowFpsScreen())) {
+      if (this.isSimulcastOn() && browser.usesSdpMungingForSimulcast() && ((localVideoTrack === null || localVideoTrack === void 0 ? void 0 : localVideoTrack.getVideoType()) === VideoType.CAMERA || this._usesUnifiedPlan || !this.isSharingLowFpsScreen())) {
         // eslint-disable-next-line no-param-reassign
         resultSdp = this.simulcast.mungeLocalDescription(resultSdp);
         this.trace(`create${logName}` + 'OnSuccess::postTransform (simulcast)', dumpSDP(resultSdp));
@@ -2888,7 +2769,7 @@ TraceablePeerConnection.prototype.generateNewStreamSSRCInfo = function (track) {
   } // Configure simulcast for camera tracks and desktop tracks that need simulcast.
 
 
-  if (this.isSimulcastOn() && (track.getVideoType() === VideoType.CAMERA || !this._isSharingLowFpsScreen())) {
+  if (this.isSimulcastOn() && (track.getVideoType() === VideoType.CAMERA || !this.isSharingLowFpsScreen())) {
     ssrcInfo = {
       ssrcs: [],
       groups: []

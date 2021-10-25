@@ -11,6 +11,7 @@ import JitsiTrackError from './JitsiTrackError';
 import * as JitsiTrackErrors from './JitsiTrackErrors';
 import * as JitsiTrackEvents from './JitsiTrackEvents';
 import authenticateAndUpgradeRole from './authenticateAndUpgradeRole';
+import { conferenceDefaultOptions } from './config';
 import { CodecSelection } from './modules/RTC/CodecSelection';
 import RTC from './modules/RTC/RTC';
 import { SS_DEFAULT_FRAME_RATE } from './modules/RTC/ScreenObtainer';
@@ -27,15 +28,16 @@ import VADTalkMutedDetection from './modules/detection/VADTalkMutedDetection';
 import { E2EEncryption } from './modules/e2ee/E2EEncryption';
 import E2ePing from './modules/e2eping/e2eping';
 import Jvb121EventGenerator from './modules/event/Jvb121EventGenerator';
+import { RecordingController } from './modules/local-recording';
 import { ReceiveVideoController } from './modules/qualitycontrol/ReceiveVideoController';
 import { SendVideoController } from './modules/qualitycontrol/SendVideoController';
 import RecordingManager from './modules/recording/RecordingManager';
 import Settings from './modules/settings/Settings';
 import AudioOutputProblemDetector from './modules/statistics/AudioOutputProblemDetector';
 import AvgRTPStatsReporter from './modules/statistics/AvgRTPStatsReporter';
+import LocalTracksDuration from './modules/statistics/LocalTracksDuration';
 import SpeakerStatsCollector from './modules/statistics/SpeakerStatsCollector';
 import Statistics from './modules/statistics/statistics';
-import LocalTracksDuration from './modules/statistics/LocalTracksDuration';
 import Transcriber from './modules/transcription/transcriber';
 import GlobalOnErrorHandler from './modules/util/GlobalOnErrorHandler';
 import RandomUtil from './modules/util/RandomUtil';
@@ -49,8 +51,6 @@ import * as MediaType from './service/RTC/MediaType';
 import VideoType from './service/RTC/VideoType';
 import { ACTION_JINGLE_RESTART, ACTION_JINGLE_SI_RECEIVED, ACTION_JINGLE_SI_TIMEOUT, ACTION_JINGLE_TERMINATE, ACTION_P2P_DECLINED, ACTION_P2P_ESTABLISHED, ACTION_P2P_FAILED, ACTION_P2P_SWITCH_TO_JVB, ICE_ESTABLISHMENT_DURATION_DIFF, createConferenceEvent, createJingleEvent, createP2PEvent } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
-import { conferenceDefaultOptions } from './config';
-import { RecordingController } from "./modules/local-recording";
 const logger = getLogger(__filename);
 window.APP = {
   conference: {}
@@ -264,8 +264,8 @@ export default function JitsiConference(options) {
   }
 
   if (options.config.iAmRecorder) {
-    this.removeCommand("userinfo");
-    this.sendCommand("userinfo", {
+    this.removeCommand('userinfo');
+    this.sendCommand('userinfo', {
       attributes: {
         xmlns: 'http://jitsi.org/jitmeet/userinfo',
         robot: true
@@ -273,7 +273,7 @@ export default function JitsiConference(options) {
     });
   }
 
-  var self = this;
+  const self = this;
   window.APP = {
     conference: {
       _room: this,
@@ -363,10 +363,9 @@ JitsiConference.prototype._init = function (options = {}) {
   this.receiveVideoController = new ReceiveVideoController(this, this.rtc);
   this.sendVideoController = new SendVideoController(this, this.rtc);
   this.participantConnectionStatus = new ParticipantConnectionStatusHandler(this.rtc, this, {
-    // Both these options are not public API, leaving it here only
-    // as an entry point through config for tuning up purposes.
-    // Default values should be adjusted as soon as optimal values
-    // are discovered.
+    // These options are not public API, leaving it here only as an entry point through config for tuning
+    // up purposes. Default values should be adjusted as soon as optimal values are discovered.
+    p2pRtcMuteTimeout: config._p2pConnStatusRtcMuteTimeout,
     rtcMuteTimeout: config._peerConnStatusRtcMuteTimeout,
     outOfLastNTimeout: config._peerConnStatusOutOfLastNTimeout
   });
@@ -1072,9 +1071,21 @@ JitsiConference.prototype._fireMuteChangeEvent = function (track) {
 
 
 JitsiConference.prototype._getInitialLocalTracks = function () {
-  // Always add the audio track on mobile Safari because of a known issue where audio playout doesn't happen
-  // if the user joins audio and video muted.
-  return this.getLocalTracks().filter(track => track.getType() === MediaType.AUDIO && (!this.isStartAudioMuted() || browser.isIosBrowser()) || track.getType() === MediaType.VIDEO && !this.isStartVideoMuted());
+  // Always add the audio track on certain platforms:
+  //  * Safari / WebKit: because of a known issue where audio playout doesn't happen
+  //    if the user joins audio and video muted.
+  //  * React Native: after iOS 15, if a user joins muted they won't be able to unmute.
+  return this.getLocalTracks().filter(track => {
+    const trackType = track.getType();
+
+    if (trackType === MediaType.AUDIO && (!this.isStartAudioMuted() || browser.isWebKitBased() || browser.isReactNative())) {
+      return true;
+    } else if (trackType === MediaType.VIDEO && !this.isStartVideoMuted()) {
+      return true;
+    }
+
+    return false;
+  });
 };
 /**
  * Clear JitsiLocalTrack properties and listeners.
@@ -1457,7 +1468,13 @@ JitsiConference.prototype.getParticipants = function () {
 
 
 JitsiConference.prototype.getParticipantsWithoutHidden = function () {
-  return this.getParticipants().filter(participant => !participant._hidden);
+  let participants = this.getParticipants().filter(participant => !participant._hidden);
+  participants = participants.filter(participant => {
+    var _participant$_propert;
+
+    return !(participant === null || participant === void 0 ? void 0 : (_participant$_propert = participant._properties) === null || _participant$_propert === void 0 ? void 0 : _participant$_propert.features_jigasi);
+  });
+  return participants;
 };
 /**
  * Returns the number of participants in the conference, including the local
@@ -1710,40 +1727,36 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
   }
 
   const participant = this.participants[id];
-  delete this.participants[id]; // Remove the ssrcs from the remote description.
 
   const mediaSessions = this._getMediaSessions();
 
-  const removePromises = [];
+  let tracksToBeRemoved = [];
 
   for (const session of mediaSessions) {
-    removePromises.push(session.removeRemoteStreamsOnLeave(id));
+    const remoteTracks = session.peerconnection.getRemoteTracks(id);
+    remoteTracks && (tracksToBeRemoved = [...tracksToBeRemoved, ...remoteTracks]); // Remove the ssrcs from the remote description and renegotiate.
+
+    session.removeRemoteStreamsOnLeave(id);
+  } // Fire the event before renegotiation is done so that the thumbnails can be removed immediately.
+
+
+  tracksToBeRemoved.forEach(track => {
+    this.eventEmitter.emit(JitsiConferenceEvents.TRACK_REMOVED, track);
+  });
+
+  if (participant) {
+    delete this.participants[id];
+    this.eventEmitter.emit(JitsiConferenceEvents.USER_LEFT, id, participant);
   }
 
-  Promise.allSettled(removePromises).then(results => {
-    let removedTracks = [];
-    results.map(result => result.value).forEach(value => {
-      if (value) {
-        removedTracks = removedTracks.concat(value);
-      }
-    });
-    removedTracks.forEach(track => {
-      this.eventEmitter.emit(JitsiConferenceEvents.TRACK_REMOVED, track);
-    }); // There can be no participant in case the member that left is focus.
+  if (this.room !== null) {
+    // Skip if we have left the room already.
+    this._maybeStartOrStopP2P(true
+    /* triggered by user left event */
+    );
 
-    if (participant) {
-      this.eventEmitter.emit(JitsiConferenceEvents.USER_LEFT, id, participant);
-    }
-
-    if (this.room !== null) {
-      // Skip if we have left the room already.
-      this._maybeStartOrStopP2P(true
-      /* triggered by user left event */
-      );
-
-      this._maybeClearSITimeout();
-    }
-  });
+    this._maybeClearSITimeout();
+  }
 };
 /* eslint-disable max-params */
 
@@ -2672,7 +2685,6 @@ JitsiConference.prototype.isConnectionInterrupted = function () {
 
 JitsiConference.prototype._onConferenceRestarted = function (session) {
   if (!session.isP2P && this.options.config.enableForcedReload) {
-    this.restartInProgress = true;
     this.eventEmitter.emit(JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.CONFERENCE_RESTARTED);
   }
 };
@@ -3495,6 +3507,18 @@ JitsiConference.prototype.toggleE2EE = function (enabled) {
   this._e2eEncryption.setEnabled(enabled);
 };
 /**
+ * Sets the key and index for End-to-End encryption.
+ *
+ * @param {CryptoKey} [keyInfo.encryptionKey] - encryption key.
+ * @param {Number} [keyInfo.index] - the index of the encryption key.
+ * @returns {void}
+ */
+
+
+JitsiConference.prototype.setMediaEncryptionKey = function (keyInfo) {
+  this._e2eEncryption.setEncryptionKey(keyInfo);
+};
+/**
  * Returns <tt>true</tt> if lobby support is enabled in the backend.
  *
  * @returns {boolean} whether lobby is supported in the backend.
@@ -3669,6 +3693,14 @@ JitsiConference.prototype.getLocalUser = function () {
     return this.user;
   }
 };
+/**
+ * Gets the local user when joined
+ */
+
+
+JitsiConference.prototype.terminate = function () {
+  this.sendCommand('terminate', {});
+};
 
 JitsiConference.prototype.handleSubtitles = function () {
   let pastMessage = {};
@@ -3681,9 +3713,11 @@ JitsiConference.prototype.handleSubtitles = function () {
       return;
     }
 
-    const translationLanguage = this.getLocalParticipantProperty("translation_language");
+    const translationLanguage = this.getLocalParticipantProperty('translation_language');
 
     try {
+      var _json$participant, _json$participant2;
+
       const transcriptMessageID = json.message_id;
       const participantName = json.participant.name;
       let newTranscriptMessage = {
@@ -3691,8 +3725,8 @@ JitsiConference.prototype.handleSubtitles = function () {
       };
 
       if (json.type === JSON_TYPE_TRANSLATION_RESULT && json.language === translationLanguage) {
-        newTranscriptMessage["final"] = json.text;
-        newTranscriptMessage["participantName"] = participantName;
+        newTranscriptMessage.final = json.text;
+        newTranscriptMessage.participantName = participantName;
       } else if (json.type === JSON_TYPE_TRANSCRIPTION_RESULT && !translationLanguage) {
         // Displays interim and final results without any translation if
         // translations are disabled.
@@ -3705,28 +3739,28 @@ JitsiConference.prototype.handleSubtitles = function () {
         if (pastMessage.transcriptMessageID === transcriptMessageID) {
           newTranscriptMessage = pastMessage;
         } else {
-          newTranscriptMessage["participantName"] = participantName;
+          newTranscriptMessage.participantName = participantName;
         } // If this is final result, update the state as a final result
         // and start a count down to remove the subtitle from the state
 
 
         if (!json.is_interim) {
-          newTranscriptMessage["final"] = text;
+          newTranscriptMessage.final = text;
         } else if (json.stability > 0.85) {
           // If the message has a high stability, we can update the
           // stable field of the state and remove the previously
           // unstable results
-          newTranscriptMessage["stable"] = text;
-          newTranscriptMessage["unstable"] = undefined;
+          newTranscriptMessage.stable = text;
+          newTranscriptMessage.unstable = undefined;
         } else {
           // Otherwise, this result has an unstable result, which we
           // add to the state. The unstable result will be appended
           // after the stable part.
-          newTranscriptMessage["unstable"] = text;
+          newTranscriptMessage.unstable = text;
         }
       }
 
-      let finalText = "";
+      let finalText = '';
 
       if (newTranscriptMessage.final) {
         finalText = newTranscriptMessage.final;
@@ -3737,7 +3771,7 @@ JitsiConference.prototype.handleSubtitles = function () {
       }
 
       pastMessage = newTranscriptMessage;
-      this.emitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, newTranscriptMessage.transcriptMessageID, newTranscriptMessage.participantName, finalText);
+      this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json === null || json === void 0 ? void 0 : (_json$participant = json.participant) === null || _json$participant === void 0 ? void 0 : _json$participant.identity_id, json === null || json === void 0 ? void 0 : (_json$participant2 = json.participant) === null || _json$participant2 === void 0 ? void 0 : _json$participant2.identity_name, finalText);
     } catch (error) {
       logger.error('Error occurred while updating transcriptions\n', error);
     }
@@ -3750,10 +3784,10 @@ JitsiConference.prototype.enableAnalytics = function () {
     let name = '',
         body = {};
 
-    if (typeof eventName === "string") {
+    if (typeof eventName === 'string') {
       name = eventName;
       body = payload;
-    } else if (typeof eventName === "object") {
+    } else if (typeof eventName === 'object') {
       name = eventName.name;
       body = eventName;
     }
@@ -3769,7 +3803,7 @@ JitsiConference.prototype.enableAnalytics = function () {
   });
 };
 
-JitsiConference.prototype.startLocalRecording = function (format = "ogg") {
+JitsiConference.prototype.startLocalRecording = function (format = 'ogg') {
   this.recordingController.startRecording(format);
 };
 

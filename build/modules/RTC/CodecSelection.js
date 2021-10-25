@@ -39,10 +39,9 @@ export class CodecSelection {
     this.jvbPreferredCodec = jvbCodec && this._isCodecSupported(jvbCodec) ? jvbCodec : CodecMimeType.VP8;
     this.p2pPreferredCodec = p2pCodec && this._isCodecSupported(p2pCodec) ? p2pCodec : CodecMimeType.VP8;
     logger.debug(`Codec preferences for the conference are JVB: ${this.jvbPreferredCodec},
-            P2P: ${this.p2pPreferredCodec}`); // Do not prefer VP9 on Firefox because of the following bug.
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1633876
+            P2P: ${this.p2pPreferredCodec}`);
 
-    if (browser.isFirefox() && this.jvbPreferredCodec === CodecMimeType.VP9) {
+    if (this.jvbPreferredCodec === CodecMimeType.VP9 && !browser.supportsVP9()) {
       this.jvbPreferredCodec = CodecMimeType.VP8;
     }
 
@@ -120,10 +119,9 @@ export class CodecSelection {
 
       for (const remote of remoteParticipants) {
         const peerMediaInfo = session.signalingLayer.getPeerMediaInfo(remote, MediaType.VIDEO);
-        const peerCodec = peerMediaInfo === null || peerMediaInfo === void 0 ? void 0 : peerMediaInfo.codecType; // We do not want Firefox to switch to VP9 because of the following bug.
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=1492500.
+        const peerCodec = peerMediaInfo === null || peerMediaInfo === void 0 ? void 0 : peerMediaInfo.codecType;
 
-        if (peerCodec && peerCodec !== currentCodec && !(browser.isFirefox() && peerCodec === CodecMimeType.VP9)) {
+        if (peerCodec && peerCodec !== currentCodec && (peerCodec !== CodecMimeType.VP9 || browser.supportsVP9())) {
           selectedCodec = peerCodec;
         }
       }

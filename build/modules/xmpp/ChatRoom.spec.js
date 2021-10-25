@@ -115,9 +115,10 @@ describe('ChatRoom', () => {
       const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns=\'http://jabber.org/protocol/muc#user\'>' + '<item jid=\'fulljid\'/>' + '</x>' + '<status>status-text</status>' + '</presence>';
       const pres = new DOMParser().parseFromString(presStr, 'text/xml').documentElement;
       room.onPresence(pres);
-      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.count()).toEqual(3);
       expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
-      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
+      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_JOIN_IN_PROGRESS]);
+      expect(emitterSpy.calls.argsFor(2)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
       null, // role
       false, // isHiddenDomain
       undefined, // statsID
@@ -129,8 +130,9 @@ describe('ChatRoom', () => {
       const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns="http://jabber.org/protocol/muc#user">' + '<item jid="jid=attr" affiliation="affiliation-attr" role="role-attr"/>' + '</x>' + '</presence>';
       const pres = new DOMParser().parseFromString(presStr, 'text/xml').documentElement;
       room.onPresence(pres);
-      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.count()).toEqual(3);
       expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
+      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_JOIN_IN_PROGRESS]);
       expect(emitterSpy).toHaveBeenCalledWith(XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
       'role-attr', // role
       jasmine.any(Boolean), // isHiddenDomain
@@ -142,8 +144,9 @@ describe('ChatRoom', () => {
       const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns="http://jabber.org/protocol/muc#user">' + '<item jid="jid=attr" affiliation="affiliation-attr" role="role-attr"/>' + '</x>' + '<flip_device />' + '</presence>';
       const pres = new DOMParser().parseFromString(presStr, 'text/xml').documentElement;
       room.onPresence(pres);
-      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.count()).toEqual(3);
       expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
+      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_JOIN_IN_PROGRESS]);
       expect(emitterSpy).toHaveBeenCalledWith(XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
       'role-attr', // role
       jasmine.any(Boolean), // isHiddenDomain
@@ -163,9 +166,10 @@ describe('ChatRoom', () => {
         group: 'group-text'
       };
       room.onPresence(pres);
-      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.count()).toEqual(3);
       expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
-      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
+      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_JOIN_IN_PROGRESS]);
+      expect(emitterSpy.calls.argsFor(2)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
       null, // role
       false, // isHiddenDomain
       undefined, // statsID
@@ -178,9 +182,10 @@ describe('ChatRoom', () => {
       const presStr = '' + '<presence to="tojid" from="fromjid">' + '<x xmlns=\'http://jabber.org/protocol/muc#user\'>' + '<item jid=\'fulljid\'/>' + '</x>' + '<status>status-text</status>' + `<bot type="${expectedBotType}"/>` + '</presence>';
       const pres = new DOMParser().parseFromString(presStr, 'text/xml').documentElement;
       room.onPresence(pres);
-      expect(emitterSpy.calls.count()).toEqual(2);
+      expect(emitterSpy.calls.count()).toEqual(3);
       expect(emitterSpy.calls.argsFor(0)).toEqual([XMPPEvents.PRESENCE_RECEIVED, jasmine.any(Object)]);
-      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
+      expect(emitterSpy.calls.argsFor(1)).toEqual([XMPPEvents.MUC_JOIN_IN_PROGRESS]);
+      expect(emitterSpy.calls.argsFor(2)).toEqual([XMPPEvents.MUC_MEMBER_JOINED, 'fromjid', undefined, // nick
       null, // role
       false, // isHiddenDomain
       undefined, // statsID

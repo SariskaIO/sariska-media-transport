@@ -112,6 +112,8 @@ const XMPPEvents = {
   MUC_MEMBER_BOT_TYPE_CHANGED: 'xmpp.muc_member_bot_type_changed',
   // Designates an event indicating that the XMPP MUC was destroyed.
   MUC_DESTROYED: 'xmpp.muc_destroyed',
+  // Designates an event indicating that we are currently in process of joining the XMPP MUC.
+  MUC_JOIN_IN_PROGRESS: 'xmpp.muc_join_in_progress',
   // Designates an event indicating that we have joined the XMPP MUC.
   MUC_JOINED: 'xmpp.muc_joined',
   // Designates an event indicating that a participant joined the XMPP MUC.
