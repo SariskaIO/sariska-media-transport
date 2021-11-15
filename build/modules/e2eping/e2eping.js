@@ -1,5 +1,4 @@
-/* global __filename */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
 import * as E2ePingEvents from '../../service/e2eping/E2ePingEvents';
 import { createE2eRttEvent } from '../../service/statistics/AnalyticsEvents';

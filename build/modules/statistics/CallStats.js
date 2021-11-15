@@ -2,7 +2,7 @@
 import browser from '../browser';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 
-const logger = require('jitsi-meet-logger').getLogger(__filename);
+const logger = require('@jitsi/logger').getLogger(__filename);
 /**
  * We define enumeration of wrtcFuncNames as we need them before
  * callstats is initialized to queue events.

@@ -1,39 +1,44 @@
-const process = require('process');
 const path = require('path');
+const process = require('process');
+const sharedConfig = require('./webpack-shared-config');
 
-const config = require('./webpack-shared-config');
+module.exports = (_env, argv) => {
+    // Despite what whe docs say calling webpack with no arguments results in mode not being set.
+    const mode = typeof argv.mode === 'undefined' ? 'production' : argv.mode;
+    const config
+        = sharedConfig(mode === 'production' /* minimize */, Boolean(process.env.ANALYZE_BUNDLE) /* analyzeBundle */);
 
-module.exports = [
-    Object.assign({}, config, {
-        entry: {
-            'sariska-media-transport': './src/index.js'
-        },
-        output: Object.assign({}, config.output, {
-            library: 'SariskaMediaTransport',
-            libraryTarget: 'umd'
-        })
-    }),
-    Object.assign({}, config, {
-        entry: {
-            'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
-        },
-        plugins: [
-            ...config.plugins,
-        ]
-    }),
-    {
-        entry: {
-            worker: './src/modules/e2ee/Worker.js'
-        },
-        mode: 'production',
-        output: {
-            filename: 'sariska-media-transport.e2ee-worker.js',
-            path: path.resolve(__dirname, 'dist')
-        },
-        optimization: {
-            minimize: false
+    return [
+        Object.assign({}, config, {
+            entry: {
+                'sariska-media-transport': './src/index.js'
+            },
+            output: Object.assign({}, config.output, {
+                library: 'SariskaMediaTransport',
+                libraryTarget: 'umd',
+                path: process.cwd()
+            })
+        }),
+        Object.assign({}, config, {
+            entry: {
+                'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
+            },
+            plugins: [
+                ...config.plugins,
+            ]
+        }),
+        {
+            entry: {
+                worker: './src/modules/e2ee/Worker.js'
+            },
+            mode,
+            output: {
+                filename: 'sariska-media-transport.e2ee-worker.js',
+                path: path.resolve(__dirname, 'dist')
+            },
+            optimization: {
+                minimize: false
+            }
         }
-    }
-];
-
-
+    ];
+};

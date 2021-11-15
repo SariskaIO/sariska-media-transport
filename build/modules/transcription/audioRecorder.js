@@ -1,4 +1,3 @@
-/* global MediaRecorder, MediaStream */
 const RecordingResult = require('./recordingResult');
 /**
  * Possible audio formats MIME types

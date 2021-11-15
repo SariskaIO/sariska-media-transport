@@ -1,5 +1,5 @@
-/* global $, __filename */
-import { getLogger } from 'jitsi-meet-logger';
+/* global $ */
+import { getLogger } from '@jitsi/logger';
 import isEqual from 'lodash.isequal';
 import { $iq, $msg, $pres, Strophe } from 'strophe.js';
 import * as JitsiTranscriptionStatus from '../../JitsiTranscriptionStatus';
@@ -68,7 +68,7 @@ export const parser = {
  * @param nodeName the name of the node (videomuted, audiomuted, etc)
  */
 
-function filterNodeFromPresenceJSON(pres, nodeName) {
+export function filterNodeFromPresenceJSON(pres, nodeName) {
   const res = [];
 
   for (let i = 0; i < pres.length; i++) {
@@ -87,7 +87,6 @@ function filterNodeFromPresenceJSON(pres, nodeName) {
  * Array of affiliations that are allowed in members only room.
  * @type {string[]}
  */
-
 
 const MEMBERS_AFFILIATIONS = ['owner', 'admin', 'member'];
 /**
@@ -1564,6 +1563,16 @@ export default class ChatRoom extends Listenable {
     }
 
     return data;
+  }
+  /**
+   * Returns the last presence advertised by a MUC member.
+   * @param {string} mucNick
+   * @returns {*}
+   */
+
+
+  getLastPresence(mucNick) {
+    return this.lastPresences[`${this.roomjid}/${mucNick}`];
   }
   /**
    * Returns true if the SIP calls are supported and false otherwise

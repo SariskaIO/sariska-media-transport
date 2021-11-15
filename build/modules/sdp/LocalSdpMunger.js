@@ -1,7 +1,7 @@
-/* global __filename */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import MediaDirection from '../../service/RTC/MediaDirection';
 import * as MediaType from '../../service/RTC/MediaType';
+import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import VideoType from '../../service/RTC/VideoType';
 import FeatureFlags from '../flags/FeatureFlags';
 import { SdpTransformWrap } from './SdpTransformUtil';
@@ -346,12 +346,11 @@ export default class LocalSdpMunger {
       const nameExists = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'name');
 
       if (!nameExists) {
-        const firstLetterOfMediaType = mediaType.substring(0, 1); // Inject source names as a=ssrc:3124985624 name:endpointA-v0
-
+        // Inject source names as a=ssrc:3124985624 name:endpointA-v0
         mediaSection.ssrcs.push({
           id: source,
           attribute: 'name',
-          value: `${this.localEndpointId}-${firstLetterOfMediaType}0`
+          value: getSourceNameForJitsiTrack(this.localEndpointId, mediaType, 0)
         });
       }
     }

@@ -1,5 +1,6 @@
-/* global $, $build, __filename */
-import { getLogger } from 'jitsi-meet-logger';
+/* global $ */
+import { getLogger } from '@jitsi/logger';
+import { $build } from 'strophe.js';
 import * as MediaType from '../../service/RTC/MediaType';
 import FeatureFlags from '../flags/FeatureFlags';
 const logger = getLogger(__filename);

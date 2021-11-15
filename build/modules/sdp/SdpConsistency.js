@@ -1,5 +1,4 @@
-/* global __filename */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import { parsePrimarySSRC, parseSecondarySSRC, SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);
 /**

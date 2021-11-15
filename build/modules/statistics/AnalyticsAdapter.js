@@ -1,4 +1,4 @@
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import { TYPE_OPERATIONAL, TYPE_PAGE, TYPE_TRACK, TYPE_UI } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';
 const MAX_CACHE_SIZE = 100; // eslist-disable-line no-undef

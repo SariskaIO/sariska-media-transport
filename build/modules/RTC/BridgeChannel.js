@@ -1,4 +1,4 @@
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import { createBridgeChannelClosedEvent } from '../../service/statistics/AnalyticsEvents';
 import Statistics from '../statistics/statistics';
@@ -278,6 +278,7 @@ export default class BridgeChannel {
    * Sends a 'VideoTypeMessage' message via the bridge channel.
    *
    * @param {string} videoType 'camera', 'desktop' or 'none'.
+   * @deprecated to be replaced with sendSourceVideoTypeMessage
    */
 
 
@@ -286,6 +287,24 @@ export default class BridgeChannel {
 
     this._send({
       colibriClass: 'VideoTypeMessage',
+      videoType
+    });
+  }
+  /**
+   * Sends a 'VideoTypeMessage' message via the bridge channel.
+   *
+   * @param {BridgeVideoType} videoType - the video type.
+   * @param {SourceName} sourceName - the source name of the video track.
+   * @returns {void}
+   */
+
+
+  sendSourceVideoTypeMessage(sourceName, videoType) {
+    logger.info(`Sending SourceVideoTypeMessage with video type ${sourceName}: ${videoType}`);
+
+    this._send({
+      colibriClass: 'SourceVideoTypeMessage',
+      sourceName,
       videoType
     });
   }

@@ -1,5 +1,5 @@
-/* global __filename, $ */
-import { getLogger } from 'jitsi-meet-logger';
+/* global $ */
+import { getLogger } from '@jitsi/logger';
 import { $iq, Strophe } from 'strophe.js';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
 import MediaDirection from '../../service/RTC/MediaDirection';
@@ -17,7 +17,6 @@ import browser from './../browser';
 import JingleSession from './JingleSession';
 import * as JingleSessionState from './JingleSessionState';
 import MediaSessionEvents from './MediaSessionEvents';
-import SignalingLayerImpl from './SignalingLayerImpl';
 import XmppConnection from './XmppConnection';
 const logger = getLogger(__filename);
 /**
@@ -243,12 +242,6 @@ export default class JingleSessionPC extends JingleSession {
 
     this.remoteRecvMaxFrameHeight = undefined;
     /**
-     * The signaling layer implementation.
-     * @type {SignalingLayerImpl}
-     */
-
-    this.signalingLayer = new SignalingLayerImpl();
-    /**
      * The queue used to serialize operations done on the peerconnection.
      *
      * @type {AsyncQueue}
@@ -358,7 +351,7 @@ export default class JingleSessionPC extends JingleSession {
       pcOptions.startSilent = true;
     }
 
-    this.peerconnection = this.rtc.createPeerConnection(this.signalingLayer, this.pcConfig, this.isP2P, pcOptions);
+    this.peerconnection = this.rtc.createPeerConnection(this._signalingLayer, this.pcConfig, this.isP2P, pcOptions);
 
     this.peerconnection.onicecandidate = ev => {
       if (!ev) {
@@ -565,10 +558,7 @@ export default class JingleSessionPC extends JingleSession {
           }
         });
       }
-    }; // The signaling layer will bind it's listeners at this point
-
-
-    this.signalingLayer.setChatRoom(this.room);
+    };
   }
   /**
    * Remote preference for receive video max frame height.
@@ -799,7 +789,7 @@ export default class JingleSessionPC extends JingleSession {
 
       if (this.isP2P) {
         // In P2P all SSRCs are owner by the remote peer
-        this.signalingLayer.setSSRCOwner(ssrc, Strophe.getResourceFromJid(this.remoteJid));
+        this._signalingLayer.setSSRCOwner(ssrc, Strophe.getResourceFromJid(this.remoteJid));
       } else {
         $(ssrcElement).find('>ssrc-info[xmlns="http://jitsi.org/jitmeet"]').each((i3, ssrcInfoElement) => {
           const owner = ssrcInfoElement.getAttribute('owner');
@@ -808,7 +798,7 @@ export default class JingleSessionPC extends JingleSession {
             if (isNaN(ssrc) || ssrc < 0) {
               logger.warn(`${this} Invalid SSRC ${ssrc} value received for ${owner}`);
             } else {
-              this.signalingLayer.setSSRCOwner(ssrc, getEndpointId(owner));
+              this._signalingLayer.setSSRCOwner(ssrc, getEndpointId(owner));
             }
           }
         });
@@ -2023,11 +2013,12 @@ export default class JingleSessionPC extends JingleSession {
       operationPromise.then(shouldRenegotiate => {
         if (shouldRenegotiate && oldLocalSDP && tpc.remoteDescription.sdp) {
           this._renegotiate().then(() => {
-            // The results are ignored, as this check failure is not
-            // enough to fail the whole operation. It will log
-            // an error inside.
-            this._verifyNoSSRCChanged(operationName, new SDP(oldLocalSDP));
+            // The results are ignored, as this check failure is not enough to fail the whole
+            // operation. It will log an error inside for plan-b.
+            !this.usesUnifiedPlan && this._verifyNoSSRCChanged(operationName, new SDP(oldLocalSDP));
+            const newLocalSdp = tpc.localDescription.sdp; // Signal the ssrc if an unmute operation results in a new ssrc being generated.
 
+            this.notifyMySSRCUpdate(new SDP(oldLocalSDP), new SDP(newLocalSdp));
             finishedCallback();
           });
         } else {
@@ -2344,9 +2335,7 @@ export default class JingleSessionPC extends JingleSession {
     this.modificationQueue.clear();
     logger.debug(`${this} Queued PC close task`);
     this.modificationQueue.push(finishCallback => {
-      // The signaling layer will remove it's listeners
-      this.signalingLayer.setChatRoom(null); // do not try to close if already closed.
-
+      // do not try to close if already closed.
       this.peerconnection && this.peerconnection.close();
       finishCallback();
       logger.debug(`${this} PC close task done!`);

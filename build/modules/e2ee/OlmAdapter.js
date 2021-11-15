@@ -1,6 +1,6 @@
-/* global __filename, Olm */
+/* global Olm */
+import { getLogger } from '@jitsi/logger';
 import base64js from 'base64-js';
-import { getLogger } from 'jitsi-meet-logger';
 import isEqual from 'lodash.isequal';
 import { v4 as uuidv4 } from 'uuid';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
@@ -87,9 +87,7 @@ export class OlmAdapter extends Listenable {
       const localParticipantId = this._conf.myUserId();
 
       for (const participant of this._conf.getParticipants()) {
-        const participantFeatures = await participant.getFeatures();
-
-        if (participantFeatures.has(FEATURE_E2EE) && localParticipantId < participant.getId()) {
+        if (participant.hasFeature(FEATURE_E2EE) && localParticipantId < participant.getId()) {
           promises.push(this._sendSessionInit(participant));
         }
       }

@@ -1,5 +1,5 @@
-/* global __filename, RTCRtpScriptTransform */
-import { getLogger } from 'jitsi-meet-logger';
+/* global RTCRtpScriptTransform */
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger(__filename); // Flag to set on senders / receivers to avoid setting up the encryption transform
 // more than once.
 
@@ -37,12 +37,20 @@ export default class E2EEcontext {
     // synchronously load the JS.
 
 
-    const workerUrl = `${baseUrl}sriska-media-transport.e2ee-worker.js`;
-    const workerBlob = new Blob([`importScripts("${workerUrl}");`], {
-      type: 'application/javascript'
-    });
-    const blobUrl = window.URL.createObjectURL(workerBlob);
-    this._worker = new Worker(blobUrl, {
+    const workerUrl = `${baseUrl}sariska-media-transport.e2ee-worker.js`; // If there is no baseUrl then we create the worker in a normal way
+    // as you cant load scripts inside blobs from relative paths.
+    // See: https://www.html5rocks.com/en/tutorials/workers/basics/#toc-inlineworkers-loadingscripts
+
+    if (baseUrl && baseUrl !== '/') {
+      // Initialize the E2EE worker. In order to avoid CORS issues, start the worker and have it
+      // synchronously load the JS.
+      const workerBlob = new Blob([`importScripts("${workerUrl}");`], {
+        type: 'application/javascript'
+      });
+      workerUrl = window.URL.createObjectURL(workerBlob);
+    }
+
+    this._worker = new Worker(workerUrl, {
       name: 'E2EE Worker'
     });
 

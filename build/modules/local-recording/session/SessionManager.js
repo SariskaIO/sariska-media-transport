@@ -2,7 +2,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 import Bourne from '@hapi/bourne';
 import { jitsiLocalStorage } from '@jitsi/js-utils';
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger(__filename);
 /**
  * Gets high precision system time.

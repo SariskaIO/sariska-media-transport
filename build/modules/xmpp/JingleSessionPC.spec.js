@@ -38,6 +38,8 @@ describe('JingleSessionPC', () => {
     new MockChatRoom(),
     /* RTC */
     rtc,
+    /* Signaling layer */
+    {},
     /* options */
     {}); // eslint-disable-next-line no-empty-function
     // connection.connect('jid', undefined, () => { }); */

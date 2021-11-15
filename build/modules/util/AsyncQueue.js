@@ -1,6 +1,5 @@
-/* global __filename */
+import { getLogger } from '@jitsi/logger';
 import async from 'async';
-import { getLogger } from 'jitsi-meet-logger';
 const logger = getLogger(__filename);
 /**
  * A queue for async task execution.

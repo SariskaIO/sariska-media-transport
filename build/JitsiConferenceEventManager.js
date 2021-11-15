@@ -1,5 +1,4 @@
-/* global __filename */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import { Strophe } from 'strophe.js';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';

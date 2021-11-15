@@ -1,6 +1,5 @@
-/* global __filename, RTCSessionDescription */
+import { getLogger } from '@jitsi/logger';
 import { Interop } from '@jitsi/sdp-interop';
-import { getLogger } from 'jitsi-meet-logger';
 import transform from 'sdp-transform';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
 import MediaDirection from '../../service/RTC/MediaDirection';
@@ -1609,18 +1608,21 @@ TraceablePeerConnection.prototype.addTrack = function (track, isInitiator = fals
   }
 
   this.localTracks.set(rtcId, track);
+  const webrtcStream = track.getOriginalStream();
 
   if (this._usesUnifiedPlan) {
-    try {
-      this.tpcUtils.addTrack(track, isInitiator);
-    } catch (error) {
-      logger.error(`${this} Adding track=${track} failed: ${error === null || error === void 0 ? void 0 : error.message}`);
-      return Promise.reject(error);
+    logger.debug(`${this} TPC.addTrack using unified plan`);
+
+    if (webrtcStream) {
+      try {
+        this.tpcUtils.addTrack(track, isInitiator);
+      } catch (error) {
+        logger.error(`${this} Adding track=${track} failed: ${error === null || error === void 0 ? void 0 : error.message}`);
+        return Promise.reject(error);
+      }
     }
   } else {
     // Use addStream API for the plan-b case.
-    const webrtcStream = track.getOriginalStream();
-
     if (webrtcStream) {
       this._addStream(webrtcStream); // It's not ok for a track to not have a WebRTC stream if:
 
@@ -1655,15 +1657,15 @@ TraceablePeerConnection.prototype.addTrack = function (track, isInitiator = fals
   let promiseChain = Promise.resolve(); // On Firefox, the encodings have to be configured on the sender only after the transceiver is created.
 
   if (browser.isFirefox()) {
-    promiseChain = promiseChain.then(() => this.tpcUtils.setEncodings(track));
+    promiseChain = promiseChain.then(() => webrtcStream && this.tpcUtils.setEncodings(track));
   }
 
   return promiseChain;
 };
 /**
  * Adds local track as part of the unmute operation.
- * @param {JitsiLocalTrack} track the track to be added as part of the unmute
- * operation
+ * @param {JitsiLocalTrack} track the track to be added as part of the unmute operation.
+ *
  * @return {Promise<boolean>} Promise that resolves to true if the underlying PeerConnection's
  * state has changed and renegotiation is required, false if no renegotiation is needed or
  * Promise is rejected when something goes wrong.
@@ -1671,12 +1673,13 @@ TraceablePeerConnection.prototype.addTrack = function (track, isInitiator = fals
 
 
 TraceablePeerConnection.prototype.addTrackUnmute = function (track) {
+  logger.info(`${this} Adding track=${track} as unmute`);
+
   if (!this._assertTrackBelongs('addTrackUnmute', track)) {
     // Abort
     return Promise.reject('Track not found on the peerconnection');
   }
 
-  logger.info(`${this} Adding track=${track} as unmute`);
   const webRtcStream = track.getOriginalStream();
 
   if (!webRtcStream) {
@@ -1685,7 +1688,7 @@ TraceablePeerConnection.prototype.addTrackUnmute = function (track) {
   }
 
   if (this._usesUnifiedPlan) {
-    return this.tpcUtils.addTrackUnmute(track);
+    return this.tpcUtils.replaceTrack(null, track).then(() => this.isP2P);
   }
 
   this._addStream(webRtcStream);
@@ -1728,7 +1731,7 @@ TraceablePeerConnection.prototype._removeStream = function (mediaStream) {
 
 
 TraceablePeerConnection.prototype._assertTrackBelongs = function (methodName, localTrack) {
-  const doesBelong = this.localTracks.has(localTrack.rtcId);
+  const doesBelong = this.localTracks.has(localTrack === null || localTrack === void 0 ? void 0 : localTrack.rtcId);
 
   if (!doesBelong) {
     logger.error(`${this} ${methodName}: track=${localTrack} does not belong to pc`);
@@ -1891,10 +1894,36 @@ TraceablePeerConnection.prototype.findSenderForTrack = function (track) {
 
 
 TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
-  if (this._usesUnifiedPlan) {
-    logger.debug(`${this} TPC.replaceTrack using unified plan`); // Renegotiate only in the case of P2P. We rely on 'negotiationeeded' to be fired for JVB.
+  if (!(oldTrack || newTrack)) {
+    logger.info(`${this} replaceTrack called with no new track and no old track`);
+    return Promise.resolve();
+  }
 
-    return this.tpcUtils.replaceTrack(oldTrack, newTrack).then(() => this.isP2P);
+  if (this._usesUnifiedPlan) {
+    var _newTrack$getType;
+
+    logger.debug(`${this} TPC.replaceTrack using unified plan`);
+    const mediaType = (_newTrack$getType = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getType()) !== null && _newTrack$getType !== void 0 ? _newTrack$getType : oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.getType();
+    const stream = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getOriginalStream();
+    const promise = newTrack && !stream // Ignore cases when the track is replaced while the device is in a muted state.
+    // The track will be replaced again on the peerconnection when the user unmutes.
+    ? Promise.resolve() : this.tpcUtils.replaceTrack(oldTrack, newTrack);
+    const transceiver = this.tpcUtils.findTransceiver(mediaType, oldTrack);
+    return promise.then(() => {
+      oldTrack && this.localTracks.delete(oldTrack.rtcId);
+      newTrack && this.localTracks.set(newTrack.rtcId, newTrack);
+
+      if (transceiver) {
+        // Set the transceiver direction.
+        transceiver.direction = newTrack ? MediaDirection.SENDRECV : MediaDirection.RECVONLY;
+      } // Avoid configuring the encodings on Chromium/Safari until simulcast is configured
+      // for the newly added track using SDP munging which happens during the renegotiation.
+
+
+      const configureEncodingsPromise = browser.usesSdpMungingForSimulcast() || !newTrack ? Promise.resolve() : this.tpcUtils.setEncodings(newTrack); // Renegotiate only in the case of P2P. We rely on 'negotiationeeded' to be fired for JVB.
+
+      return configureEncodingsPromise.then(() => this.isP2P);
+    });
   }
 
   logger.debug(`${this} TPC.replaceTrack using plan B`);
@@ -1930,7 +1959,7 @@ TraceablePeerConnection.prototype.removeTrackMute = function (localTrack) {
   }
 
   if (this._usesUnifiedPlan) {
-    return this.tpcUtils.removeTrackMute(localTrack);
+    return this.tpcUtils.replaceTrack(localTrack, null);
   }
 
   if (webRtcStream) {

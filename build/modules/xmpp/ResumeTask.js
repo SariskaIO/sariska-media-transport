@@ -1,4 +1,4 @@
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import { default as NetworkInfo, NETWORK_INFO_EVENT } from '../connectivity/NetworkInfo';
 import { getJitterDelay } from '../util/Retry';
 const logger = getLogger(__filename);

@@ -1,4 +1,3 @@
-/* global */
 import Listenable from '../util/Listenable';
 import { nextTick } from '../util/TestUtils';
 import IceFailedHandling from './IceFailedHandling';

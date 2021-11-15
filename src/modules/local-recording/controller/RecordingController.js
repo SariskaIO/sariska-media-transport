@@ -1,7 +1,7 @@
 /* @flow */
 
 import Bourne from '@hapi/bourne';
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger(__filename);
 
 import {

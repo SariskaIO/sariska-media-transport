@@ -1,6 +1,7 @@
+import Logger from '@jitsi/logger';
 /* global __filename */
+
 import './dom/jquery.js';
-import Logger from 'jitsi-meet-logger';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import JitsiConnection from './JitsiConnection';
@@ -168,23 +169,6 @@ export default _mergeNamespaceAndModule({
 
     if (options.enableWindowOnErrorHandler) {
       GlobalOnErrorHandler.addHandler(this.getGlobalOnErrorHandler.bind(this));
-    } // Log deployment-specific information, if available. Defined outside
-    // the application by individual deployments
-
-
-    const aprops = options.deploymentInfo;
-
-    if (aprops && Object.keys(aprops).length > 0) {
-      const logObject = {};
-
-      for (const attr in aprops) {
-        if (aprops.hasOwnProperty(attr)) {
-          logObject[attr] = aprops[attr];
-        }
-      }
-
-      logObject.id = 'deployment_info';
-      Statistics.sendLog(JSON.stringify(logObject));
     }
 
     if (this.version) {

@@ -1,5 +1,4 @@
-/* global __filename, Promise */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import JitsiTrackError from '../../JitsiTrackError';
 import { TRACK_IS_DISPOSED, TRACK_NO_STREAM_FOUND } from '../../JitsiTrackErrors';
 import { LOCAL_TRACK_STOPPED, NO_DATA_FROM_SOURCE, TRACK_MUTE_CHANGED } from '../../JitsiTrackEvents';
@@ -62,12 +61,23 @@ export default class JitsiLocalTrack extends JitsiTrack {
     if (effect) {
       this._startStreamEffect(effect);
     }
+
+    const displaySurface = videoType === VideoType.DESKTOP ? track.getSettings().displaySurface : null;
+    /**
+     * Track metadata.
+     */
+
+    this.metadata = {
+      timestamp: Date.now(),
+      ...(displaySurface ? {
+        displaySurface
+      } : {})
+    };
     /**
      * The ID assigned by the RTC module on instance creation.
      *
      * @type {number}
      */
-
 
     this.rtcId = rtcId;
     this.sourceId = sourceId;
@@ -163,6 +173,16 @@ export default class JitsiLocalTrack extends JitsiTrack {
     RTCUtils.addListener(RTCEvents.DEVICE_LIST_WILL_CHANGE, this._onDeviceListWillChange);
 
     this._initNoDataFromSourceHandlers();
+  }
+  /**
+   * Get the duration of the track.
+   *
+   * @returns {Number} the duration of the track in seconds
+   */
+
+
+  getDuration() {
+    return Date.now() / 1000 - this.metadata.timestamp / 1000;
   }
   /**
    * Returns if associated MediaStreamTrack is in the 'ended' state
@@ -600,8 +620,8 @@ export default class JitsiLocalTrack extends JitsiTrack {
 
 
   _sendMuteStatus(mute) {
-    if (this.conference && this.conference.room) {
-      this.conference.room[this.isAudioTrack() ? 'setAudioMute' : 'setVideoMute'](mute);
+    if (this.conference) {
+      this.conference._setTrackMuteStatus(this, mute) && this.conference.room.sendPresence();
     }
   }
   /**

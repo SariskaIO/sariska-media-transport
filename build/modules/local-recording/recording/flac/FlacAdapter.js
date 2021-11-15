@@ -1,6 +1,6 @@
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger(__filename);
 import { AbstractAudioContextAdapter } from '../AbstractAudioContextAdapter';
 import { DEBUG, MAIN_THREAD_FINISH, MAIN_THREAD_INIT, MAIN_THREAD_NEW_DATA_ARRIVED, WORKER_BLOB_READY, WORKER_LIBFLAC_READY } from './messageTypes';

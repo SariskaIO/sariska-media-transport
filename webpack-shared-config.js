@@ -3,6 +3,7 @@ const path = require('path');
 const process = require('process');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const { ProvidePlugin } = require('webpack');
+const webpack = require('webpack');
 
 module.exports = (minimize, analyzeBundle) => {
    return {
@@ -77,8 +78,8 @@ module.exports = (minimize, analyzeBundle) => {
         },
         performance: {
             hints: minimize ? 'error' : false,
-            maxAssetSize: 750 * 1024,
-            maxEntrypointSize: 750 * 1024
+            maxAssetSize: 800 * 1024,
+            maxEntrypointSize: 800 * 1024
         },
         plugins: [
             new webpack.ProvidePlugin({

@@ -1,5 +1,4 @@
-/* global __filename */
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import isEqual from 'lodash.isequal';
 import * as ConferenceEvents from '../../JitsiConferenceEvents';
 import * as MediaType from '../../service/RTC/MediaType';

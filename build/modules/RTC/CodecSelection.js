@@ -1,4 +1,4 @@
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
 import CodecMimeType from '../../service/RTC/CodecMimeType';
 import * as MediaType from '../../service/RTC/MediaType';
@@ -118,7 +118,8 @@ export class CodecSelection {
       const remoteParticipants = this.conference.getParticipants().map(participant => participant.getId());
 
       for (const remote of remoteParticipants) {
-        const peerMediaInfo = session.signalingLayer.getPeerMediaInfo(remote, MediaType.VIDEO);
+        const peerMediaInfo = session._signalingLayer.getPeerMediaInfo(remote, MediaType.VIDEO);
+
         const peerCodec = peerMediaInfo === null || peerMediaInfo === void 0 ? void 0 : peerMediaInfo.codecType;
 
         if (peerCodec && peerCodec !== currentCodec && (peerCodec !== CodecMimeType.VP9 || browser.supportsVP9())) {

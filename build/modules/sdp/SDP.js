@@ -364,9 +364,26 @@ SDP.prototype.toJingle = function (elem, thecreator) {
 SDP.prototype.transportToJingle = function (mediaindex, elem) {
   elem.c('transport'); // XEP-0343 DTLS/SCTP
 
+  const sctpport = SDPUtil.findLine(this.media[mediaindex], 'a=sctp-port:', this.session);
   const sctpmap = SDPUtil.findLine(this.media[mediaindex], 'a=sctpmap:', this.session);
 
-  if (sctpmap) {
+  if (sctpport) {
+    const sctpAttrs = SDPUtil.parseSCTPPort(sctpport);
+    elem.c('sctpmap', {
+      xmlns: 'urn:xmpp:jingle:transports:dtls-sctp:1',
+      number: sctpAttrs,
+
+      /* SCTP port */
+      protocol: 'webrtc-datachannel'
+      /* protocol */
+
+    }); // The parser currently requires streams to be present
+
+    elem.attrs({
+      streams: 0
+    });
+    elem.up();
+  } else if (sctpmap) {
     const sctpAttrs = SDPUtil.parseSCTPMap(sctpmap);
     elem.c('sctpmap', {
       xmlns: 'urn:xmpp:jingle:transports:dtls-sctp:1',
@@ -381,6 +398,10 @@ SDP.prototype.transportToJingle = function (mediaindex, elem) {
     if (sctpAttrs.length > 2) {
       elem.attrs({
         streams: sctpAttrs[2]
+      });
+    } else {
+      elem.attrs({
+        streams: 0
       });
     }
 
@@ -534,7 +555,7 @@ SDP.prototype.jingle2media = function (content) {
   const media = {
     media: desc.attr('media')
   };
-  media.port = '1';
+  media.port = '9';
 
   if (content.attr('senders') === 'rejected') {
     // estos hack to reject an m-line.
@@ -542,21 +563,15 @@ SDP.prototype.jingle2media = function (content) {
   }
 
   if (transport.find('>fingerprint[xmlns="urn:xmpp:jingle:apps:dtls:0"]').length) {
-    media.proto = sctp.length ? 'DTLS/SCTP' : 'RTP/SAVPF';
+    media.proto = sctp.length ? 'UDP/DTLS/SCTP' : 'UDP/TLS/RTP/SAVPF';
   } else {
-    media.proto = 'RTP/AVPF';
+    media.proto = 'UDP/TLS/RTP/SAVPF';
   }
 
   if (sctp.length) {
-    sdp += `m=application ${media.port} DTLS/SCTP ${sctp.attr('number')}\r\n`;
-    sdp += `a=sctpmap:${sctp.attr('number')} ${sctp.attr('protocol')}`;
-    const streamCount = sctp.attr('streams');
-
-    if (streamCount) {
-      sdp += ` ${streamCount}\r\n`;
-    } else {
-      sdp += '\r\n';
-    }
+    sdp += `m=application ${media.port} UDP/DTLS/SCTP webrtc-datachannel\r\n`;
+    sdp += `a=sctp-port:${sctp.attr('number')}\r\n`;
+    sdp += 'a=max-message-size:262144\r\n';
   } else {
     media.fmt = desc.find('>payload-type').map((_, payloadType) => payloadType.getAttribute('id')).get();
     sdp += `${SDPUtil.buildMLine(media)}\r\n`;

@@ -1,5 +1,5 @@
+import { getLogger } from '@jitsi/logger';
 import { EventEmitter } from 'events';
-import { getLogger } from 'jitsi-meet-logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
 import { VAD_SCORE_PUBLISHED, DETECTOR_STATE_CHANGE } from './DetectionEvents';
 import TrackVADEmitter from './TrackVADEmitter';

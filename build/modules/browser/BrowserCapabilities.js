@@ -1,9 +1,10 @@
 import { BrowserDetection } from '@jitsi/js-utils';
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger(__filename);
 /* Minimum required Chrome / Chromium version. This applies also to derivatives. */
 
-const MIN_REQUIRED_CHROME_VERSION = 72; // TODO: Move this code to js-utils.
+const MIN_REQUIRED_CHROME_VERSION = 72;
+const MIN_REQUIRED_SAFARI_VERSION = 14; // TODO: Move this code to js-utils.
 // NOTE: Now we are extending BrowserDetection in order to preserve
 // RTCBrowserType interface but maybe it worth exporting BrowserCapabilities
 // and BrowserDetection as separate objects in future.
@@ -97,6 +98,10 @@ export default class BrowserCapabilities extends BrowserDetection {
 
 
   isSupported() {
+    if (this.isSafari() && this._getSafariVersion() < MIN_REQUIRED_SAFARI_VERSION) {
+      return false;
+    }
+
     return this.isChromiumBased() && this._getChromiumBasedVersion() >= MIN_REQUIRED_CHROME_VERSION || this.isFirefox() || this.isReactNative() || this.isWebKitBased();
   }
   /**
@@ -313,6 +318,18 @@ export default class BrowserCapabilities extends BrowserDetection {
     return this.isChromiumBased();
   }
   /**
+   * Check if the browser supports the RTP RTX feature (and it is usable).
+   *
+   * @returns {boolean}
+   */
+
+
+  supportsRTX() {
+    // Disable RTX on Firefox up to 96 because we prefer simulcast over RTX
+    // see https://bugzilla.mozilla.org/show_bug.cgi?id=1738504
+    return !(this.isFirefox() && this.isVersionLessThan('96'));
+  }
+  /**
    * Returns the version of a Chromium based browser.
    *
    * @returns {Number}
@@ -338,6 +355,20 @@ export default class BrowserCapabilities extends BrowserDetection {
         const version = Number.parseInt(ua.match(/Chrome\/([\d.]+)/)[1], 10);
         return version;
       }
+    }
+
+    return -1;
+  }
+  /**
+   * Returns the version of a Safari browser.
+   *
+   * @returns {Number}
+   */
+
+
+  _getSafariVersion() {
+    if (this.isSafari()) {
+      return Number.parseInt(this.getVersion(), 10);
     }
 
     return -1;

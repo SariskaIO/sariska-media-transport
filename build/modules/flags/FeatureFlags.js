@@ -1,4 +1,4 @@
-import { getLogger } from 'jitsi-meet-logger';
+import { getLogger } from '@jitsi/logger';
 const logger = getLogger('FeatureFlags');
 /**
  * A global module for accessing information about different feature flags state.
