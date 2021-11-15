@@ -325,7 +325,7 @@ export default function JitsiConference(options) {
         conference: {
             _room: this,
             get membersCount() {
-                return self.getParticipants().length + 1;
+                return self.getParticipantsWithoutHidden().length + 1;
             },
             getStats() {
                 return self.connectionQuality.getStats();
