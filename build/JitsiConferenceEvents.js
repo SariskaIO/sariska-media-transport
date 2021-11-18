@@ -419,6 +419,11 @@ export const AV_MODERATION_PARTICIPANT_APPROVED = 'conference.av_moderation.part
  */
 
 export const AV_MODERATION_PARTICIPANT_REJECTED = 'conference.av_moderation.participant.rejected';
+/**
+ * A new facial expression is added with its duration for a participant
+ */
+
+export const FACIAL_EXPRESSION_ADDED = 'conference.facial_expression.added';
 export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
 export const TRACK_UPDATED = 'conference.track.updated';
 export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';

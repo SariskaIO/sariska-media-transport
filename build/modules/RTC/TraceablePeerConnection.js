@@ -1897,7 +1897,13 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
   if (!(oldTrack || newTrack)) {
     logger.info(`${this} replaceTrack called with no new track and no old track`);
     return Promise.resolve();
-  }
+  } // If a track is being added to the peerconnection for the first time, we want the source signaling to be sent to
+  // Jicofo before the mute state is sent over presence. Therefore, trigger a renegotiation in this case. If we
+  // rely on "negotiationneeded" fired by the browser to signal new ssrcs, the mute state in presence will be sent
+  // before the source signaling which is undesirable.
+
+
+  const negotiationNeeded = Boolean(!oldTrack || !this.localTracks.has(oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.rtcId));
 
   if (this._usesUnifiedPlan) {
     var _newTrack$getType;
@@ -1922,7 +1928,7 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
 
       const configureEncodingsPromise = browser.usesSdpMungingForSimulcast() || !newTrack ? Promise.resolve() : this.tpcUtils.setEncodings(newTrack); // Renegotiate only in the case of P2P. We rely on 'negotiationeeded' to be fired for JVB.
 
-      return configureEncodingsPromise.then(() => this.isP2P);
+      return configureEncodingsPromise.then(() => this.isP2P || negotiationNeeded);
     });
   }
 

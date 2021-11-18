@@ -18,6 +18,12 @@ const logger = getLogger(__filename);
  */
 
 const STATS_MESSAGE_TYPE = 'stats';
+/**
+ * The value to use for the "type" field for messages sent
+ * over the data channel that contain facial expression.
+ */
+
+const FACIAL_EXPRESSION_MESSAGE_TYPE = 'facial_expression';
 const kSimulcastFormats = [{
   width: 1920,
   height: 1080,
@@ -212,6 +218,11 @@ export default class ConnectionQuality {
     });
     conference.on(ConferenceEvents.ENDPOINT_STATS_RECEIVED, (participant, payload) => {
       this._updateRemoteStats(participant.getId(), payload);
+    });
+    conference.on(ConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, payload) => {
+      if (payload.type === FACIAL_EXPRESSION_MESSAGE_TYPE) {
+        this.eventEmitter.emit(ConferenceEvents.FACIAL_EXPRESSION_ADDED, participant.getId(), payload);
+      }
     }); // Listen to local statistics events originating from the RTC module and update the _localStats field.
 
     conference.statistics.addConnectionStatsListener(this._updateLocalStats.bind(this)); // Save the last time we were unmuted.
