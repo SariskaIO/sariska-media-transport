@@ -175,17 +175,11 @@ export default class SpeakerStatsCollector {
                 }
             }
 
-<<<<<<< HEAD
-            speakerStatsToUpdate.totalDominantSpeakerTime
-                = newStats[userId].totalDominantSpeakerTime;
-
-            speakerStatsToUpdate.setFacialExpressions(newStats[userId].facialExpressions);
-=======
             if (speakerStatsToUpdate) {
                 speakerStatsToUpdate.totalDominantSpeakerTime
-                    = newStats[userId].totalDominantSpeakerTime;
+                = newStats[userId].totalDominantSpeakerTime;
+                speakerStatsToUpdate.setFacialExpressions(newStats[userId].facialExpressions);
             }
->>>>>>> polyfills
         }
     }
 }
