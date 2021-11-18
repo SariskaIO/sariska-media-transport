@@ -32,7 +32,10 @@ deploy-app:
 	cp \
 		src/modules/browser/capabilities.json \
 		$(DEPLOY_DIR)
-
+	cp \
+		src/modules/browser/capabilities.json \
+		$(BUILD_DIR)/modules/browser/capabilities.json
+		
 deploy-rnnoise-binary:
 	cp \
 		$(RNNOISE_WASM_DIR)/* \
