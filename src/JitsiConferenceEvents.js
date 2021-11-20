@@ -121,6 +121,11 @@ export const ENDPOINT_STATS_RECEIVED = 'conference.endpoint_stats_received';
  *
  * @type {string}
  */
+
+export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
+
+export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received'
+
 export const JVB121_STATUS = 'conference.jvb121Status';
 
 /**
@@ -443,10 +448,7 @@ export const BREAKOUT_ROOMS_MOVE_TO_ROOM = 'conference.breakout-rooms.move-to-ro
  */
 export const BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated';
 
-export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
 
 export const TRACK_UPDATED = 'conference.track.updated';
 
-export const TRACK_UPDATED = 'conference.track.updated';
 
-export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';

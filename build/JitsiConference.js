@@ -108,6 +108,10 @@ const JINGLE_SI_TIMEOUT = 5000;
 export default function JitsiConference(options) {
   var _this$connection;
 
+  options = { ...conferenceDefaultOptions,
+    ...options
+  };
+
   if (!options.name || options.name.toLowerCase() !== options.name) {
     const errmsg = 'Invalid conference name (no conference name passed or it ' + 'contains invalid characters like capital letters)!';
     logger.error(errmsg);
@@ -709,7 +713,7 @@ JitsiConference.prototype._sendBridgeVideoTypeMessage = function (localtrack) {
 
 
 JitsiConference.prototype.getName = function () {
-  return this.options.name;
+  return this.options.name.toString();
 };
 /**
  * Returns the {@link JitsiConnection} used by this this conference.
@@ -3807,6 +3811,18 @@ JitsiConference.prototype.avModerationReject = function (mediaType, id) {
   }
 };
 /**
+ * Returns the breakout rooms manager object.
+ *
+ * @returns {Object} the breakout rooms manager.
+ */
+
+
+JitsiConference.prototype.getBreakoutRooms = function () {
+  var _this$room;
+
+  return (_this$room = this.room) === null || _this$room === void 0 ? void 0 : _this$room.getBreakoutRooms();
+};
+/**
  * Gets the local user when joined
  */
 
@@ -3839,7 +3855,7 @@ JitsiConference.prototype.handleSubtitles = function () {
     const translationLanguage = this.getLocalParticipantProperty('translation_language');
 
     try {
-      var _json$participant, _json$participant2;
+      var _conference$participa, _conference$participa2, _conference$participa3, _json$participant, _conference, _conference$getLocalU, _json$participant2;
 
       const transcriptMessageID = json.message_id;
       const participantName = json.participant.name;
@@ -3893,8 +3909,8 @@ JitsiConference.prototype.handleSubtitles = function () {
         finalText = stable + unstable;
       }
 
-      pastMessage = newTranscriptMessage;
-      this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json === null || json === void 0 ? void 0 : (_json$participant = json.participant) === null || _json$participant === void 0 ? void 0 : _json$participant.identity_id, json === null || json === void 0 ? void 0 : (_json$participant2 = json.participant) === null || _json$participant2 === void 0 ? void 0 : _json$participant2.identity_name, finalText);
+      const fellowParticipantName = ((_conference$participa = conference.participants[json === null || json === void 0 ? void 0 : (_json$participant = json.participant) === null || _json$participant === void 0 ? void 0 : _json$participant.id]) === null || _conference$participa === void 0 ? void 0 : (_conference$participa2 = _conference$participa._identity) === null || _conference$participa2 === void 0 ? void 0 : (_conference$participa3 = _conference$participa2.user) === null || _conference$participa3 === void 0 ? void 0 : _conference$participa3.name) || ((_conference = conference) === null || _conference === void 0 ? void 0 : (_conference$getLocalU = _conference.getLocalUser()) === null || _conference$getLocalU === void 0 ? void 0 : _conference$getLocalU.name);
+      this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json === null || json === void 0 ? void 0 : (_json$participant2 = json.participant) === null || _json$participant2 === void 0 ? void 0 : _json$participant2.id, fellowParticipantName, finalText);
     } catch (error) {
       logger.error('Error occurred while updating transcriptions\n', error);
     }

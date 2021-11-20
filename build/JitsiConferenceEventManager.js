@@ -217,7 +217,7 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
   (jid, txt, myJid, ts) => {
     const id = Strophe.getResourceFromJid(jid);
 
-    if (txt.indexOf("Transcript") || txt.indexOf("Fellow Jitser")) {
+    if (txt.indexOf("Transcript") !== -1 || txt.indexOf("Fellow Jitser") !== -1) {
       return;
     }
 
@@ -294,7 +294,11 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
     chatRoom.addListener(XMPPEvents.ADD_ICE_CANDIDATE_FAILED, (e, pc) => {
       conference.statistics.sendAddIceCandidateFailed(e, pc);
     });
-  }
+  } // Breakout rooms.
+
+
+  this.chatRoomForwarder.forward(XMPPEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM, JitsiConferenceEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM);
+  this.chatRoomForwarder.forward(XMPPEvents.BREAKOUT_ROOMS_UPDATED, JitsiConferenceEvents.BREAKOUT_ROOMS_UPDATED);
 };
 /**
  * Setups event listeners related to conference.rtc

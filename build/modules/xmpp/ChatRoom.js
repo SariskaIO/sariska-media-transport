@@ -8,6 +8,7 @@ import XMPPEvents from '../../service/xmpp/XMPPEvents';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import Listenable from '../util/Listenable';
 import AVModeration from './AVModeration';
+import BreakoutRooms from './BreakoutRooms';
 import Lobby from './Lobby';
 import XmppConnection from './XmppConnection';
 import Moderator from './moderator';
@@ -138,6 +139,7 @@ export default class ChatRoom extends Listenable {
     }
 
     this.avModeration = new AVModeration(this);
+    this.breakoutRooms = new BreakoutRooms(this);
     this.initPresenceMap(options);
     this.lastPresences = {};
     this.phoneNumber = null;
@@ -320,6 +322,17 @@ export default class ChatRoom extends Listenable {
 
       if (this.lobby) {
         this.lobby.setLobbyRoomJid(lobbyRoomField && lobbyRoomField.length ? lobbyRoomField.text() : undefined);
+      }
+
+      const isBreakoutField = $(result).find('>query>x[type="result"]>field[var="muc#roominfo_isbreakout"]>value');
+      const isBreakoutRoom = Boolean(isBreakoutField === null || isBreakoutField === void 0 ? void 0 : isBreakoutField.text());
+
+      this.breakoutRooms._setIsBreakoutRoom(isBreakoutRoom);
+
+      const breakoutMainRoomField = $(result).find('>query>x[type="result"]>field[var="muc#roominfo_breakout_main_room"]>value');
+
+      if (breakoutMainRoomField === null || breakoutMainRoomField === void 0 ? void 0 : breakoutMainRoomField.length) {
+        this.breakoutRooms._setMainRoomJid(breakoutMainRoomField.text());
       }
 
       if (membersOnly !== this.membersOnlyEnabled) {
@@ -1621,6 +1634,14 @@ export default class ChatRoom extends Listenable {
     return this.avModeration;
   }
   /**
+   * @returns {BreakoutRooms}
+   */
+
+
+  getBreakoutRooms() {
+    return this.breakoutRooms;
+  }
+  /**
    * Returns the phone number for joining the conference.
    */
 
@@ -1736,7 +1757,11 @@ export default class ChatRoom extends Listenable {
 
 
   leave() {
-    return new Promise((resolve, reject) => {
+    var _this$lobby;
+
+    const promises = [];
+    ((_this$lobby = this.lobby) === null || _this$lobby === void 0 ? void 0 : _this$lobby.lobbyRoom) && promises.push(this.lobby.leave());
+    promises.push(new Promise((resolve, reject) => {
       const timeout = setTimeout(() => onMucLeft(true), 5000);
       const eventEmitter = this.eventEmitter;
       this.clean();
@@ -1759,7 +1784,8 @@ export default class ChatRoom extends Listenable {
 
       eventEmitter.on(XMPPEvents.MUC_LEFT, onMucLeft);
       this.doLeave();
-    });
+    }));
+    return Promise.all(promises);
   }
 
 }

@@ -121,6 +121,8 @@ export const ENDPOINT_STATS_RECEIVED = 'conference.endpoint_stats_received';
  * @type {string}
  */
 
+export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
+export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';
 export const JVB121_STATUS = 'conference.jvb121Status';
 /**
  * You are kicked from the conference.
@@ -424,6 +426,14 @@ export const AV_MODERATION_PARTICIPANT_REJECTED = 'conference.av_moderation.part
  */
 
 export const FACIAL_EXPRESSION_ADDED = 'conference.facial_expression.added';
-export const SUBTITLES_RECEIVED = 'conference.subtitles.received';
+/**
+ * Event fired when a participant is requested to join a given (breakout) room.
+ */
+
+export const BREAKOUT_ROOMS_MOVE_TO_ROOM = 'conference.breakout-rooms.move-to-room';
+/**
+ * Event fired when the breakout rooms data was updated.
+ */
+
+export const BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated';
 export const TRACK_UPDATED = 'conference.track.updated';
-export const ANALYTICS_EVENT_RECEIVED = 'analytics.event.received';
