@@ -4154,7 +4154,7 @@ JitsiConference.prototype.handleSubtitles = function() {
 
                 finalText = stable + unstable;
             }
-            const fellowParticipantName =  this.participants[json?.participant?.id]?._identity?.user?.name ||  conference?.getLocalUser()?.name;
+            const fellowParticipantName =  this.participants[json?.participant?.id]?._identity?.user?.name ||  this?.getLocalUser()?.name;
             this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json?.participant?.id, fellowParticipantName, finalText);
         } catch (error) {
             logger.error('Error occurred while updating transcriptions\n', error);

@@ -3850,7 +3850,7 @@ JitsiConference.prototype.handleSubtitles = function () {
     const translationLanguage = this.getLocalParticipantProperty('translation_language');
 
     try {
-      var _this$participants$js, _this$participants$js2, _this$participants$js3, _json$participant, _conference, _conference$getLocalU, _json$participant2;
+      var _this$participants$js, _this$participants$js2, _this$participants$js3, _json$participant, _this$getLocalUser, _json$participant2;
 
       const transcriptMessageID = json.message_id;
       const participantName = json.participant.name;
@@ -3904,7 +3904,7 @@ JitsiConference.prototype.handleSubtitles = function () {
         finalText = stable + unstable;
       }
 
-      const fellowParticipantName = ((_this$participants$js = this.participants[json === null || json === void 0 ? void 0 : (_json$participant = json.participant) === null || _json$participant === void 0 ? void 0 : _json$participant.id]) === null || _this$participants$js === void 0 ? void 0 : (_this$participants$js2 = _this$participants$js._identity) === null || _this$participants$js2 === void 0 ? void 0 : (_this$participants$js3 = _this$participants$js2.user) === null || _this$participants$js3 === void 0 ? void 0 : _this$participants$js3.name) || ((_conference = conference) === null || _conference === void 0 ? void 0 : (_conference$getLocalU = _conference.getLocalUser()) === null || _conference$getLocalU === void 0 ? void 0 : _conference$getLocalU.name);
+      const fellowParticipantName = ((_this$participants$js = this.participants[json === null || json === void 0 ? void 0 : (_json$participant = json.participant) === null || _json$participant === void 0 ? void 0 : _json$participant.id]) === null || _this$participants$js === void 0 ? void 0 : (_this$participants$js2 = _this$participants$js._identity) === null || _this$participants$js2 === void 0 ? void 0 : (_this$participants$js3 = _this$participants$js2.user) === null || _this$participants$js3 === void 0 ? void 0 : _this$participants$js3.name) || (this === null || this === void 0 ? void 0 : (_this$getLocalUser = this.getLocalUser()) === null || _this$getLocalUser === void 0 ? void 0 : _this$getLocalUser.name);
       this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json === null || json === void 0 ? void 0 : (_json$participant2 = json.participant) === null || _json$participant2 === void 0 ? void 0 : _json$participant2.id, fellowParticipantName, finalText);
     } catch (error) {
       logger.error('Error occurred while updating transcriptions\n', error);
