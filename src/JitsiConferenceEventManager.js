@@ -381,7 +381,7 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function() {
         // eslint-disable-next-line max-params
         (jid, txt, myJid, ts) => {
             const id = Strophe.getResourceFromJid(jid);
-            if (txt.indexOf("Transcript") || txt.indexOf("Fellow Jitser")) {
+            if (txt.indexOf("Transcript") !== -1 || txt.indexOf("Fellow Jitser") !== -1) {
                 return;
             }
             conference.eventEmitter.emit(
