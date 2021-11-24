@@ -120,6 +120,8 @@ Moderator.prototype.getFocusComponent = function () {
 };
 
 Moderator.prototype.createConferenceIq = function () {
+  var _this$options$confere, _this$options$confere2, _this$options$confere3;
+
   // Generate create conference IQ
   const elem = $iq({
     to: this.getFocusComponent(),
@@ -181,6 +183,33 @@ Moderator.prototype.createConferenceIq = function () {
     elem.c('property', {
       name: 'startVideoMuted',
       value: this.options.conference.startVideoMuted
+    }).up();
+  } // this flag determines whether the bridge will include this call in its
+  // rtcstats reporting or not. If the site admin hasn't set the flag in
+  // config.js, then the client defaults to false (see
+  // react/features/rtcstats/functions.js in jitsi-meet). The server-side
+  // components default to true to match the pre-existing behavior so we only
+  // signal if false.
+
+
+  const rtcstatsEnabled = (_this$options$confere = (_this$options$confere2 = this.options.conference) === null || _this$options$confere2 === void 0 ? void 0 : (_this$options$confere3 = _this$options$confere2.analytics) === null || _this$options$confere3 === void 0 ? void 0 : _this$options$confere3.rtcstatsEnabled) !== null && _this$options$confere !== void 0 ? _this$options$confere : false;
+
+  if (!rtcstatsEnabled) {
+    elem.c('property', {
+      name: 'rtcstatsEnabled',
+      value: rtcstatsEnabled
+    }).up();
+  }
+
+  const callstatsDisabled = !this.options.callStatsID || !this.options.callStatsSecret || !this.options.enableCallStats // Even though AppID and AppSecret may be specified, the integration
+  // of callstats.io may be disabled because of globally-disallowed
+  // requests to any third parties.
+  || this.options.disableThirdPartyRequests === true; // since the default is true across all the server-side components, only signal if false.
+
+  if (callstatsDisabled) {
+    elem.c('property', {
+      name: 'callstatsEnabled',
+      value: !callstatsDisabled
     }).up();
   }
 

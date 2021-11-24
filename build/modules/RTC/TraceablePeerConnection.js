@@ -6,9 +6,11 @@ import MediaDirection from '../../service/RTC/MediaDirection';
 import * as MediaType from '../../service/RTC/MediaType';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import * as SignalingEvents from '../../service/RTC/SignalingEvents';
+import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import * as VideoType from '../../service/RTC/VideoType';
 import { SS_DEFAULT_FRAME_RATE } from '../RTC/ScreenObtainer';
 import browser from '../browser';
+import FeatureFlags from '../flags/FeatureFlags';
 import LocalSdpMunger from '../sdp/LocalSdpMunger';
 import RtxModifier from '../sdp/RtxModifier';
 import SDP from '../sdp/SDP';
@@ -868,7 +870,19 @@ TraceablePeerConnection.prototype._remoteTrackAdded = function (stream, track, t
     return;
   }
 
-  logger.info(`${this} creating remote track[endpoint=${ownerEndpointId},ssrc=${trackSsrc},type=${mediaType}]`);
+  let sourceName;
+
+  if (FeatureFlags.isSourceNameSignalingEnabled()) {
+    sourceName = this.signalingLayer.getTrackSourceName(trackSsrc); // If source name was not signaled, we'll generate one which allows testing signaling
+    // when mixing legacy(mobile) with new clients.
+
+    if (!sourceName) {
+      sourceName = getSourceNameForJitsiTrack(ownerEndpointId, mediaType, 0);
+    }
+  } // eslint-disable-next-line no-undef
+
+
+  logger.info(`${this} creating remote track[endpoint=${ownerEndpointId},ssrc=${trackSsrc},` + `type=${mediaType},sourceName=${sourceName}]`);
   const peerMediaInfo = this.signalingLayer.getPeerMediaInfo(ownerEndpointId, mediaType);
 
   if (!peerMediaInfo) {
@@ -878,8 +892,9 @@ TraceablePeerConnection.prototype._remoteTrackAdded = function (stream, track, t
 
   const muted = peerMediaInfo.muted;
   const videoType = peerMediaInfo.videoType; // can be undefined
+  // eslint-disable-next-line no-undef
 
-  this._createRemoteTrack(ownerEndpointId, stream, track, mediaType, videoType, trackSsrc, muted);
+  this._createRemoteTrack(ownerEndpointId, stream, track, mediaType, videoType, trackSsrc, muted, sourceName);
 }; // FIXME cleanup params
 
 /* eslint-disable max-params */
@@ -895,10 +910,11 @@ TraceablePeerConnection.prototype._remoteTrackAdded = function (stream, track, t
  * @param {VideoType} [videoType] the track's type of the video (if applicable)
  * @param {number} ssrc the track's main SSRC number
  * @param {boolean} muted the initial muted status
+ * @param {String} sourceName the track's source name
  */
 
 
-TraceablePeerConnection.prototype._createRemoteTrack = function (ownerEndpointId, stream, track, mediaType, videoType, ssrc, muted) {
+TraceablePeerConnection.prototype._createRemoteTrack = function (ownerEndpointId, stream, track, mediaType, videoType, ssrc, muted, sourceName) {
   let remoteTracksMap = this.remoteTracks.get(ownerEndpointId);
 
   if (!remoteTracksMap) {
@@ -924,7 +940,7 @@ TraceablePeerConnection.prototype._createRemoteTrack = function (ownerEndpointId
     this._remoteTrackRemoved(existingTrack.getOriginalStream(), existingTrack.getTrack());
   }
 
-  const remoteTrack = new JitsiRemoteTrack(this.rtc, this.rtc.conference, ownerEndpointId, stream, track, mediaType, videoType, ssrc, muted, this.isP2P);
+  const remoteTrack = new JitsiRemoteTrack(this.rtc, this.rtc.conference, ownerEndpointId, stream, track, mediaType, videoType, ssrc, muted, this.isP2P, sourceName);
   remoteTracksMap.set(mediaType, remoteTrack);
   this.eventEmitter.emit(RTCEvents.REMOTE_TRACK_ADDED, remoteTrack, this);
 };
@@ -2377,8 +2393,12 @@ TraceablePeerConnection.prototype.setSenderVideoConstraints = function (frameHei
   } else if (frameHeight > 0) {
     var _this$options2, _this$options2$videoQ;
 
-    // Do not scale down encodings for desktop tracks for non-simulcast case.
-    const scaleFactor = videoType === VideoType.DESKTOP || localVideoTrack.resolution <= frameHeight ? HD_SCALE_FACTOR : Math.floor(localVideoTrack.resolution / frameHeight);
+    let scaleFactor = HD_SCALE_FACTOR; // Do not scale down encodings for desktop tracks for non-simulcast case.
+
+    if (videoType === VideoType.CAMERA && localVideoTrack.resolution > frameHeight) {
+      scaleFactor = Math.floor(localVideoTrack.resolution / frameHeight);
+    }
+
     parameters.encodings[0].active = true;
     parameters.encodings[0].scaleResolutionDownBy = scaleFactor; // Firefox doesn't follow the spec and lets application specify the degradation preference on the encodings.
 
