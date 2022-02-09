@@ -7,7 +7,7 @@ import rnnoiseWasmInit from 'rnnoise-wasm';
 import RnnoiseProcessor from './RnnoiseProcessor';
 
 export { RNNOISE_SAMPLE_LENGTH } from './RnnoiseProcessor';
-export type { RnnoiseProcessor };
+export { RnnoiseProcessor };
 
 let rnnoiseModule;
 

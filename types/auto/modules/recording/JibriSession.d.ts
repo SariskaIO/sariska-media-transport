@@ -27,7 +27,7 @@ export default class JibriSession {
      *
      * @returns {JitsiParticipant|string} The participant that started the session.
      */
-    getInitiator(): JitsiParticipant | string;
+    getInitiator(): any | string;
     /**
      * Returns the streaming URL of the session.
      *
@@ -45,7 +45,7 @@ export default class JibriSession {
      *
      * @returns {JitsiParticipant|string} The participant that stopped the session.
      */
-    getTerminator(): JitsiParticipant | string;
+    getTerminator(): any | string;
     /**
      * Returns the current recording mode of the session, such as "file".
      *
@@ -83,14 +83,14 @@ export default class JibriSession {
      * @param {JitsiParticipant | string} participant - The participant or resource id
      * if local participant.
      */
-    setInitiator(participant: JitsiParticipant | string): void;
+    setInitiator(participant: any | string): void;
     _initiator: any;
     /**
      * Sets the participant that stopped the session.
      * @param {JitsiParticipant | string} participant - The participant or the resource id
      * if local participant.
      */
-    setTerminator(participant: JitsiParticipant | string): void;
+    setTerminator(participant: any | string): void;
     _terminator: any;
     /**
      * Sends a message to start the actual recording.

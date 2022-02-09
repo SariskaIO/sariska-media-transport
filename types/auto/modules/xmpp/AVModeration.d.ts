@@ -7,9 +7,9 @@ export default class AVModeration {
      *
      * @param {ChatRoom} room the main room.
      */
-    constructor(room: ChatRoom);
+    constructor(room: any);
     _xmpp: any;
-    _mainRoom: ChatRoom;
+    _mainRoom: any;
     _moderationEnabledByType: {
         audio: boolean;
         video: boolean;

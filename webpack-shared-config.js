@@ -80,7 +80,7 @@ module.exports = (minimize, analyzeBundle) => {
         },
         plugins: [
             new webpack.ProvidePlugin({
-                $: path.resolve(__dirname, './src/dom/jquery.js')
+                $: path.resolve(__dirname, './dom/jquery.js')
             }),
             analyzeBundle
             && new BundleAnalyzerPlugin({

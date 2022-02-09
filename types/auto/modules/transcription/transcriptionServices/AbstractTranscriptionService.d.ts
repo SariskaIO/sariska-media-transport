@@ -12,7 +12,7 @@ export default class TranscriptionService {
      * @param {Function} callback  which will retrieve the a RecordingResult with
      *        the answer as a WordArray
      */
-    send(recordingResult: RecordingResult, callback: Function): void;
+    send(recordingResult: any, callback: Function): void;
     /**
      * Abstract method which will rend the recorder audio stream to the implemented
      * transcription service and will retrieve an answer, which will be
@@ -38,7 +38,7 @@ export default class TranscriptionService {
      *                 formatted
      * @return {Array<Word>} an array of Word objects
      */
-    formatResponse(response: any): Array<Word>;
+    formatResponse(response: any): Array<any>;
     /**
      * Abstract method which will verify that the response from the server is valid
      *

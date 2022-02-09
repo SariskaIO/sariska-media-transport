@@ -21,7 +21,7 @@ export default class ProxyConnectionService {
     constructor(options?: {
         convertVideoToDesktop?: boolean;
         pcConfig?: any;
-        jitsiConnection?: JitsiConnection;
+        jitsiConnection?: any;
         onRemoteStream: Function;
         onSendMessage: Function;
     });
@@ -102,7 +102,7 @@ export default class ProxyConnectionService {
      * send through to the peer.
      * @returns {void}
      */
-    start(peerJid: string, localTracks?: Array<JitsiLocalTrack>): void;
+    start(peerJid: string, localTracks?: Array<any>): void;
     /**
      * Terminates any active proxy peer connection.
      *

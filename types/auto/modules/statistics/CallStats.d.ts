@@ -149,12 +149,12 @@ declare class CallStats {
      * @param {string} [options.remoteUserID='jitsi'] the remote user ID to
      * which given <tt>tpc</tt> is connected.
      */
-    constructor(tpc: TraceablePeerConnection, options: {
+    constructor(tpc: any, options: {
         confID: string;
         remoteUserID?: string;
     });
     confID: string;
-    tpc: TraceablePeerConnection;
+    tpc: any;
     peerconnection: any;
     remoteUserID: string;
     hasFabric: boolean;
@@ -239,7 +239,7 @@ declare class CallStats {
     sendAddIceCandidateFailed(e: Error): void;
 }
 declare namespace CallStats {
-    const backend: callstats;
+    const backend: any;
     const reportsQueue: any[];
     const backendInitialized: boolean;
     const callStatsID: string;

@@ -11,7 +11,7 @@ module.exports = (_env, argv) => {
     return [
         Object.assign({}, config, {
             entry: {
-                'sariska-media-transport': './src/index.js'
+                'sariska-media-transport': './index.js'
             },
             output: Object.assign({}, config.output, {
                 library: 'SariskaMediaTransport',
@@ -21,7 +21,7 @@ module.exports = (_env, argv) => {
         }),
         Object.assign({}, config, {
             entry: {
-                'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
+                'flacEncodeWorker': './modules/local-recording/recording/flac/flacEncodeWorker.js'
             },
             plugins: [
                 ...config.plugins,
@@ -29,7 +29,7 @@ module.exports = (_env, argv) => {
         }),
         {
             entry: {
-                worker: './src/modules/e2ee/Worker.js'
+                worker: './modules/e2ee/Worker.js'
             },
             mode,
             output: {

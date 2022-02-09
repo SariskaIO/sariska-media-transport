@@ -17,12 +17,15 @@
     "outDir": "dist/esm/",
   },
   "exclude": [
+    "build",
     "doc",
     "dist",
+    "libs",
+    "dom", 
     "**/*.spec.js",
     "*.conf*.js",
     "webpack*.js",
-    "lib-jitsi-meet.*.js",
+    "sariska-media-transport.*.js",
     "types"
   ]
 }

@@ -19,8 +19,8 @@ export default class E2ePing {
      * @param {Function} sendMessage - The function to use to send a message.
      * @param {Object} options
      */
-    constructor(conference: JitsiConference, options: any, sendMessage: Function);
-    conference: JitsiConference;
+    constructor(conference: any, options: any, sendMessage: Function);
+    conference: any;
     eventEmitter: any;
     sendMessage: Function;
     pingIntervalMs: any;
@@ -34,7 +34,7 @@ export default class E2ePing {
      * @param {String} id - The ID of the participant.
      * @param {JitsiParticipant} participant - The participant that joined.
      */
-    participantJoined(id: string, participant: JitsiParticipant): void;
+    participantJoined(id: string, participant: any): void;
     /**
      * Handles a participant leaving the conference. Stops sending requests.
      *

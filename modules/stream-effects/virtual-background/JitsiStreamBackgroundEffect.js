@@ -22,7 +22,7 @@ export default class JitsiStreamBackgroundEffect {
      * @param {Object} model - Meet model.
      * @param {Object} options - Segmentation dimensions.
      */
-    constructor(model: Object, options: Object) {
+    constructor(model, options) {
         this._options = options;
 
         if (this._options.virtualBackground.backgroundType === VIRTUAL_BACKGROUND_TYPE.IMAGE) {
@@ -54,7 +54,7 @@ export default class JitsiStreamBackgroundEffect {
      * @param {EventHandler} response - The onmessage EventHandler parameter.
      * @returns {void}
      */
-    _onMaskFrameTimer(response: Object) {
+    _onMaskFrameTimer(response) {
         if (response.data.id === TIMEOUT_TICK) {
             this._renderMask();
         }
@@ -209,7 +209,7 @@ export default class JitsiStreamBackgroundEffect {
      * @returns {boolean} - Returns true if this effect can run on the specified track
      * false otherwise.
      */
-    isEnabled(jitsiLocalTrack: Object) {
+    isEnabled(jitsiLocalTrack) {
         return jitsiLocalTrack.isVideoTrack() && jitsiLocalTrack.videoType === 'camera';
     }
 
@@ -219,7 +219,7 @@ export default class JitsiStreamBackgroundEffect {
      * @param {MediaStream} stream - Stream to be used for processing.
      * @returns {MediaStream} - The stream with the applied effect.
      */
-    startEffect(stream: MediaStream) {
+    startEffect(stream) {
         this._maskFrameTimerWorker = new Worker(timerWorkerScript, { name: 'Blur effect worker' });
         this._maskFrameTimerWorker.onmessage = this._onMaskFrameTimer;
         const firstVideoTrack = stream.getVideoTracks()[0];

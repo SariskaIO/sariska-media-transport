@@ -13,9 +13,9 @@ export default class BridgeChannel {
      * @param {string} [wsUrl] WebSocket URL.
      * @param {EventEmitter} emitter the EventEmitter instance to use for event emission.
      */
-    constructor(peerconnection?: RTCPeerConnection, wsUrl?: string, emitter: EventEmitter);
+    constructor(peerconnection?: RTCPeerConnection, wsUrl?: string, emitter: any);
     _channel: any;
-    _eventEmitter: EventEmitter;
+    _eventEmitter: any;
     _mode: string;
     _areRetriesEnabled: boolean;
     _closedFromClient: boolean;
@@ -102,7 +102,7 @@ export default class BridgeChannel {
      *
      * @param {ReceiverVideoConstraints} constraints video constraints.
      */
-    sendNewReceiverVideoConstraintsMessage(constraints: ReceiverVideoConstraints): void;
+    sendNewReceiverVideoConstraintsMessage(constraints: any): void;
     /**
      * Sends a 'VideoTypeMessage' message via the bridge channel.
      *
@@ -117,7 +117,7 @@ export default class BridgeChannel {
      * @param {SourceName} sourceName - the source name of the video track.
      * @returns {void}
      */
-    sendSourceVideoTypeMessage(sourceName: SourceName, videoType: BridgeVideoType): void;
+    sendSourceVideoTypeMessage(sourceName: any, videoType: any): void;
     /**
      * Set events on the given RTCDataChannel or WebSocket instance.
      */

@@ -38,7 +38,7 @@ export default class JitsiParticipant {
      * @returns {JitsiConference} The conference that this participant belongs
      * to.
      */
-    getConference(): JitsiConference;
+    getConference(): any;
     /**
      * Gets the value of a property of this participant.
      */
@@ -78,13 +78,13 @@ export default class JitsiParticipant {
      * @returns {Array.<JitsiTrack>} The list of media tracks for this
      * participant.
      */
-    getTracks(): Array<JitsiTrack>;
+    getTracks(): Array<any>;
     /**
      * @param {MediaType} mediaType
      * @returns {Array.<JitsiTrack>} an array of media tracks for this
      * participant, for given media type.
      */
-    getTracksByMediaType(mediaType: typeof MediaType): Array<JitsiTrack>;
+    getTracksByMediaType(mediaType: typeof MediaType): Array<any>;
     /**
      * @returns {String} The ID of this participant.
      */

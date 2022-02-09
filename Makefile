@@ -11,7 +11,7 @@ RNNOISE_WASM_DIR = node_modules/rnnoise-wasm/dist/
 TFLITE_WASM = libs/vendor/tflite
 MEET_MODELS_DIR  = libs/vendor/models/
 
-all: clean transpile compile deploy
+all: clean compile transpile deploy
 
 clean:
 	rm -fr $(DEPLOY_DIR)
@@ -30,10 +30,10 @@ deploy: deploy-app deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite
 
 deploy-app:
 	cp \
-		src/modules/browser/capabilities.json \
+		modules/browser/capabilities.json \
 		$(DEPLOY_DIR)
 	cp \
-		src/modules/browser/capabilities.json \
+		modules/browser/capabilities.json \
 		$(BUILD_DIR)/modules/browser/capabilities.json
 		
 deploy-rnnoise-binary:

@@ -12,7 +12,6 @@ import {
 } from './constants';
 import { timerWorkerScript } from './worker';
 
-declare var interfaceConfig: Object;
 
 /**
  * Effect that wraps {@code MediaStream} adding periodic screenshot captures.
@@ -23,7 +22,7 @@ export default class ScreenshotCaptureEffect {
      * Initializes a new {@code ScreenshotCaptureEffect} instance.
      *
      */
-    constructor(callback: Function) {
+    constructor(callback) {
         this.callback = callback;
         this._currentCanvas = document.createElement('canvas');
         this._currentCanvasContext = this._currentCanvas.getContext('2d');
@@ -44,8 +43,8 @@ export default class ScreenshotCaptureEffect {
      * @returns {Promise} - Promise that resolves once effect has started or rejects if the
      * videoType parameter is not desktop.
      */
-    startEffect(stream: MediaStream, videoType: string) {
-        return new Promise<void>((resolve, reject) => {
+    startEffect(stream, videoType) {
+        return new Promise((resolve, reject) => {
             if (videoType !== 'desktop') {
                 reject();
             }
@@ -108,7 +107,7 @@ export default class ScreenshotCaptureEffect {
      * @param {EventHandler} message - Message received from the Worker.
      * @returns {void}
      */
-    _handleWorkerAction(message: Object) {
+    _handleWorkerAction(message) {
         return message.data.id === INTERVAL_TIMEOUT && this._handleScreenshot();
     }
 
@@ -119,7 +118,7 @@ export default class ScreenshotCaptureEffect {
      * @param {integer} nbPixels - The number of pixels of the candidate image.
      * @returns {boolean} - Whether the image should be processed or not.
      */
-    _shouldProcessScreenshot(nbPixels: number) {
+    _shouldProcessScreenshot(nbPixels) {
         return nbPixels >= PIXEL_LOWER_BOUND;
     }
 

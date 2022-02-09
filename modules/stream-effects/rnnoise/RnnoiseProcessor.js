@@ -3,17 +3,17 @@
 /**
  * Constant. Rnnoise default sample size, samples of different size won't work.
  */
-export const RNNOISE_SAMPLE_LENGTH: number = 480;
+export const RNNOISE_SAMPLE_LENGTH = 480;
 
 /**
  *  Constant. Rnnoise only takes inputs of 480 PCM float32 samples thus 480*4.
  */
-const RNNOISE_BUFFER_SIZE: number = RNNOISE_SAMPLE_LENGTH * 4;
+const RNNOISE_BUFFER_SIZE = RNNOISE_SAMPLE_LENGTH * 4;
 
 /**
  *  Constant. Rnnoise only takes operates on 44.1Khz float 32 little endian PCM.
  */
-const PCM_FREQUENCY: number = 44100;
+const PCM_FREQUENCY = 44100;
 
 /**
  * Represents an adaptor for the rnnoise library compiled to webassembly. The class takes care of webassembly
@@ -27,7 +27,7 @@ export default class RnnoiseProcessor {
      * @class
      * @param {Object} wasmInterface - WebAssembly module interface that exposes rnnoise functionality.
      */
-    constructor(wasmInterface: Object) {
+    constructor(wasmInterface) {
         // Considering that we deal with dynamic allocated memory employ exception safety strong guarantee
         // i.e. in case of exception there are no side effects.
         try {
@@ -66,7 +66,7 @@ export default class RnnoiseProcessor {
      * @param {Float32Array} pcmSample - Array containing 16 bit format PCM sample stored in 32 Floats .
      * @returns {void}
      */
-    _copyPCMSampleToWasmBuffer(pcmSample: Float32Array) {
+    _copyPCMSampleToWasmBuffer(pcmSample) {
         this._wasmInterface.HEAPF32.set(pcmSample, this._wasmPcmInputF32Index);
     }
 
@@ -76,7 +76,7 @@ export default class RnnoiseProcessor {
      * @param {Float32Array} f32Array - Array containing 32 bit PCM samples.
      * @returns {void}
      */
-    _convertTo16BitPCM(f32Array: Float32Array) {
+    _convertTo16BitPCM(f32Array) {
         for (const [ index, value ] of f32Array.entries()) {
             f32Array[index] = value * 0x7fff;
         }
@@ -148,7 +148,7 @@ export default class RnnoiseProcessor {
      * @param {Float32Array} pcmFrame - Array containing 32 bit PCM samples.
      * @returns {Float} Contains VAD score in the interval 0 - 1 i.e. 0.90 .
      */
-    calculateAudioFrameVAD(pcmFrame: Float32Array) {
+    calculateAudioFrameVAD(pcmFrame) {
         if (this._destroyed) {
             throw new Error('RnnoiseProcessor instance is destroyed, please create another one!');
         }

@@ -9,7 +9,7 @@ import JitsiStreamPresenterEffect from './JitsiStreamPresenterEffect';
  * creating the presenter effect.
  * @returns {Promise<JitsiStreamPresenterEffect>}
  */
-export function createPresenterEffect(stream: MediaStream) {
+export function createPresenterEffect(stream) {
     if (!MediaStreamTrack.prototype.getSettings
         && !MediaStreamTrack.prototype.getConstraints) {
         return Promise.reject(new Error('JitsiStreamPresenterEffect not supported!'));

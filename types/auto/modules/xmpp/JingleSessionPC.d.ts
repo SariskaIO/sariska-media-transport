@@ -40,7 +40,7 @@ export default class JingleSessionPC extends JingleSession {
      * @param {jQuery} jingleContents - A jQuery selector pointing to the '>jingle' element.
      * @returns {Number|null}
      */
-    static parseMaxFrameHeight(jingleContents: jQuery): number | null;
+    static parseMaxFrameHeight(jingleContents: any): number | null;
     /**
      * Creates new <tt>JingleSessionPC</tt>
      * @param {string} sid the Jingle Session ID - random string which identifies the session
@@ -246,7 +246,7 @@ export default class JingleSessionPC extends JingleSession {
      * added, before the offer/answer cycle executes (for the local track
      * addition to be an atomic operation together with the offer/answer).
      */
-    invite(localTracks?: Array<JitsiLocalTrack>): void;
+    invite(localTracks?: Array<any>): void;
     /**
      * Sends 'session-initiate' to the remote peer.
      *
@@ -277,7 +277,7 @@ export default class JingleSessionPC extends JingleSession {
      * executes (for the local track addition to be an atomic operation together
      * with the offer/answer).
      */
-    setOfferAnswerCycle(jingleOfferAnswerIq: any, success: any, failure: any, localTracks?: Array<JitsiLocalTrack>): void;
+    setOfferAnswerCycle(jingleOfferAnswerIq: any, success: any, failure: any, localTracks?: Array<any>): void;
     /**
      * Updates the codecs on the peerconnection and initiates a renegotiation for the
      * new codec config to take effect.
@@ -370,7 +370,7 @@ export default class JingleSessionPC extends JingleSession {
      *
      * @param {XmppConnection.Status} status - The new status.
      */
-    onXmppStatusChanged(status: Strophe.Status): void;
+    onXmppStatusChanged(status: any): void;
     /**
      * Parse the information from the xml sourceAddElem and translate it
      *  into sdp lines
@@ -381,7 +381,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns {list} a list of SDP line strings that should
      *  be added to the remote SDP
      */
-    _parseSsrcInfoFromSourceAdd(sourceAddElem: any, currentRemoteSdp: any): list;
+    _parseSsrcInfoFromSourceAdd(sourceAddElem: any, currentRemoteSdp: any): any;
     /**
      * Handles a Jingle source-add message for this Jingle session.
      * @param elem An array of Jingle "content" elements.
@@ -421,7 +421,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns type {SDP Object} the new remote SDP (after removing the lines
      *  in removeSsrcInfo
      */
-    _processRemoteRemoveSource(removeSsrcInfo: list): SDP;
+    _processRemoteRemoveSource(removeSsrcInfo: any): SDP;
     /**
      * Add the given ssrc lines to the current remote sdp
      * @param {list} addSsrcInfo a list of SDP line strings that
@@ -429,7 +429,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns type {SDP Object} the new remote SDP (after removing the lines
      *  in removeSsrcInfo
      */
-    _processRemoteAddSource(addSsrcInfo: list): SDP;
+    _processRemoteAddSource(addSsrcInfo: any): SDP;
     /**
      * Do a new o/a flow using the existing remote description
      * @param {string} [optionalRemoteSdp] optional, raw remote sdp
@@ -462,7 +462,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns {Promise<void>} that resolves when the track is successfully added to the peerconnection, rejected
      * otherwise.
      */
-    addTrack(localTrack: JitsiLocalTrack): Promise<void>;
+    addTrack(localTrack: any): Promise<void>;
     /**
      * Replaces <tt>oldTrack</tt> with <tt>newTrack</tt> and performs a single
      * offer/answer cycle after both operations are done. Either
@@ -475,7 +475,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns {Promise} which resolves once the replacement is complete
      *  with no arguments or rejects with an error {string}
      */
-    replaceTrack(oldTrack: JitsiLocalTrack | null, newTrack: JitsiLocalTrack | null): Promise<any>;
+    replaceTrack(oldTrack: any | null, newTrack: any | null): Promise<any>;
     /**
      * Parse the information from the xml sourceRemoveElem and translate it
      *  into sdp lines
@@ -486,7 +486,7 @@ export default class JingleSessionPC extends JingleSession {
      * @returns {list} a list of SDP line strings that should
      *  be removed from the remote SDP
      */
-    _parseSsrcInfoFromSourceRemove(sourceRemoveElem: any, currentRemoteSdp: any): list;
+    _parseSsrcInfoFromSourceRemove(sourceRemoveElem: any, currentRemoteSdp: any): any;
     /**
      * Will print an error if there is any difference, between the SSRCs given
      * in the <tt>oldSDP</tt> and the ones currently described in
@@ -508,7 +508,7 @@ export default class JingleSessionPC extends JingleSession {
      * with a <tt>string</tt> that provides some error details in case something
      * goes wrong.
      */
-    addTrackAsUnmute(track: JitsiLocalTrack): Promise<any>;
+    addTrackAsUnmute(track: any): Promise<any>;
     /**
      * Remove local track as part of the mute operation.
      * @param {JitsiLocalTrack} track the local track to be removed
@@ -517,7 +517,7 @@ export default class JingleSessionPC extends JingleSession {
      * The promise will be rejected with a <tt>string</tt> that the describes
      * the error if anything goes wrong.
      */
-    removeTrackAsMute(track: JitsiLocalTrack): Promise<any>;
+    removeTrackAsMute(track: any): Promise<any>;
     /**
      * See {@link addTrackAsUnmute} and {@link removeTrackAsMute}.
      * @param {boolean} isMute <tt>true</tt> for "remove as mute" or
@@ -547,7 +547,7 @@ export default class JingleSessionPC extends JingleSession {
      * @see {@link _remoteVideoActive}
      * @see {@link _localVideoActive}
      */
-    modifyContents(jingleContents: jQuery): void;
+    modifyContents(jingleContents: any): void;
     /**
      * Processes new value of remote video "senders" Jingle attribute and tries
      * to apply it for {@link _remoteVideoActive}.

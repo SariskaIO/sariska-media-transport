@@ -8,7 +8,7 @@
  * the server.
  * @constructor
  */
-export default function JitsiConnection(appID: any, token: any, options: any): void;
+export default function JitsiConnection(token: any, roomName: any, isDev: any): void;
 export default class JitsiConnection {
     /**
      * Creates a new connection object for the Jitsi Meet server side video
@@ -20,11 +20,20 @@ export default class JitsiConnection {
      * the server.
      * @constructor
      */
-    constructor(appID: any, token: any, options: any);
-    appID: any;
-    token: any;
-    options: any;
+    constructor(token: any, roomName: any, isDev: any);
+    name: any;
+    user: any;
+    options: {
+        hosts: {
+            domain: string;
+            muc: string;
+        };
+        serviceUrl: string;
+        clientNode: string;
+    };
     xmpp: XMPP;
+    token: any;
+    parseJwt(token: any): any;
     /**
      * Connect the client with the server.
      * @param options {object} connecting options
@@ -63,7 +72,7 @@ export default class JitsiConnection {
      * that will be created.
      * @returns {JitsiConference} returns the new conference object.
      */
-    initJitsiConference(name: any, options: any): JitsiConference;
+    initJitsiConference(options?: {}): JitsiConference;
     /**
      * Subscribes the passed listener to the event.
      * @param event {JitsiConnectionEvents} the connection event.
@@ -101,6 +110,7 @@ export default class JitsiConnection {
      */
     getLogs(): any;
 }
+export const DISCO_JIBRI_FEATURE: "http://jitsi.org/protocol/jibri";
 import XMPP from "./modules/xmpp/xmpp";
 import JitsiConference from "./JitsiConference";
 import * as JitsiConnectionEvents from "./JitsiConnectionEvents";

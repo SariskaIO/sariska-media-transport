@@ -9,8 +9,8 @@ export default class ResumeTask {
      * Initializes new {@code RetryTask}.
      * @param {Strophe.Connection} stropheConnection - The Strophe connection instance.
      */
-    constructor(stropheConnection: Strophe.Connection);
-    _stropheConn: Strophe.Connection;
+    constructor(stropheConnection: any);
+    _stropheConn: any;
     /**
      * The counter increased before each resume retry attempt, used to calculate exponential backoff.
      * @type {number}

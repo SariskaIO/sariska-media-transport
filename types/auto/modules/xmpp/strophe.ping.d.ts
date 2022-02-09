@@ -68,6 +68,6 @@ export default class PingConnectionPlugin extends PingConnectionPlugin_base {
      *
      * @returns {int} the time ping was suspended, if it was not 0 is returned.
      */
-    getPingSuspendTime(): int;
+    getPingSuspendTime(): any;
 }
 export {};

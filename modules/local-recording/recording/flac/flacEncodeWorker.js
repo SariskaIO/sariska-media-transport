@@ -61,7 +61,7 @@ importScripts('https://sdk.sariska.io/libflac4-1.3.2.min.js');
 // ESLint will complain about the `declare` statement.
 // As the current workaround, add an exception for eslint.
 /* eslint-disable flowtype/no-types-missing-file-annotation */
-declare var Flac: Object;
+var Flac;
 
 const FLAC_ERRORS = {
     // The encoder is in the normal OK state and samples can be processed.

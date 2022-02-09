@@ -19,8 +19,8 @@ export class CodecSelection {
      * @param {string} options.jvbCodec the codec that is preferred on jvb connection.
      * @param {string} options.p2pCodec the codec that is preferred on p2p connection.
      */
-    constructor(conference: JitsiConference, options: any);
-    conference: JitsiConference;
+    constructor(conference: any, options: any);
+    conference: any;
     options: any;
     disabledCodec: {
         H264: string;
@@ -76,7 +76,7 @@ export class CodecSelection {
      * @param {CodecMimeType} preferredCodec preferred codec.
      * @param {CodecMimeType} disabledCodec codec that needs to be disabled.
      */
-    _selectPreferredCodec(mediaSession?: JingleSessionPC, preferredCodec?: {
+    _selectPreferredCodec(mediaSession?: any, preferredCodec?: {
         H264: string;
         OPUS: string;
         ULPFEC: string;

@@ -7,7 +7,7 @@ import SariskaMediaTransport from '../../../SariskaMediaTransport';
  * provided at the moment of creation, second is provided through the effect interface.
  */
 export class AudioMixerEffect {
-    constructor(mixAudio: Object) {
+    constructor(mixAudio) {
         if (mixAudio.getType() !== "audio") {
             throw new Error('AudioMixerEffect only supports audio JitsiLocalTracks; effect will not work!');
         }
@@ -21,7 +21,7 @@ export class AudioMixerEffect {
      * @param {JitsiLocalTrack} sourceLocalTrack - Track to which the effect will be applied.
      * @returns {boolean} - Returns true if this effect can run on the specified track, false otherwise.
      */
-    isEnabled(sourceLocalTrack: Object) {
+    isEnabled(sourceLocalTrack) {
         // Both JitsiLocalTracks need to be audio i.e. contain an audio MediaStreamTrack
         return sourceLocalTrack.isAudioTrack() && this._mixAudio.isAudioTrack();
     }
@@ -33,7 +33,7 @@ export class AudioMixerEffect {
      * @param {MediaStream} audioStream - Audio stream which will be mixed with _mixAudio.
      * @returns {MediaStream} - MediaStream containing both audio tracks mixed together.
      */
-    startEffect(audioStream: MediaStream) {
+    startEffect(audioStream) {
         this._originalStream = audioStream;
         this._originalTrack = audioStream.getTracks()[0];
 
@@ -69,7 +69,7 @@ export class AudioMixerEffect {
      * @param {boolean} muted - Should effect be muted or not.
      * @returns {void}
      */
-    setMuted(muted: boolean) {
+    setMuted(muted) {
         this._mixedMediaTrack.enabled = !muted;
     }
 

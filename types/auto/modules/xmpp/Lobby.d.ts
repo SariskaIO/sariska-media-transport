@@ -8,9 +8,9 @@ export default class Lobby {
      *
      * @param {ChatRoom} room the main room.
      */
-    constructor(room: ChatRoom);
+    constructor(room: any);
     xmpp: any;
-    mainRoom: ChatRoom;
+    mainRoom: any;
     lobbyRoomJid: any;
     /**
      * Whether lobby is supported on backend.

@@ -2,14 +2,14 @@
  * Setups all event listeners related to conference
  * @param conference {JitsiConference} the conference
  */
-export default function JitsiConferenceEventManager(conference: JitsiConference): void;
+export default function JitsiConferenceEventManager(conference: any): void;
 export default class JitsiConferenceEventManager {
     /**
      * Setups all event listeners related to conference
      * @param conference {JitsiConference} the conference
      */
-    constructor(conference: JitsiConference);
-    conference: JitsiConference;
+    constructor(conference: any);
+    conference: any;
     xmppListeners: {};
     /**
      * Setups event listeners related to conference.chatRoom

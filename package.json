@@ -1,10 +1,10 @@
 {
-  "name": "lib-jitsi-meet",
+  "name": "sariska-media-transport",
   "version": "0.0.0",
   "description": "JS library for accessing Jitsi server side deployments",
   "repository": {
     "type": "git",
-    "url": "git://github.com/jitsi/lib-jitsi-meet"
+    "url": "https://github.com/sariskaIO/sariska-media-transport"
   },
   "keywords": [
     "jingle",
@@ -65,7 +65,8 @@
     "webpack-cli": "4.9.0"
   },
   "scripts": {
-    "build": "export LIB_JITSI_MEET_COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null) && webpack && tsc",
+    "build": "webpack",
+    "transpile": "tsc",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "prepack": "npm run build",
@@ -74,13 +75,14 @@
     "validate": "npm ls",
     "watch": "webpack --config webpack.config.js --watch --mode development"
   },
-  "browser": "dist/umd/lib-jitsi-meet.min.js",
-  "module": "dist/esm/JitsiMeetJS.js",
+  "browser": "dist/umd/sariska-media-transport.min.js",
+  "module": "dist/esm/SariskaMediaTransport.js",
   "files": [
     "dist",
     "types",
     "connection_optimization/external_connect.js",
     "modules/browser/capabilities.json"
   ],
+  "main": "./dist/esm/index.js",
   "license": "Apache-2.0"
 }

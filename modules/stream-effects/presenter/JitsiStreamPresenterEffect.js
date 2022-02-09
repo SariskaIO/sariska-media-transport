@@ -22,7 +22,7 @@ export default class JitsiStreamPresenterEffect {
      * @param {MediaStream} videoStream - The video stream which is user for
      * creating the canvas.
      */
-    constructor(videoStream: MediaStream) {
+    constructor(videoStream) {
         const videoDiv = document.createElement('div');
         const firstVideoTrack = videoStream.getVideoTracks()[0];
         const { height, width, frameRate } = firstVideoTrack.getSettings() ?? firstVideoTrack.getConstraints();
@@ -101,7 +101,7 @@ export default class JitsiStreamPresenterEffect {
      * @returns {boolean} - Returns true if this effect can run on the
      * specified track, false otherwise.
      */
-    isEnabled(jitsiLocalTrack: Object) {
+    isEnabled(jitsiLocalTrack) {
         return jitsiLocalTrack.isVideoTrack() && jitsiLocalTrack.videoType === 'desktop';
     }
 
@@ -111,7 +111,7 @@ export default class JitsiStreamPresenterEffect {
      * @param {MediaStream} desktopStream - Stream to be used for processing.
      * @returns {MediaStream} - The stream with the applied effect.
      */
-    startEffect(desktopStream: MediaStream) {
+    startEffect(desktopStream) {
         const firstVideoTrack = desktopStream.getVideoTracks()[0];
         const { height, width } = firstVideoTrack.getSettings() ?? firstVideoTrack.getConstraints();
 

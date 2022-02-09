@@ -86,28 +86,28 @@ const ControllerState = Object.freeze({
 /**
  * Type of the stats reported by each participant (client).
  */
-type RecordingStats = {
+// type RecordingStats = {
 
-    /**
-     * Current local recording session token used by the participant.
-     */
-    currentSessionToken: number,
+//     /**
+//      * Current local recording session token used by the participant.
+//      */
+//     currentSessionToken: number,
 
-    /**
-     * Whether local recording is engaged on the participant's device.
-     */
-    isRecording: boolean,
+//     /**
+//      * Whether local recording is engaged on the participant's device.
+//      */
+//     isRecording: boolean,
 
-    /**
-     * Total recorded bytes. (Reserved for future use.)
-     */
-    recordedBytes: number,
+//     /**
+//      * Total recorded bytes. (Reserved for future use.)
+//      */
+//     recordedBytes: number,
 
-    /**
-     * Total recording duration. (Reserved for future use.)
-     */
-    recordedLength: number
-}
+//     /**
+//      * Total recording duration. (Reserved for future use.)
+//      */
+//     recordedLength: number
+// }
 
 /**
  * The component responsible for the coordination of local recording, across
@@ -130,7 +130,7 @@ export class RecordingController {
      *
      * @private
      */
-    _conference: * = null;
+    _conference = null;
 
     /**
      * Current recording session token.
@@ -139,7 +139,7 @@ export class RecordingController {
      *
      * @private
      */
-    _currentSessionToken: number = -1;
+    _currentSessionToken = -1;
 
     /**
      * Current state of {@code RecordingController}.
@@ -197,7 +197,7 @@ export class RecordingController {
      * @param {JitsiConference} conference - A {@code JitsiConference} instance.
      * @returns {void}
      */
-    registerEvents(conference: Object) {
+    registerEvents(conference) {
         if (!this._registered) {
             this._conference = conference;
             if (this._conference) {
@@ -221,7 +221,7 @@ export class RecordingController {
      * @param {Function} delegate - The event handler.
      * @returns {void}
      */
-    set onStateChanged(delegate: Function) {
+    set onStateChanged(delegate) {
         this._onStateChanged = delegate;
     }
 
@@ -231,7 +231,7 @@ export class RecordingController {
      * @param {Function} delegate - The event handler.
      * @returns {void}
      */
-    set onNotify(delegate: Function) {
+    set onNotify(delegate) {
         this._onNotify = delegate;
     }
 
@@ -241,7 +241,7 @@ export class RecordingController {
      * @param {Function} delegate - The event handler.
      * @returns {void}
      */
-    set onWarning(delegate: Function) {
+    set onWarning(delegate) {
         this._onWarning = delegate;
     }
 
@@ -250,7 +250,7 @@ export class RecordingController {
      *
      * @returns {void}
      */
-    startRecording(format: string) {
+    startRecording(format) {
         this.registerEvents();
         this.switchFormat(format);
         if (this._conference && this._conference.isModerator()) {
@@ -293,7 +293,7 @@ export class RecordingController {
      * @param {number} sessionToken - The token of the session to download.
      * @returns {void}
      */
-    downloadRecordedData(sessionToken: number) {
+    downloadRecordedData(sessionToken) {
         if (this._adapters[sessionToken]) {
             this._adapters[sessionToken].exportRecordedData()
                 .then(args => {
@@ -319,7 +319,7 @@ export class RecordingController {
      * @param {string} micDeviceId - The new microphone device ID.
      * @returns {void}
      */
-    setMicDevice(micDeviceId: string) {
+    setMicDevice(micDeviceId) {
         if (micDeviceId !== this._micDeviceId) {
             this._micDeviceId = String(micDeviceId);
 
@@ -348,7 +348,7 @@ export class RecordingController {
      * @param {boolean} muted - If the audio should be muted.
      * @returns {void}
      */
-    setMuted(muted: boolean) {
+    setMuted(muted) {
         this._isMuted = Boolean(muted);
 
         if (this._state === ControllerState.RECORDING) {
@@ -362,7 +362,7 @@ export class RecordingController {
      * @param {string} newFormat - The new format.
      * @returns {void}
      */
-    switchFormat(newFormat: string) {
+    switchFormat(newFormat) {
         if (!RECORDING_FORMATS.has(newFormat)) {
             logger.log(`Unknown format ${newFormat}. Ignoring...`);
 
@@ -379,7 +379,7 @@ export class RecordingController {
      *
      * @returns {RecordingStats}
      */
-    getLocalStats(): RecordingStats {
+    getLocalStats() {
         return {
             currentSessionToken: this._currentSessionToken,
             isRecording: this._state === ControllerState.RECORDING,
@@ -429,7 +429,7 @@ export class RecordingController {
      * @param {Symbol} newState - The new state.
      * @returns {void}
      */
-    _changeState(newState: Symbol) {
+    _changeState(newState) {
         if (this._state !== newState) {
             logger.log(`state change: ${this._state.toString()} -> `
                 + `${newState.toString()}`);
@@ -583,7 +583,7 @@ export class RecordingController {
         }
 
         /* eslint-disable */
-        return (Promise.resolve(): Promise<void>);
+        return Promise.resolve();
         // FIXME: better ways to satisfy flow and ESLint at the same time?
         /* eslint-enable */
 

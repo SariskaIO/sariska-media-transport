@@ -9,7 +9,7 @@ import ScreenshotCaptureEffect from './ScreenshotCaptureEffect';
  * {@code getState} function.
  * @returns {Promise<ScreenshotCaptureEffect>}
  */
-export function createScreenshotCaptureEffect(callback: Function) {
+export function createScreenshotCaptureEffect(callback) {
     if (!MediaStreamTrack.prototype.getSettings && !MediaStreamTrack.prototype.getConstraints) {
         return Promise.reject(new Error('ScreenshotCaptureEffect not supported!'));
     }

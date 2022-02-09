@@ -261,7 +261,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
      * @param {number} bytesSent - The new value.
      * @returns {void}
      */
-    onByteSentStatsReceived(tpc: TraceablePeerConnection, bytesSent: number): void;
+    onByteSentStatsReceived(tpc: any, bytesSent: number): void;
     /**
      * Sets the JitsiConference object associated with the track. This is temp solution.
      *

@@ -11,7 +11,7 @@ const logger = getLogger(__filename);
  *
  * @returns {number}
  */
-function highPrecisionTime(): number {
+function highPrecisionTime() {
     return window.performance
         && window.performance.now
         && window.performance.timing
@@ -52,75 +52,75 @@ const SessionEventType = Object.freeze({
  * The event can be either that the adapter started recording, or stopped
  * recording.
  */
-type SessionEvent = {
+// type SessionEvent = {
 
-    /**
-     * The type of the event.
-     * Should be one of the values in {@code SessionEventType}.
-     */
-    type: string,
+//     /**
+//      * The type of the event.
+//      * Should be one of the values in {@code SessionEventType}.
+//      */
+//     type: string,
 
-    /**
-     * The timestamp of the event.
-     */
-    timestamp: number
-};
+//     /**
+//      * The timestamp of the event.
+//      */
+//     timestamp: number
+// };
 
 /**
  * Representation of the metadata of a segment.
  */
-type SegmentInfo = {
+// type SegmentInfo = {
 
-    /**
-     * The length of gap before this segment, in milliseconds.
-     * mull if unknown.
-     */
-    gapBefore?: ?number,
+//     /**
+//      * The length of gap before this segment, in milliseconds.
+//      * mull if unknown.
+//      */
+//     gapBefore?: ?number,
 
-    /**
-     * The duration of this segment, in milliseconds.
-     * null if unknown or the segment is not finished.
-     */
-    duration?: ?number,
+//     /**
+//      * The duration of this segment, in milliseconds.
+//      * null if unknown or the segment is not finished.
+//      */
+//     duration?: ?number,
 
-    /**
-     * The start time, in milliseconds.
-     */
-    start?: ?number,
+//     /**
+//      * The start time, in milliseconds.
+//      */
+//     start?: ?number,
 
-    /**
-     * The end time, in milliseconds.
-     * null if unknown, the segment is not finished, or the recording is
-     * interrupted (e.g. browser reload).
-     */
-    end?: ?number
-};
+//     /**
+//      * The end time, in milliseconds.
+//      * null if unknown, the segment is not finished, or the recording is
+//      * interrupted (e.g. browser reload).
+//      */
+//     end?: ?number
+// };
 
 /**
  * Representation of metadata of a local recording session.
  */
-type SessionInfo = {
+// type SessionInfo = {
 
-    /**
-     * The session token.
-     */
-    sessionToken: string,
+//     /**
+//      * The session token.
+//      */
+//     sessionToken: string,
 
-    /**
-     * The start time of the session.
-     */
-    start: ?number,
+//     /**
+//      * The start time of the session.
+//      */
+//     start: ?number,
 
-    /**
-     * The recording format.
-     */
-    format: string,
+//     /**
+//      * The recording format.
+//      */
+//     format: string,
 
-    /**
-     * Array of segments in the session.
-     */
-    segments: SegmentInfo[]
-}
+//     /**
+//      * Array of segments in the session.
+//      */
+//     segments: SegmentInfo[]
+// }
 
 /**
  * {@code localStorage} key.
@@ -194,7 +194,7 @@ class SessionManager {
      * @param {string} format - The local recording format.
      * @returns {void}
      */
-    createSession(sessionToken: string, format: string) {
+    createSession(sessionToken, format) {
         if (this._sessionsMetadata[sessionToken] === undefined) {
             this._sessionsMetadata[sessionToken] = {
                 format,
@@ -215,13 +215,13 @@ class SessionManager {
      *
      * @returns {SessionInfo[]}
      */
-    getSessions(): SessionInfo[] {
+    getSessions(){
         const sessionTokens = Object.keys(this._sessionsMetadata);
         const output = [];
 
         for (let i = 0; i < sessionTokens.length; ++i) {
             const thisSession = this._sessionsMetadata[sessionTokens[i]];
-            const newSessionInfo: SessionInfo = {
+            const newSessionInfo = {
                 start: thisSession.events[0].timestamp,
                 format: thisSession.format,
                 sessionToken: sessionTokens[i],
@@ -242,7 +242,7 @@ class SessionManager {
      * @param {string} sessionToken - The session token.
      * @returns {void}
      */
-    removeSession(sessionToken: string) {
+    removeSession(sessionToken) {
         delete this._sessionsMetadata[sessionToken];
         this._saveMetadata();
     }
@@ -253,7 +253,7 @@ class SessionManager {
      * @param {string} sessionToken - The session token.
      * @returns {SegmentInfo[]}
      */
-    getSegments(sessionToken: string): SegmentInfo[] {
+    getSegments(sessionToken) {
         const thisSession = this._sessionsMetadata[sessionToken];
 
         if (thisSession) {
@@ -273,7 +273,7 @@ class SessionManager {
      * segment in.
      * @returns {number} - Current segment index.
      */
-    beginSegment(sessionToken: string): number {
+    beginSegment(sessionToken) {
         if (this._sessionsMetadata[sessionToken] === undefined) {
             logger.warn('Attempting to add segments to nonexistent'
                 + ` session ${sessionToken}`);
@@ -296,7 +296,7 @@ class SessionManager {
      * @param {string} sessionToken - The session token.
      * @returns {number}
      */
-    getCurrentSegmentIndex(sessionToken: string): number {
+    getCurrentSegmentIndex(sessionToken) {
         if (this._sessionsMetadata[sessionToken] === undefined) {
             return -1;
         }
@@ -322,7 +322,7 @@ class SessionManager {
      * @param {string} sessionToken - The session token.
      * @returns {void}
      */
-    endSegment(sessionToken: string) {
+    endSegment(sessionToken) {
         if (this._sessionsMetadata[sessionToken] === undefined) {
             logger.warn('Attempting to end a segment in nonexistent'
                 + ` session ${sessionToken}`);
@@ -343,14 +343,14 @@ class SessionManager {
      * @param {SessionEvent[]} events - The array of {@code SessionEvent}s.
      * @returns {SegmentInfo[]}
      */
-    _constructSegments(events: SessionEvent[]): SegmentInfo[] {
+    _constructSegments(events) {
         if (events.length === 0) {
             return [];
         }
 
         const output = [];
         let sessionStartTime = null;
-        let currentSegment: SegmentInfo = {};
+        let currentSegment = {};
 
         /**
          * Helper function for adding a new {@code SegmentInfo} object to the

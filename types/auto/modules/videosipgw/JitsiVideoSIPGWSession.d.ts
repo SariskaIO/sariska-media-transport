@@ -12,10 +12,10 @@ export default class JitsiVideoSIPGWSession extends Listenable {
      * that participant.
      * @param {ChatRoom} chatRoom - The chat room this session is bound to.
      */
-    constructor(sipAddress: string, displayName: string, chatRoom: ChatRoom);
+    constructor(sipAddress: string, displayName: string, chatRoom: any);
     sipAddress: string;
     displayName: string;
-    chatRoom: ChatRoom;
+    chatRoom: any;
     state: any;
     /**
      * Stops the current session.

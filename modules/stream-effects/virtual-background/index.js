@@ -27,7 +27,7 @@ const segmentationDimensions = {
  * @param {Function} dispatch - The Redux dispatch function.
  * @returns {Promise<JitsiStreamBackgroundEffect>}
  */
-export async function createVirtualBackgroundEffect(virtualBackground: Object, dispatch: Function) {
+export async function createVirtualBackgroundEffect(virtualBackground, dispatch) {
     if (!MediaStreamTrack.prototype.getSettings && !MediaStreamTrack.prototype.getConstraints) {
         throw new Error('JitsiStreamBackgroundEffect not supported!');
     }
