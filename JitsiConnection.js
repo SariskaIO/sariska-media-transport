@@ -6,6 +6,10 @@ import {
     CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED,
     createConnectionFailedEvent
 } from './service/statistics/AnalyticsEvents';
+import { jitsiLocalStorage } from '@jitsi/js-utils';
+import { syncWithURL } from "./modules/util/parseURLParams";
+import { connectionConfig, conferenceConfig } from './config';
+export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 
 /**
  * Creates a new connection object for the Jitsi Meet server side video
@@ -17,11 +21,16 @@ import {
  * the server.
  * @constructor
  */
-export default function JitsiConnection(appID, token, options) {
-    this.appID = appID;
-    this.token = token;
+export default function JitsiConnection(token, roomName, isDev) {
+    const options = { ...connectionConfig };
+    
+    const jwt = this.parseJwt(token);
+    this.name = roomName;
+    this.user = jwt.context.user;
+    options.serviceUrl = isDev ? `wss://api.dev.sariska.io/api/v1/media/websocket?room=${roomName}` : `${options.serviceUrl}?room=${roomName}`;
     this.options = options;
     this.xmpp = new XMPP(options, token);
+    this.token = token;
 
     /* eslint-disable max-params */
     this.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED,
@@ -52,12 +61,31 @@ export default function JitsiConnection(appID, token, options) {
         });
 }
 
+JitsiConnection.prototype.parseJwt = function (token) {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
+  };
+  
 /**
  * Connect the client with the server.
  * @param options {object} connecting options
  * (for example authentications parameters).
  */
 JitsiConnection.prototype.connect = function(options = {}) {
+    const usernameOverride = jitsiLocalStorage.getItem('xmpp_username_override');
+    const passwordOverride = jitsiLocalStorage.getItem('xmpp_password_override');
+  
+    if (usernameOverride && usernameOverride.length > 0) {
+      options.id = usernameOverride; // eslint-disable-line no-param-reassign
+    }
+  
+    if (passwordOverride && passwordOverride.length > 0) {
+      options.password = passwordOverride; // eslint-disable-line no-param-reassign
+    }
+  
     this.xmpp.connect(options.id, options.password);
 };
 
@@ -109,11 +137,22 @@ JitsiConnection.prototype.setToken = function(token) {
  * that will be created.
  * @returns {JitsiConference} returns the new conference object.
  */
-JitsiConnection.prototype.initJitsiConference = function(name, options) {
+JitsiConnection.prototype.initJitsiConference = function(options={}) {
+    options = { ...conferenceConfig,
+    ...options
+    };
+    options = syncWithURL(options);
+    const name = this.name;
+
+    if (options.iAmRecorder) {
+    this.addFeature(DISCO_JIBRI_FEATURE);
+    }
+
     return new JitsiConference({
         name,
         config: options,
-        connection: this
+        connection: this,
+        user: this.user
     });
 };
 

@@ -385,7 +385,10 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function() {
         // eslint-disable-next-line max-params
         (jid, txt, myJid, ts) => {
             const id = Strophe.getResourceFromJid(jid);
-
+            if (txt.indexOf("Transcript") !== -1 || txt.indexOf("Fellow Jitser") !== -1) {
+                return;
+            }
+          
             conference.eventEmitter.emit(
                 JitsiConferenceEvents.MESSAGE_RECEIVED,
                 id, txt, ts);
@@ -511,6 +514,9 @@ JitsiConferenceEventManager.prototype.setupRTCListeners = function() {
 
     rtc.addListener(RTCEvents.DOMINANT_SPEAKER_CHANGED,
         (dominant, previous) => {
+            if (conference.participants[dominant]?._hidden) {
+                return;
+            } 
             if (conference.lastDominantSpeaker !== dominant && conference.room) {
                 conference.lastDominantSpeaker = dominant;
                 conference.eventEmitter.emit(

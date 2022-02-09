@@ -37,6 +37,7 @@ import * as ConnectionQualityEvents
     from './service/connectivity/ConnectionQualityEvents';
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
+import {createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect} from "./modules/stream-effects";
 
 const logger = Logger.getLogger(__filename);
 
@@ -92,8 +93,8 @@ function getAnalyticsAttributesFromOptions(options) {
  */
 function _mergeNamespaceAndModule(module) {
     return (
-        typeof window.JitsiMeetJS === 'object'
-            ? Object.assign({}, window.JitsiMeetJS, module)
+        typeof window.SariskaMediaTransport === 'object'
+            ? Object.assign({}, window.SariskaMediaTransport, module)
             : module);
 }
 
@@ -114,7 +115,12 @@ export default _mergeNamespaceAndModule({
      * it is advised against.
      */
     ProxyConnectionService,
-
+    effects: {
+        createPresenterEffect,
+        createRnnoiseProcessor,
+        createScreenshotCaptureEffect,
+        createVirtualBackgroundEffect
+    },
     constants: {
         participantConnectionStatus: ParticipantConnectionStatus,
         recording: recordingConstants,
@@ -141,7 +147,11 @@ export default _mergeNamespaceAndModule({
     logLevels: Logger.levels,
     mediaDevices: JitsiMediaDevices,
     analytics: Statistics.analytics,
+    initialize(options = {}) {
+        this.init(options); 
+    },
     init(options = {}) {
+        options = {...initSDKConfig, ...options};
         Settings.init(options.externalStorage);
         Statistics.init(options);
 
@@ -167,7 +177,7 @@ export default _mergeNamespaceAndModule({
         if (this.version) {
             const logObject = {
                 id: 'component_version',
-                component: 'lib-jitsi-meet',
+                component: 'sariska-media-transport',
                 version: this.version
             };
 
@@ -284,6 +294,10 @@ export default _mergeNamespaceAndModule({
      * JitsiConferenceError if rejected.
      */
     createLocalTracks(options = {}, oldfirePermissionPromptIsShownEvent) {
+        if (window.location.href.indexOf("iAmRecorder") >= 0) {
+            return [];
+         }
+
         let promiseFulfilled = false;
 
         const { firePermissionPromptIsShownEvent, fireSlowPromiseEvent, ...restOptions } = options;
@@ -543,6 +557,10 @@ export default _mergeNamespaceAndModule({
      * otherwise.
      */
     setNetworkInfo({ isOnline }) {
+        Statistics.sendAnalytics(
+            createAnalyticsEvent.createNetworkInfoEvent({
+                isOnline
+        }));
         NetworkInfo.updateNetworkInfo({ isOnline });
     },
 

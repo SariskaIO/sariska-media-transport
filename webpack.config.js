@@ -1,6 +1,5 @@
 const path = require('path');
 const process = require('process');
-
 const sharedConfig = require('./webpack-shared-config');
 
 module.exports = (_env, argv) => {
@@ -12,22 +11,30 @@ module.exports = (_env, argv) => {
     return [
         Object.assign({}, config, {
             entry: {
-                'lib-jitsi-meet': './index.js'
+                'sariska-media-transport': './src/index.js'
             },
             output: Object.assign({}, config.output, {
-                library: 'JitsiMeetJS',
+                library: 'SariskaMediaTransport',
                 libraryTarget: 'umd',
                 path: path.join(process.cwd(), 'dist', 'umd')
             })
         }),
+        Object.assign({}, config, {
+            entry: {
+                'flacEncodeWorker': './src/modules/local-recording/recording/flac/flacEncodeWorker.js'
+            },
+            plugins: [
+                ...config.plugins,
+            ]
+        }),
         {
             entry: {
-                worker: './modules/e2ee/Worker.js'
+                worker: './src/modules/e2ee/Worker.js'
             },
             mode,
             output: {
-                filename: 'lib-jitsi-meet.e2ee-worker.js',
-                path: path.join(process.cwd(), 'dist', 'umd')
+                filename: 'sariska-media-transport.e2ee-worker.js',
+                path: path.resolve(__dirname, 'dist')
             },
             optimization: {
                 minimize: false
@@ -35,3 +42,4 @@ module.exports = (_env, argv) => {
         }
     ];
 };
+

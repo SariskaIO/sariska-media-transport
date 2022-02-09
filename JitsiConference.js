@@ -32,6 +32,7 @@ import { E2EEncryption } from './modules/e2ee/E2EEncryption';
 import E2ePing from './modules/e2eping/e2eping';
 import Jvb121EventGenerator from './modules/event/Jvb121EventGenerator';
 import FeatureFlags from './modules/flags/FeatureFlags';
+import { RecordingController } from './modules/local-recording';
 import { ReceiveVideoController } from './modules/qualitycontrol/ReceiveVideoController';
 import { SendVideoController } from './modules/qualitycontrol/SendVideoController';
 import RecordingManager from './modules/recording/RecordingManager';
@@ -47,6 +48,7 @@ import ComponentsVersions from './modules/version/ComponentsVersions';
 import VideoSIPGW from './modules/videosipgw/VideoSIPGW';
 import * as VideoSIPGWConstants from './modules/videosipgw/VideoSIPGWConstants';
 import SignalingLayerImpl from './modules/xmpp/SignalingLayerImpl';
+import LocalTracksDuration from './modules/statistics/LocalTracksDuration';
 import {
     FEATURE_E2EE,
     FEATURE_JIGASI,
@@ -73,6 +75,10 @@ import {
     createP2PEvent
 } from './service/statistics/AnalyticsEvents';
 import * as XMPPEvents from './service/xmpp/XMPPEvents';
+window.APP = {
+    conference: {
+    }
+};
 
 const logger = getLogger(__filename);
 
@@ -299,6 +305,48 @@ export default function JitsiConference(options) {
      * again by Jicofo.
      */
     this._videoSenderLimitReached = undefined;
+
+
+
+    this.handleSubtitles();
+
+    if (options.config.enableLocalRecording) {
+        this.recordingController = new RecordingController();
+        this.recordingController.registerEvents(this);
+    }
+
+    if (options.config.enableAnalytics) {
+        this.enableAnalytics();
+    }
+
+    if (options.config.iAmRecorder) {
+        this.removeCommand('userinfo');
+        this.sendCommand(
+            'userinfo',
+            {
+                attributes: {
+                    xmlns: 'http://jitsi.org/jitmeet/userinfo',
+                    robot: true
+                }
+            });
+    }
+
+    const self = this;
+
+    window.APP = {
+        conference: {
+            _room: this,
+            get membersCount() {
+                return self.getParticipantsWithoutHidden().length + 1;
+            },
+            getStats() {
+                return self.connectionQuality.getStats();
+            }
+        }
+    };
+    this.localTracksDuration = new LocalTracksDuration(this);
+    this.sessions = {};
+    this.user = options.user;
 }
 
 // FIXME convert JitsiConference to ES6 - ASAP !
@@ -1085,6 +1133,15 @@ JitsiConference.prototype.getTranscriptionStatus = function() {
  * another video track in the conference.
  */
 JitsiConference.prototype.addTrack = function(track) {
+    if (!track) {
+        return;
+    }
+    if (track.isAudioTrack() && this.options.config.startAudioMuted) {
+        track.mute();
+    }
+    if (track.isVideoTrack() && this.options.config.startVideoMuted) {
+        track.mute();
+    }
     const mediaType = track.getType();
     const localTracks = this.rtc.getLocalTracks(mediaType);
 
@@ -1654,6 +1711,20 @@ JitsiConference.prototype.isInLastN = function(participantId) {
 JitsiConference.prototype.getParticipants = function() {
     return Object.values(this.participants);
 };
+
+
+/**
+ * @return Array<JitsiParticipant> an array of all participants in this
+ * conference.
+ */
+ JitsiConference.prototype.getParticipantsWithoutHidden = function() {
+    let participants = this.getParticipants().filter(participant => !participant._hidden);
+
+    participants = participants.filter(participant => !participant?._properties?.features_jigasi);
+
+    return participants;
+};
+
 
 /**
  * Returns the number of participants in the conference, including the local
@@ -4133,4 +4204,169 @@ JitsiConference.prototype.avModerationReject = function(mediaType, id) {
  */
 JitsiConference.prototype.getBreakoutRooms = function() {
     return this.room?.getBreakoutRooms();
+};
+
+
+
+/**
+ * Gets the local user when joined
+ */
+ JitsiConference.prototype.getLocalUser = function() {
+    if (this.user) {
+        return this.user;
+    }
+};
+
+/**
+ * Gets the local user when joined
+ */
+JitsiConference.prototype.terminate = function() {
+    this.sendCommand('terminate', {});
+};
+
+
+JitsiConference.prototype.handleSubtitles = function() {
+
+    let pastMessage = {};
+    const JSON_TYPE_TRANSCRIPTION_RESULT = 'transcription-result';
+    const JSON_TYPE_TRANSLATION_RESULT = 'translation-result';
+    const P_NAME_REQUESTING_TRANSCRIPTION = 'requestingTranscription';
+    const P_NAME_TRANSLATION_LANGUAGE = 'translation_language';
+
+    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, json) => {
+
+        if (!(json && (json.type === JSON_TYPE_TRANSCRIPTION_RESULT || json.type === JSON_TYPE_TRANSLATION_RESULT))) {
+            return;
+        }
+
+        const translationLanguage = this.getLocalParticipantProperty('translation_language');
+
+        try {
+
+            const transcriptMessageID = json.message_id;
+            const participantName = json.participant.name;
+
+            let newTranscriptMessage = { transcriptMessageID };
+
+            if (json.type === JSON_TYPE_TRANSLATION_RESULT && json.language === translationLanguage) {
+
+                newTranscriptMessage.final = json.text;
+                newTranscriptMessage.participantName = participantName;
+
+            } else if (json.type === JSON_TYPE_TRANSCRIPTION_RESULT && !translationLanguage) {
+                // Displays interim and final results without any translation if
+                // translations are disabled.
+
+                const { text } = json.transcript[0];
+
+                // We update the previous transcript message with the same
+                // message ID or adds a new transcript message if it does not
+                // exist in the map.
+
+                if (pastMessage.transcriptMessageID === transcriptMessageID) {
+                    newTranscriptMessage = pastMessage;
+                } else {
+                    newTranscriptMessage.participantName = participantName;
+                }
+
+                // If this is final result, update the state as a final result
+                // and start a count down to remove the subtitle from the state
+                if (!json.is_interim) {
+                    newTranscriptMessage.final = text;
+
+                } else if (json.stability > 0.85) {
+                    // If the message has a high stability, we can update the
+                    // stable field of the state and remove the previously
+                    // unstable results
+                    newTranscriptMessage.stable = text;
+                    newTranscriptMessage.unstable = undefined;
+
+                } else {
+                    // Otherwise, this result has an unstable result, which we
+                    // add to the state. The unstable result will be appended
+                    // after the stable part.
+                    newTranscriptMessage.unstable = text;
+                }
+
+            }
+
+            let finalText = '';
+
+            if (newTranscriptMessage.final) {
+                finalText = newTranscriptMessage.final;
+            } else {
+                const stable = newTranscriptMessage.stable || '';
+                const unstable = newTranscriptMessage.unstable || '';
+
+                finalText = stable + unstable;
+            }
+            const fellowParticipantName =  this.participants[json?.participant?.id]?._identity?.user?.name ||  this?.getLocalUser()?.name;
+            this.eventEmitter.emit(JitsiConferenceEvents.SUBTITLES_RECEIVED, json?.participant?.id, fellowParticipantName, finalText);
+        } catch (error) {
+            logger.error('Error occurred while updating transcriptions\n', error);
+        }
+    });
+};
+
+// enable analytics
+JitsiConference.prototype.enableAnalytics = function() {
+    this.statistics.addAnalyticsEventListener((eventName, payload) => {
+        let name = '', body = {};
+
+        if (typeof eventName === 'string') {
+            name = eventName;
+            body = payload;
+        } else if (typeof eventName === 'object') {
+            name = eventName.name;
+            body = eventName;
+        }
+
+        const finalPaylaod = {
+            name,
+            action: body.action ? body.action : '',
+            actionSubject: body.actionSubject ? body.actionSubject : '',
+            source: body.source ? body.source : '',
+            attributes: JSON.stringify(payload)
+        };
+
+        this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, finalPaylaod);
+    });
+};
+
+JitsiConference.prototype.startLocalRecording = function(format = 'ogg') {
+    this.recordingController.startRecording(format);
+};
+
+JitsiConference.prototype.stopLocalRecording = function() {
+    this.recordingController.stopRecording();
+};
+
+JitsiConference.prototype.switchFormat = function() {
+    this.recordingController.switchFormat(format);
+};
+
+JitsiConference.prototype.setMuted = function(muted) {
+    this.recordingController.setMuted(muted);
+};
+
+JitsiConference.prototype.setMicDevice = function(micDeviceId) {
+    this.recordingController.setMicDevice(micDeviceId);
+};
+
+JitsiConference.prototype.startSIPVideoCall = function(sipAddress, displayName) {
+    if (this.sessions[sipAddress]) {
+        return;
+    }
+    const session = this.createVideoSIPGWSession(sipAddress, displayName);
+
+    this.sessions[sipAddress] = session;
+    session.start();
+};
+
+JitsiConference.prototype.stopSIPVideoCall = function(sipAddress) {
+    if (!this.sessions[sipAddress]) {
+        return;
+    }
+    this.sessions[sipAddress].stop();
+    delete this.sessions[sipAddress];
 };

@@ -101,7 +101,7 @@ export default class ChatRoom extends Listenable {
      *
      * @param {Strophe.Status} status - The Strophe connection status.
      */
-    onConnStatusChanged(status: any): void;
+    onConnStatusChanged(status: Strophe.Status): void;
     /**
      *
      * @param pres
@@ -291,7 +291,7 @@ export default class ChatRoom extends Listenable {
      * info or <tt>null</tt> either if there is no presence available or if
      * the media type given is invalid.
      */
-    getMediaPresenceInfo(endpointId: string, mediaType: typeof MediaType): any;
+    getMediaPresenceInfo(endpointId: string, mediaType: typeof MediaType): PeerMediaInfo;
     /**
      * Returns the last presence advertised by a MUC member.
      * @param {string} mucNick
