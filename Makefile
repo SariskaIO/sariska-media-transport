@@ -15,7 +15,8 @@ all: clean compile transpile deploy
 
 clean:
 	rm -fr $(DEPLOY_DIR)
-	mkdir -p $(DEPLOY_DIR)
+	mkdir -p $(DEPLOY_DIR)/esm
+	cp -r dom $(DEPLOY_DIR)/esm
 
 
 transpile:
