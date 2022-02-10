@@ -173,6 +173,7 @@ Statistics.audioLevelsInterval = 200;
 Statistics.pcStatsInterval = 10000;
 Statistics.disableThirdPartyRequests = false;
 Statistics.analytics = analytics;
+Statistics.analyticsEventEmitter = new EventEmitter();
 Object.defineProperty(Statistics, 'instances', {
     /**
      * Returns the Set holding all active {@link Statistics} instances. Lazily

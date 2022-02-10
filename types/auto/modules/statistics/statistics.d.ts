@@ -244,6 +244,7 @@ declare namespace Statistics {
     export const pcStatsInterval: number;
     export const disableThirdPartyRequests: boolean;
     export { analytics };
+    export const analyticsEventEmitter: EventEmitter;
     export const instances: any;
     export const localStats: any[];
     export function startLocalStats(stream: any, callback: any): void;
