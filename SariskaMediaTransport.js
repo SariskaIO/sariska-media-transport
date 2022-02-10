@@ -38,6 +38,7 @@ import * as ConnectionQualityEvents
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import {createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect} from "./modules/stream-effects";
+import {initSDKConfig} from './config';
 
 const logger = Logger.getLogger(__filename);
 
