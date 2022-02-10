@@ -16,7 +16,7 @@ import RtxModifier from '../sdp/RtxModifier';
 import SDP from '../sdp/SDP';
 import SDPUtil from '../sdp/SDPUtil';
 import SdpConsistency from '../sdp/SdpConsistency';
-import SdpSimulcast from '../sdp/SdpSimulcast.js';
+import SdpSimulcast from '../sdp/SdpSimulcast';
 import { SdpTransformWrap } from '../sdp/SdpTransformUtil';
 import * as GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import JitsiRemoteTrack from './JitsiRemoteTrack';
