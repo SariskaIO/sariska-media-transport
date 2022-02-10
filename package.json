@@ -73,6 +73,7 @@
     "test": "karma start karma.conf.js",
     "test-watch": "karma start karma.conf.js --no-single-run",
     "validate": "npm ls",
+    "deploy": "aws s3 cp dist/ s3://sdk.sariska.io --recursive --acl public-read && aws cloudfront create-invalidation --distribution-id E3RL1IE6WPHQ72 --paths /main.bundle.js",
     "watch": "webpack --config webpack.config.js --watch --mode development"
   },
   "browser": "dist/umd/sariska-media-transport.min.js",

@@ -1,0 +1,1 @@
+{"version":3,"file":"StreamEventTypes.js","sourceRoot":"","sources":["../../../../service/RTC/StreamEventTypes.js"],"names":[],"mappings":"AAAA,MAAM,gBAAgB,GAAG;IACrB,wBAAwB,EAAE,sBAAsB;IAEhD,wBAAwB,EAAE,sBAAsB;IAEhD,sBAAsB,EAAE,oBAAoB;IAE5C,yBAAyB,EAAE,uBAAuB;IAElD,uBAAuB,EAAE,qBAAqB;IAC9C,kBAAkB,EAAE,wBAAwB;CAC/C,CAAC;AAEF,MAAM,CAAC,OAAO,GAAG,gBAAgB,CAAC"}
