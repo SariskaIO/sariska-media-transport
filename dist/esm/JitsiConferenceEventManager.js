@@ -132,6 +132,9 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
         conference._onConferenceRestarted(jingleSession);
     });
     this.chatRoomForwarder.forward(XMPPEvents.RESERVATION_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.RESERVATION_ERROR);
+    chatRoom.addListener(XMPPEvents.RESERVATION_ERROR, () => {
+        conference.xmpp.connection.emuc.doLeave(conference.room.roomjid);
+    });
     this.chatRoomForwarder.forward(XMPPEvents.GRACEFUL_SHUTDOWN, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.GRACEFUL_SHUTDOWN);
     chatRoom.addListener(XMPPEvents.CONNECTION_ICE_FAILED, jingleSession => {
         conference._onIceConnectionFailed(jingleSession);
