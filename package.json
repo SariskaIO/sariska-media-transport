@@ -18,7 +18,7 @@
   "dependencies": {
     "pixelmatch": "^5.2.1",
     "@hapi/bourne": "^2.0.0",
-    "@jitsi/js-utils": "2.0.0",
+    "@jitsi/js-utils": "https://github.com/SariskaIO/js-utils.git",
     "@jitsi/logger": "2.0.0",
     "libflacjs": "github:mmig/libflac.js#93d37e7f811f01cf7d8b6a603e38bd3c3810907d",
     "@jitsi/sdp-interop": "github:jitsi/sdp-interop#3707993863eb6c5b6d66c4a025e9dba193775bfb",
