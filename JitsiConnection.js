@@ -22,11 +22,11 @@ export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
  * @constructor
  */
 export default function JitsiConnection(token, roomName, isDev) {
-    const options = { ...connectionConfig };
+    let options;
     const jwt = this.parseJwt(token);
     this.name = roomName;
     this.user = jwt.context.user;
-    options = isDev ? devConnectionConfig : conferenceConfig;
+    options = isDev ? {...devConnectionConfig} : {...conferenceConfig};
     options.serviceUrl = `${options.serviceUrl}?room=${roomName}`;
     this.options = options;
     this.xmpp = new XMPP(options, token);
