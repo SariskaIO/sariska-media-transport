@@ -1,32 +1,70 @@
-# Jitsi Meet API library
+# Sariska Media Transport API library
 
-You can use Jitsi Meet API to create Jitsi Meet video conferences with a custom GUI.
+**sariska-media-transport** is powerful JavaScript API's for developing Real time applications. You can integrate
+audio/video, live streaming ,transciptions, language translation, virtual background and many other services on the fly. The API supports all modern Browsers, React Native,
+Electron.js, NW.js and many more. This API documentation describes all possibe features supported by
+sariska-media-transport which possibliy covers any of your use cases.
+
 
 ## Installation
 
-- [Installation guide](doc/API.md#installation)
-- [Checkout the example](doc/example)
+To build library
 
-## Building the sources
+```shell
 
-NOTE: you need Node.js >= 12 and npm >= 6
-
-To build the library, just type:
-```
-npm install
-```
-To lint:
-```
-npm run lint
-```
-and to run unit tests:
-```
-npm test
-```
-if you need to rebuild lib-jitsi-meet.min.js
+make 
 
 ```
-npm run postinstall
+
+
+
+Manaully update SariskaMediaTransport.js w
+
+```shell
+
+at the top of the file import "./dom/jquery";
+
 ```
 
-Both linting and units will also be done by a pre-commit hook.
+
+To install library
+
+```shell
+
+npm i sariska-media-transport
+
+```
+
+For complete explaination of all API's. Please checkout documentation [a link](https://www.sariska.io/docs/sariska-media-javascript)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
