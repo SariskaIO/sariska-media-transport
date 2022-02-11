@@ -71,4 +71,3 @@ export default class TranscriptionService {
         throw new Error('TranscriptionService.verify is abstract');
     }
 }
-//# sourceMappingURL=AbstractTranscriptionService.js.map

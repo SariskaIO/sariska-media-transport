@@ -74,4 +74,3 @@ export class E2EEncryption {
         this._keyHandler.setKey(keyInfo);
     }
 }
-//# sourceMappingURL=E2EEncryption.js.map

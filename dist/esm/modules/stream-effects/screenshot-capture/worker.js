@@ -21,4 +21,3 @@ const code = `
     };
 `;
 export const timerWorkerScript = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }));
-//# sourceMappingURL=worker.js.map

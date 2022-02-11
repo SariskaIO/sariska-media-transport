@@ -129,4 +129,3 @@ export default class ResumeTask {
         }
     }
 }
-//# sourceMappingURL=ResumeTask.js.map

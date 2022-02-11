@@ -82,4 +82,3 @@ export class PerformanceObserverStats {
         }
     }
 }
-//# sourceMappingURL=PerformanceObserverStats.js.map

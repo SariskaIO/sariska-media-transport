@@ -629,4 +629,3 @@ SDP.prototype.jingle2media = function (content) {
     sdp += nonUserSources + userSources;
     return sdp;
 };
-//# sourceMappingURL=SDP.js.map

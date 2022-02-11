@@ -111,4 +111,3 @@ export class AbstractAudioContextAdapter extends RecordingAdapter {
         return Promise.resolve();
     }
 }
-//# sourceMappingURL=AbstractAudioContextAdapter.js.map

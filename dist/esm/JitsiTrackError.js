@@ -150,4 +150,3 @@ function getResolutionFromFailedConstraint(failedConstraintName, constraints) {
     return '';
 }
 export default JitsiTrackError;
-//# sourceMappingURL=JitsiTrackError.js.map

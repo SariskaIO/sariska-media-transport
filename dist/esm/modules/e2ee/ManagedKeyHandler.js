@@ -156,4 +156,3 @@ export class ManagedKeyHandler extends KeyHandler {
         return window.crypto.getRandomValues(new Uint8Array(32));
     }
 }
-//# sourceMappingURL=ManagedKeyHandler.js.map

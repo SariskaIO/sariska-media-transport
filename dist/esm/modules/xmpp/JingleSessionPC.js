@@ -2271,4 +2271,3 @@ export default class JingleSessionPC extends JingleSession {
         return integerHash(jid) % 2 === 0;
     }
 }
-//# sourceMappingURL=JingleSessionPC.js.map

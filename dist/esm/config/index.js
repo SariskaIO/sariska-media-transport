@@ -113,4 +113,3 @@ export const conferenceConfig = {
         // backToP2PDelay: 5
     }
 };
-//# sourceMappingURL=index.js.map

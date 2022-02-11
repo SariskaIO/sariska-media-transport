@@ -18,4 +18,3 @@ function integerHash(string) {
     return hash;
 }
 module.exports = { integerHash };
-//# sourceMappingURL=StringUtils.js.map

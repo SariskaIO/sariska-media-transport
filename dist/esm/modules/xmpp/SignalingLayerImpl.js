@@ -358,4 +358,3 @@ export default class SignalingLayerImpl extends SignalingLayer {
         this._sourceNames.set(ssrc, sourceName);
     }
 }
-//# sourceMappingURL=SignalingLayerImpl.js.map

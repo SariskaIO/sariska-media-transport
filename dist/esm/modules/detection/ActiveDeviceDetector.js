@@ -76,4 +76,3 @@ function stopActiveDevices(deviceList) {
         device.stopStream();
     }
 }
-//# sourceMappingURL=ActiveDeviceDetector.js.map

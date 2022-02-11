@@ -100,4 +100,3 @@ export default class RayoConnectionPlugin extends ConnectionPlugin {
         });
     }
 }
-//# sourceMappingURL=strophe.rayo.js.map

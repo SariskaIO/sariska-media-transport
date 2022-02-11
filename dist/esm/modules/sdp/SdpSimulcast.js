@@ -266,4 +266,3 @@ export default class SdpSimulcast {
         });
     }
 }
-//# sourceMappingURL=SdpSimulcast.js.map

@@ -121,4 +121,3 @@ export class OggAdapter extends RecordingAdapter {
         this._recordedData = data;
     }
 }
-//# sourceMappingURL=OggAdapter.js.map

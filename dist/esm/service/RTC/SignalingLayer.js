@@ -101,4 +101,3 @@ export default class SignalingLayer extends Listenable {
         throw new Error('not implemented');
     }
 }
-//# sourceMappingURL=SignalingLayer.js.map

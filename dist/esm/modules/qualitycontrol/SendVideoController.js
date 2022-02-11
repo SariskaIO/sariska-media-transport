@@ -97,4 +97,3 @@ export class SendVideoController {
         return this._propagateSendMaxFrameHeight();
     }
 }
-//# sourceMappingURL=SendVideoController.js.map

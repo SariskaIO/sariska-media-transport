@@ -9,4 +9,3 @@ export function nextTick(advanceTimer) {
     advanceTimer && jasmine.clock().tick(advanceTimer);
     return new Promise(resolve => process.nextTick(resolve));
 }
-//# sourceMappingURL=TestUtils.js.map

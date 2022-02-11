@@ -4,4 +4,3 @@
         global.__filename = '__filename';
     }
 })(global || window || this); // eslint-disable-line no-invalid-this
-//# sourceMappingURL=bundler.js.map

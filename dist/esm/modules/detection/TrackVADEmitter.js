@@ -203,4 +203,3 @@ export default class TrackVADEmitter extends EventEmitter {
         this._destroyed = true;
     }
 }
-//# sourceMappingURL=TrackVADEmitter.js.map

@@ -40,4 +40,3 @@ export default class Jvb121EventGenerator {
         }
     }
 }
-//# sourceMappingURL=Jvb121EventGenerator.js.map

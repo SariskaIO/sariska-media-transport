@@ -26,4 +26,3 @@ export const PASSWORD_REQUIRED = 'connection.passwordRequired';
  * errors on BOSH requests.
  */
 export const SERVER_ERROR = 'connection.serverError';
-//# sourceMappingURL=JitsiConnectionErrors.js.map

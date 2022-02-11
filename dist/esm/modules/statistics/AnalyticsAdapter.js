@@ -296,4 +296,3 @@ class AnalyticsAdapter {
     }
 }
 export default new AnalyticsAdapter();
-//# sourceMappingURL=AnalyticsAdapter.js.map

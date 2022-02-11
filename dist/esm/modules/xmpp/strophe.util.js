@@ -117,4 +117,3 @@ export default function () {
         }
     };
 }
-//# sourceMappingURL=strophe.util.js.map

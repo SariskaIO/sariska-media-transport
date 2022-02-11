@@ -13,4 +13,3 @@ export function createScreenshotCaptureEffect(callback) {
     }
     return Promise.resolve(new ScreenshotCaptureEffect(callback));
 }
-//# sourceMappingURL=index.js.map

@@ -29,4 +29,3 @@ import RTCPeerConnection from './RTCPeerConnection';
         }
     }
 })(global || window || this); // eslint-disable-line no-invalid-this
-//# sourceMappingURL=webrtc.js.map

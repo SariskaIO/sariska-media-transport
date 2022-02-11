@@ -269,4 +269,3 @@ export default class JitsiParticipant {
         this._botType = newBotType;
     }
 }
-//# sourceMappingURL=JitsiParticipant.js.map

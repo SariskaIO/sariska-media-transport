@@ -417,4 +417,3 @@ Moderator.prototype.logout = function (callback) {
         logger.error(errmsg, error);
     });
 };
-//# sourceMappingURL=moderator.js.map

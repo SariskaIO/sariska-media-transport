@@ -11,4 +11,3 @@ export const PEER_MUTED_CHANGED = 'signaling.peerMuted';
  * @param {VideoType} videoType the new value
  */
 export const PEER_VIDEO_TYPE_CHANGED = 'signaling.peerVideoType';
-//# sourceMappingURL=SignalingEvents.js.map

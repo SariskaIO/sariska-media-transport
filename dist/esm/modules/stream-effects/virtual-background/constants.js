@@ -4,4 +4,3 @@ export const VIRTUAL_BACKGROUND_TYPE = {
     BLUR: 'blur',
     NONE: 'none'
 };
-//# sourceMappingURL=constants.js.map

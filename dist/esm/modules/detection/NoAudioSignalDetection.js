@@ -126,4 +126,3 @@ export default class NoAudioSignalDetection extends EventEmitter {
         }
     }
 }
-//# sourceMappingURL=NoAudioSignalDetection.js.map

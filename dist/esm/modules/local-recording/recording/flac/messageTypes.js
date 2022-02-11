@@ -33,4 +33,3 @@ export const WORKER_BLOB_READY = 'WORKER_BLOB_READY';
  * Debug messages.
  */
 export const DEBUG = 'DEBUG';
-//# sourceMappingURL=messageTypes.js.map

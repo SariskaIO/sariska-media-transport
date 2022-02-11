@@ -799,4 +799,3 @@ function wrapAttachMediaStream(origAttachMediaStream) {
     };
 }
 export default rtcUtils;
-//# sourceMappingURL=RTCUtils.js.map

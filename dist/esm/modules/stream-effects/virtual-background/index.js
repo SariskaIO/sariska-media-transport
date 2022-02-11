@@ -69,4 +69,3 @@ export function createVirtualBackgroundEffect(virtualBackground, dispatch) {
         return new JitsiStreamBackgroundEffect(tflite, options);
     });
 }
-//# sourceMappingURL=index.js.map

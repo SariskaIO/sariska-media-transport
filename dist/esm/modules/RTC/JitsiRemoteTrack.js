@@ -263,4 +263,3 @@ export default class JitsiRemoteTrack extends JitsiTrack {
         return `RemoteTrack[userID: ${this.getParticipantId()}, type: ${this.getType()}, ssrc: ${this.getSSRC()}, p2p: ${this.isP2P}, sourceName: ${this._sourceName}, status: ${this._getStatus()}]`;
     }
 }
-//# sourceMappingURL=JitsiRemoteTrack.js.map

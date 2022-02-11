@@ -384,4 +384,3 @@ class SessionManager {
 export const sessionManager = new SessionManager();
 // For debug only. To remove later.
 window.sessionManager = sessionManager;
-//# sourceMappingURL=SessionManager.js.map

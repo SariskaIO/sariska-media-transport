@@ -12,4 +12,3 @@ const transcriberHolder = {
     }
 };
 module.exports = transcriberHolder;
-//# sourceMappingURL=transcriberHolder.js.map

@@ -511,4 +511,3 @@ export const createBridgeChannelClosedEvent = function (code, reason) {
 export const createTtfmEvent = function (attributes) {
     return createConnectionStageReachedEvent('ttfm', attributes);
 };
-//# sourceMappingURL=AnalyticsEvents.js.map

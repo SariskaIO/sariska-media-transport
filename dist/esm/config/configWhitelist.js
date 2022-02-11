@@ -155,4 +155,3 @@ export default [
     'webrtcIceTcpDisable',
     'webrtcIceUdpDisable'
 ];
-//# sourceMappingURL=configWhitelist.js.map

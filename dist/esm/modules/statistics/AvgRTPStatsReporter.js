@@ -815,4 +815,3 @@ export default class AvgRTPStatsReporter {
         this.p2pStatsMonitor.dispose();
     }
 }
-//# sourceMappingURL=AvgRTPStatsReporter.js.map

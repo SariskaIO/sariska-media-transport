@@ -435,4 +435,3 @@ function generateUsername() {
 module.exports = {
     generateUsername
 };
-//# sourceMappingURL=UsernameGenerator.js.map

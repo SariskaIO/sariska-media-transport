@@ -14,4 +14,3 @@ export function createPresenterEffect(stream) {
     }
     return Promise.resolve(new JitsiStreamPresenterEffect(stream));
 }
-//# sourceMappingURL=index.js.map

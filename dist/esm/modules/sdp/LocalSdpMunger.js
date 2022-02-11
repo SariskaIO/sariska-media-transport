@@ -320,4 +320,3 @@ export default class LocalSdpMunger {
         }
     }
 }
-//# sourceMappingURL=LocalSdpMunger.js.map

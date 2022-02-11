@@ -141,4 +141,3 @@ export default class RnnoiseProcessor {
         return this._wasmInterface._rnnoise_process_frame(this._context, this._wasmPcmOutput, this._wasmPcmInput);
     }
 }
-//# sourceMappingURL=RnnoiseProcessor.js.map

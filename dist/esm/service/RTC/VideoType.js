@@ -13,4 +13,3 @@ const VideoType = {
     DESKTOP: 'desktop'
 };
 module.exports = VideoType;
-//# sourceMappingURL=VideoType.js.map

@@ -99,4 +99,3 @@ export default class VideoSIPGW {
         this.eventEmitter.emit(XMPPEvents.VIDEO_SIP_GW_SESSION_STATE_CHANGED, event);
     }
 }
-//# sourceMappingURL=VideoSIPGW.js.map

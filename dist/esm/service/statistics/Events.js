@@ -31,4 +31,3 @@ export const CONNECTION_STATS = 'statistics.connectionstats';
  * An event carrying performance stats.
  */
 export const LONG_TASKS_STATS = 'statistics.long_tasks_stats';
-//# sourceMappingURL=Events.js.map

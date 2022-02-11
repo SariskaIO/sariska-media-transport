@@ -169,4 +169,3 @@ export default class PingConnectionPlugin extends ConnectionPlugin {
         return Math.max(maxInterval, 0);
     }
 }
-//# sourceMappingURL=strophe.ping.js.map

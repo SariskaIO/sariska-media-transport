@@ -506,4 +506,3 @@ JitsiConferenceEventManager.prototype.setupStatisticsListeners = function () {
         });
     }
 };
-//# sourceMappingURL=JitsiConferenceEventManager.js.map

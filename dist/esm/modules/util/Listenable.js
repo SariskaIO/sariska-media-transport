@@ -36,4 +36,3 @@ export default class Listenable {
         this.eventEmitter.removeListener(eventName, listener);
     }
 }
-//# sourceMappingURL=Listenable.js.map

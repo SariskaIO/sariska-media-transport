@@ -364,4 +364,3 @@ export default class BridgeChannel {
         channel.send(JSON.stringify(jsonObject));
     }
 }
-//# sourceMappingURL=BridgeChannel.js.map

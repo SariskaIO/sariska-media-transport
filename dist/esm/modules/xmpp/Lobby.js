@@ -323,4 +323,3 @@ export default class Lobby {
         }
     }
 }
-//# sourceMappingURL=Lobby.js.map

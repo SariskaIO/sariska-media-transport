@@ -41,4 +41,3 @@ class StropheLogger extends ConnectionPlugin {
 export default function () {
     Strophe.addConnectionPlugin('logger', new StropheLogger());
 }
-//# sourceMappingURL=strophe.logger.js.map

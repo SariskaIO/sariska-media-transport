@@ -162,4 +162,3 @@ export function expandSourcesFromJson(iq, jsonMessageXml) {
     }
     return ssrcMap;
 }
-//# sourceMappingURL=JingleHelperFunctions.js.map

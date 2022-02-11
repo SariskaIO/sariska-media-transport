@@ -59,4 +59,3 @@ webserviceUrl, successCallback, error_callback) {
     console.log('(TIME) Sending external connect XHR:\t', now);
     xhttp.send();
 }
-//# sourceMappingURL=external_connect.js.map

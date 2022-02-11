@@ -53,4 +53,3 @@ const Resolutions = {
     }
 };
 module.exports = Resolutions;
-//# sourceMappingURL=Resolutions.js.map

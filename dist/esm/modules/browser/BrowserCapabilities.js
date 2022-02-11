@@ -362,4 +362,3 @@ export default class BrowserCapabilities extends BrowserDetection {
         return -1;
     }
 }
-//# sourceMappingURL=BrowserCapabilities.js.map

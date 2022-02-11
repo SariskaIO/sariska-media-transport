@@ -178,4 +178,3 @@ SDPDiffer.prototype.toJingle = function (modify) {
     });
     return modified;
 };
-//# sourceMappingURL=SDPDiffer.js.map

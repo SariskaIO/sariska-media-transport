@@ -432,4 +432,3 @@ export default class JitsiTrack extends EventEmitter {
         }));
     }
 }
-//# sourceMappingURL=JitsiTrack.js.map

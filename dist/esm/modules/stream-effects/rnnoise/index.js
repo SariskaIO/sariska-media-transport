@@ -17,4 +17,3 @@ export function createRnnoiseProcessor() {
     }
     return rnnoiseModule.then(mod => new RnnoiseProcessor(mod));
 }
-//# sourceMappingURL=index.js.map

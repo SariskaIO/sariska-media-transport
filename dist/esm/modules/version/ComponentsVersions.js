@@ -48,4 +48,3 @@ ComponentsVersions.prototype.processVersions
 ComponentsVersions.prototype.getComponentVersion = function (componentName) {
     return this.versions[componentName];
 };
-//# sourceMappingURL=ComponentsVersions.js.map

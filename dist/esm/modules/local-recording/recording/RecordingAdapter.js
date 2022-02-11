@@ -71,4 +71,3 @@ export class RecordingAdapter {
         });
     }
 }
-//# sourceMappingURL=RecordingAdapter.js.map

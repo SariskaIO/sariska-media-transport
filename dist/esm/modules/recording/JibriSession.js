@@ -234,4 +234,3 @@ export default class JibriSession {
         this._sessionID = sessionID;
     }
 }
-//# sourceMappingURL=JibriSession.js.map

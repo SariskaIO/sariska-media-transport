@@ -22,4 +22,3 @@ export default class TrackRecorder {
         this.startTime = null;
     }
 }
-//# sourceMappingURL=trackRecorder.js.map

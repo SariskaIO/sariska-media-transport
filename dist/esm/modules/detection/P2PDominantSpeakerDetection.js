@@ -44,4 +44,3 @@ export default class P2PDominantSpeakerDetection {
         this.conference.rtc.eventEmitter.emit(RTCEvents.DOMINANT_SPEAKER_CHANGED, id);
     }
 }
-//# sourceMappingURL=P2PDominantSpeakerDetection.js.map

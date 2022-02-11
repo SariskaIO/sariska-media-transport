@@ -9,6 +9,7 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+import './dom/jquery';
 import Logger from '@jitsi/logger';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
@@ -513,4 +514,3 @@ export default _mergeNamespaceAndModule({
         browser
     }
 });
-//# sourceMappingURL=SariskaMediaTransport.js.map

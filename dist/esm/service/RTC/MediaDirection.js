@@ -21,4 +21,3 @@ const MediaDirection = {
     SENDRECV: 'sendrecv'
 };
 module.exports = MediaDirection;
-//# sourceMappingURL=MediaDirection.js.map

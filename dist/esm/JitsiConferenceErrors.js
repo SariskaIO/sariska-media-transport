@@ -86,4 +86,3 @@ export const RESERVATION_ERROR = 'conference.reservationError';
  * Indicates that there is no available videobridge.
  */
 export const VIDEOBRIDGE_NOT_AVAILABLE = 'conference.videobridgeNotAvailable';
-//# sourceMappingURL=JitsiConferenceErrors.js.map

@@ -257,4 +257,3 @@ class JitsiMediaDevices {
     }
 }
 export default new JitsiMediaDevices();
-//# sourceMappingURL=JitsiMediaDevices.js.map

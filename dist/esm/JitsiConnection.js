@@ -186,4 +186,3 @@ JitsiConnection.prototype.getLogs = function () {
     data.metadata = metadata;
     return data;
 };
-//# sourceMappingURL=JitsiConnection.js.map

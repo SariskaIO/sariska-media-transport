@@ -430,4 +430,3 @@ export default class ConnectionQuality {
         return this._localStats;
     }
 }
-//# sourceMappingURL=ConnectionQuality.js.map

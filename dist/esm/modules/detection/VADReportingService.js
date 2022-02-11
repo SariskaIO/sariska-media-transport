@@ -200,4 +200,3 @@ export default class VADReportingService extends EventEmitter {
         this._destroyed = true;
     }
 }
-//# sourceMappingURL=VADReportingService.js.map

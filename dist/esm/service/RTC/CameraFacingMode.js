@@ -18,4 +18,3 @@ const CameraFacingMode = {
     USER: 'user'
 };
 module.exports = CameraFacingMode;
-//# sourceMappingURL=CameraFacingMode.js.map

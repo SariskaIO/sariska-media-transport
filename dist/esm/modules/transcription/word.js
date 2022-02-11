@@ -37,4 +37,3 @@ export default class Word {
         return this.end;
     }
 }
-//# sourceMappingURL=word.js.map

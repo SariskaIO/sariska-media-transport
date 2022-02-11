@@ -7,4 +7,3 @@ const StreamEventTypes = {
     TRACK_MUTE_CHANGED: 'rtc.track_mute_changed'
 };
 module.exports = StreamEventTypes;
-//# sourceMappingURL=StreamEventTypes.js.map

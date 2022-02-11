@@ -128,4 +128,3 @@ export default class VADTalkMutedDetection extends EventEmitter {
         clearTimeout(this._processTimeout);
     }
 }
-//# sourceMappingURL=VADTalkMutedDetection.js.map

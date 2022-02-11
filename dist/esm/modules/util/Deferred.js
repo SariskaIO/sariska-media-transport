@@ -38,4 +38,3 @@ export default class Deferred {
         }, ms);
     }
 }
-//# sourceMappingURL=Deferred.js.map

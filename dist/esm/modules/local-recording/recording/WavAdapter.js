@@ -235,4 +235,3 @@ function floatTo16BitPCM(output, offset, inputBuffers) {
         }
     }
 }
-//# sourceMappingURL=WavAdapter.js.map

@@ -62,4 +62,3 @@ export default class AsyncQueue {
         this._stopped = true;
     }
 }
-//# sourceMappingURL=AsyncQueue.js.map

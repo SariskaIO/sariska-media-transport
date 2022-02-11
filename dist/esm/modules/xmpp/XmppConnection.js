@@ -542,4 +542,3 @@ export default class XmppConnection extends Listenable {
         return false;
     }
 }
-//# sourceMappingURL=XmppConnection.js.map

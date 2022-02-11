@@ -56,4 +56,3 @@ const ScriptUtil = {
 };
 /* eslint-enable max-params */
 module.exports = ScriptUtil;
-//# sourceMappingURL=ScriptUtil.js.map

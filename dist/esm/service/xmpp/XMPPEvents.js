@@ -304,4 +304,3 @@ const XMPPEvents = {
     JSON_MESSAGE_RECEIVED: 'xmmp.json_message_received'
 };
 module.exports = XMPPEvents;
-//# sourceMappingURL=XMPPEvents.js.map

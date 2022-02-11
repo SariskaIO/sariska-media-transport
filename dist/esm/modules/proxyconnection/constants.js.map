@@ -1,1 +1,0 @@
-{"version":3,"file":"constants.js","sourceRoot":"","sources":["../../../../modules/proxyconnection/constants.js"],"names":[],"mappings":"AAAA;;;GAGG;AACH,MAAM,CAAC,MAAM,OAAO,GAAG;IACnB,MAAM,EAAE,gBAAgB;IACxB,gBAAgB,EAAE,8BAA8B;IAChD,QAAQ,EAAE,kBAAkB;IAC5B,SAAS,EAAE,mBAAmB;IAC9B,cAAc,EAAE,gBAAgB;IAChC,WAAW,EAAE,aAAa;CAC7B,CAAC"}

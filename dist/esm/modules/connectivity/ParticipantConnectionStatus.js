@@ -697,4 +697,3 @@ export default class ParticipantConnectionStatusHandler {
         this.connectionStatusMap[id] = Object.assign(Object.assign({}, this.connectionStatusMap[id] || {}), { videoType: type, startedMs: nowMs });
     }
 }
-//# sourceMappingURL=ParticipantConnectionStatus.js.map

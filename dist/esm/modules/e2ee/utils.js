@@ -12,4 +12,3 @@ export function isArrayEqual(a1, a2) {
     }
     return true;
 }
-//# sourceMappingURL=utils.js.map

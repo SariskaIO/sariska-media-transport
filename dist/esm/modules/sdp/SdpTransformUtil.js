@@ -365,4 +365,3 @@ export class SdpTransformWrap {
         return transform.write(this.parsedSDP);
     }
 }
-//# sourceMappingURL=SdpTransformUtil.js.map

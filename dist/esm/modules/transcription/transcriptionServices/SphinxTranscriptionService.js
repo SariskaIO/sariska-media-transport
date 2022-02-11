@@ -108,4 +108,3 @@ function getURL() {
         console.log(message);
     }
 }
-//# sourceMappingURL=SphinxTranscriptionService.js.map

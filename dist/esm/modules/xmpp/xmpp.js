@@ -864,4 +864,3 @@ export default class XMPP extends Listenable {
         this.sendDeploymentInfo = false;
     }
 }
-//# sourceMappingURL=xmpp.js.map

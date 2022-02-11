@@ -127,4 +127,3 @@ export default class JitsiStreamPresenterEffect {
         this._videoFrameTimerWorker.terminate();
     }
 }
-//# sourceMappingURL=JitsiStreamPresenterEffect.js.map

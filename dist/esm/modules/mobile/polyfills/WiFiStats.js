@@ -14,4 +14,3 @@ function getJitsiMeetGlobalNS() {
 if (NativeModules.WiFiStats) {
     getJitsiMeetGlobalNS().getWiFiStats = NativeModules.WiFiStats.getWiFiStats;
 }
-//# sourceMappingURL=WiFiStats.js.map

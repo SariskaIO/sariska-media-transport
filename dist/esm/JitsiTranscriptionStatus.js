@@ -10,4 +10,3 @@ export const ON = 'on';
  * @type {String}
  */
 export const OFF = 'off';
-//# sourceMappingURL=JitsiTranscriptionStatus.js.map

@@ -212,4 +212,3 @@ catch (e) { } } var Q = {}; function V() { if (!V.strings) {
     for ("function" == typeof a.preInit && (a.preInit = [a.preInit]); a.preInit.length > 0;)
         a.preInit.pop()(); return h = !0, ae(), n.ready; }; }();
 "object" == typeof exports && "object" == typeof module ? module.exports = createTFLiteSIMDModule : "function" == typeof define && define.amd ? define([], function () { return createTFLiteSIMDModule; }) : "object" == typeof exports && (exports.createTFLiteSIMDModule = createTFLiteSIMDModule);
-//# sourceMappingURL=tflite-simd.js.map

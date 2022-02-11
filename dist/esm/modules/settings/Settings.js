@@ -105,4 +105,3 @@ function generateUniqueId() {
 function _p8() {
     return `${Math.random().toString(16)}000000000`.substr(2, 8);
 }
-//# sourceMappingURL=Settings.js.map

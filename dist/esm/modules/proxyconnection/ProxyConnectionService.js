@@ -273,4 +273,3 @@ export default class ProxyConnectionService {
             && this._options.onConnectionClosed();
     }
 }
-//# sourceMappingURL=ProxyConnectionService.js.map

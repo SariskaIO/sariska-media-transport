@@ -105,4 +105,3 @@ export default class IceFailedHandling {
         window.clearTimeout(this._iceFailedTimeout);
     }
 }
-//# sourceMappingURL=IceFailedHandling.js.map

@@ -10,4 +10,3 @@ const AuthenticationEvents = {
     IDENTITY_UPDATED: 'authentication.identity_updated'
 };
 module.exports = AuthenticationEvents;
-//# sourceMappingURL=AuthenticationEvents.js.map

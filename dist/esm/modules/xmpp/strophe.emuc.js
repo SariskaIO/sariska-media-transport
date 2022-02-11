@@ -157,4 +157,3 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
         return true;
     }
 }
-//# sourceMappingURL=strophe.emuc.js.map

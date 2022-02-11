@@ -289,4 +289,3 @@ Transcriber.prototype.reset = function () {
     this.lineLength = 0;
 };
 export default Transcriber;
-//# sourceMappingURL=transcriber.js.map

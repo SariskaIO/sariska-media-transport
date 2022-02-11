@@ -94,4 +94,3 @@ const RTCEvents = {
     REMOTE_UFRAG_CHANGED: 'rtc.remote_ufrag_changed'
 };
 module.exports = RTCEvents;
-//# sourceMappingURL=RTCEvents.js.map

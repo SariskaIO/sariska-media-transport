@@ -365,4 +365,3 @@ function _visitNode(node, callback) {
         global.sessionStorage = new Storage();
     }
 })(global || window || this); // eslint-disable-line no-invalid-this
-//# sourceMappingURL=browser.js.map

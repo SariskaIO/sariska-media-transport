@@ -40,4 +40,3 @@ export const WRONG_STATE = 'connection.wrongState';
  * There are cases like lobby room where display name is required.
  */
 export const DISPLAY_NAME_REQUIRED = 'connection.display_name_required';
-//# sourceMappingURL=JitsiConnectionEvents.js.map

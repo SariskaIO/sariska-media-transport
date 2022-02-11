@@ -21,4 +21,3 @@ export class ExternallyManagedKeyHandler extends KeyHandler {
         this.e2eeCtx.setKey(undefined, { encryptionKey: keyInfo.encryptionKey }, keyInfo.index);
     }
 }
-//# sourceMappingURL=ExternallyManagedKeyHandler.js.map

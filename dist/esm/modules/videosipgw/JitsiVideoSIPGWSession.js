@@ -133,4 +133,3 @@ export default class JitsiVideoSIPGWSession extends Listenable {
         });
     }
 }
-//# sourceMappingURL=JitsiVideoSIPGWSession.js.map

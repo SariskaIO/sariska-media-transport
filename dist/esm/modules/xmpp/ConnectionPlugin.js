@@ -34,4 +34,3 @@ export default getConnectionPluginDefinition();
  * ConnectionPlugin class that extends Listenable.
  */
 export const ConnectionPluginListenable = getConnectionPluginDefinition(Listenable);
-//# sourceMappingURL=ConnectionPlugin.js.map

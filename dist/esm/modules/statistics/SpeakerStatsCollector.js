@@ -146,4 +146,3 @@ export default class SpeakerStatsCollector {
         }
     }
 }
-//# sourceMappingURL=SpeakerStatsCollector.js.map

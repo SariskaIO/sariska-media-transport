@@ -585,4 +585,3 @@ StatsCollector.prototype.processAudioLevelReport = function () {
         }
     });
 };
-//# sourceMappingURL=RTPStatsCollector.js.map

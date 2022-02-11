@@ -16,4 +16,3 @@ export function downloadBlob(blob, fileName = 'recording.ogg') {
     a.click();
     document.body.removeChild(a);
 }
-//# sourceMappingURL=Utils.js.map

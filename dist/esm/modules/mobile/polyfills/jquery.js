@@ -5,4 +5,3 @@ import jQuery from 'sariska-media-transport/build/dom/jquery';
         global.$ = jQuery;
     }
 })(global || window || this); // eslint-disable-line no-invalid-this
-//# sourceMappingURL=jquery.js.map

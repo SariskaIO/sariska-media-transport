@@ -702,4 +702,3 @@ Statistics.prototype.addAnalyticsEventListener = function (listener) {
 Statistics.prototype.removeAnalyticsEventListener = function (listener) {
     Statistics.analyticsEventEmitter.removeListener(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, listener);
 };
-//# sourceMappingURL=statistics.js.map

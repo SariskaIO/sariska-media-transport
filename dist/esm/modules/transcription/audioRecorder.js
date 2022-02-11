@@ -227,4 +227,3 @@ AudioRecorder.prototype.getFileType = function () {
  * export the main object AudioRecorder
  */
 export default AudioRecorder;
-//# sourceMappingURL=audioRecorder.js.map

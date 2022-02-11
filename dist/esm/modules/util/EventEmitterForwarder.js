@@ -29,4 +29,3 @@ EventEmitterForwarder.prototype.forward = function (...args) {
     this.src.addListener(srcEvent, Function.prototype.bind.apply(this.dest.emit, args));
 };
 module.exports = EventEmitterForwarder;
-//# sourceMappingURL=EventEmitterForwarder.js.map

@@ -299,4 +299,3 @@ export default class E2ePing {
         this.participants = {};
     }
 }
-//# sourceMappingURL=e2eping.js.map

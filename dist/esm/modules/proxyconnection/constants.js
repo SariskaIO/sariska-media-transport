@@ -10,4 +10,3 @@ export const ACTIONS = {
     TRANSPORT_INFO: 'transport-info',
     UNAVAILABLE: 'unavailable'
 };
-//# sourceMappingURL=constants.js.map

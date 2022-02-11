@@ -12,4 +12,3 @@
 export function getJitterDelay(retry, minDelay = 500, base = 2) {
     return Math.floor((Math.random() * ((Math.pow(base, retry) * 1000) - minDelay)) + minDelay);
 }
-//# sourceMappingURL=Retry.js.map

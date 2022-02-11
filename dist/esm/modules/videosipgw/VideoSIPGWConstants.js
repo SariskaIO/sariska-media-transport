@@ -52,4 +52,3 @@ export const ERROR_NO_CONNECTION = 'error_no_connection';
  * @type {string}
  */
 export const ERROR_SESSION_EXISTS = 'error_session_already_exists';
-//# sourceMappingURL=VideoSIPGWConstants.js.map

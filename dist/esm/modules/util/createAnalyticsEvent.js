@@ -8,4 +8,3 @@ export function createNetworkInfoEvent({ isOnline, networkType, details }) {
         attributes
     };
 }
-//# sourceMappingURL=createAnalyticsEvent.js.map

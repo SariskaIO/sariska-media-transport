@@ -1514,4 +1514,3 @@ export default class ChatRoom extends Listenable {
     }
 }
 /* eslint-enable newline-per-chained-call */
-//# sourceMappingURL=ChatRoom.js.map

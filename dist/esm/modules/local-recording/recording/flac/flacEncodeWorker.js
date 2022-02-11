@@ -319,4 +319,3 @@ self.onmessage = function (e) {
             break;
     }
 };
-//# sourceMappingURL=flacEncodeWorker.js.map

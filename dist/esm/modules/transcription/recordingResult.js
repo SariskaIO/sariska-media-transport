@@ -18,4 +18,3 @@ export default class RecordingResult {
         this.wordArray = wordArray;
     }
 }
-//# sourceMappingURL=recordingResult.js.map

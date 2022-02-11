@@ -763,4 +763,3 @@ export default class JitsiLocalTrack extends JitsiTrack {
         return this._queueSetMuted(false);
     }
 }
-//# sourceMappingURL=JitsiLocalTrack.js.map

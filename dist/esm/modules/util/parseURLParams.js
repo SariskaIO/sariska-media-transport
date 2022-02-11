@@ -74,4 +74,3 @@ export function syncWithURL(conferenceConfig) {
     console.log("conferenceConfig", conferenceConfig);
     return conferenceConfig;
 }
-//# sourceMappingURL=parseURLParams.js.map

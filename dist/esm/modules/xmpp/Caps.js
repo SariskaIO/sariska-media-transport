@@ -221,4 +221,3 @@ export default class Caps extends Listenable {
         this._notifyVersionChanged();
     }
 }
-//# sourceMappingURL=Caps.js.map

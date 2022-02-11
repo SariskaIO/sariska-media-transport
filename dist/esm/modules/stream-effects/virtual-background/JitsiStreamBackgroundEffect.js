@@ -192,4 +192,3 @@ export default class JitsiStreamBackgroundEffect {
         this._maskFrameTimerWorker.terminate();
     }
 }
-//# sourceMappingURL=JitsiStreamBackgroundEffect.js.map

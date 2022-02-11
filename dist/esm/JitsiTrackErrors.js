@@ -56,4 +56,3 @@ export const TRACK_NO_STREAM_FOUND = 'track.no_stream_found';
  * by a webcam.
  */
 export const UNSUPPORTED_RESOLUTION = 'gum.unsupported_resolution';
-//# sourceMappingURL=JitsiTrackErrors.js.map

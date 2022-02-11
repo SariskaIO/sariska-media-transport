@@ -161,4 +161,3 @@ export default class BreakoutRooms {
         this.room.xmpp.connection.send(msg);
     }
 }
-//# sourceMappingURL=BreakoutRooms.js.map

@@ -21,4 +21,3 @@ const BridgeVideoType = {
     NONE: 'none'
 };
 module.exports = BridgeVideoType;
-//# sourceMappingURL=BridgeVideoType.js.map

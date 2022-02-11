@@ -3585,4 +3585,3 @@ JitsiConference.prototype.stopSIPVideoCall = function (sipAddress) {
     this.sessions[sipAddress].stop();
     delete this.sessions[sipAddress];
 };
-//# sourceMappingURL=JitsiConference.js.map

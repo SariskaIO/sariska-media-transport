@@ -3,4 +3,3 @@ export * from './RecordingAdapter';
 export * from './Utils';
 export * from './WavAdapter';
 export * from './flac';
-//# sourceMappingURL=index.js.map

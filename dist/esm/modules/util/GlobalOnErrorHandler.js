@@ -63,4 +63,3 @@ const GlobalOnErrorHandler = {
     }
 };
 module.exports = GlobalOnErrorHandler;
-//# sourceMappingURL=GlobalOnErrorHandler.js.map

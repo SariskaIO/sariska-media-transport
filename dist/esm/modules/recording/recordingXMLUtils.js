@@ -78,4 +78,3 @@ export default {
         return presence.getAttribute('from').includes('focus');
     }
 };
-//# sourceMappingURL=recordingXMLUtils.js.map

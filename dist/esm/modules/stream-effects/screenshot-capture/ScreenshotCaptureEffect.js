@@ -116,4 +116,3 @@ export default class ScreenshotCaptureEffect {
         }
     }
 }
-//# sourceMappingURL=ScreenshotCaptureEffect.js.map

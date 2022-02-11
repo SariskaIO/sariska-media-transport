@@ -35,4 +35,3 @@ export const CLEAR_INTERVAL = 2;
  * }
  */
 export const INTERVAL_TIMEOUT = 3;
-//# sourceMappingURL=constants.js.map

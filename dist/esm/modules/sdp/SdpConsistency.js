@@ -110,4 +110,3 @@ export default class SdpConsistency {
         return sdpTransformer.toRawSDP();
     }
 }
-//# sourceMappingURL=SdpConsistency.js.map

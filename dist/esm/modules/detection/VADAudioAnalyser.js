@@ -196,4 +196,3 @@ export default class VADAudioAnalyser extends EventEmitter {
         }
     }
 }
-//# sourceMappingURL=VADAudioAnalyser.js.map

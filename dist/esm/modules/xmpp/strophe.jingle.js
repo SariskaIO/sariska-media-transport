@@ -392,4 +392,3 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
     }
 }
 /* eslint-enable newline-per-chained-call */
-//# sourceMappingURL=strophe.jingle.js.map

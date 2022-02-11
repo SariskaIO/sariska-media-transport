@@ -151,4 +151,3 @@ class SpeakerStats {
     }
 }
 module.exports = SpeakerStats;
-//# sourceMappingURL=SpeakerStats.js.map

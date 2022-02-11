@@ -118,4 +118,3 @@ LocalStatsCollector.prototype.stop = function () {
 LocalStatsCollector.isLocalStatsSupported = function () {
     return Boolean(context);
 };
-//# sourceMappingURL=LocalStatsCollector.js.map

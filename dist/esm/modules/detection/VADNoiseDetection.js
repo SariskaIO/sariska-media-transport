@@ -156,4 +156,3 @@ export default class VADNoiseDetection extends EventEmitter {
         }
     }
 }
-//# sourceMappingURL=VADNoiseDetection.js.map

@@ -49,4 +49,3 @@ export default class LastRequestTracker {
             : null;
     }
 }
-//# sourceMappingURL=StropheLastSuccess.js.map

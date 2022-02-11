@@ -172,4 +172,3 @@ export default class JingleSession extends Listenable {
         return this.isInitiator ? this.localJid : this.remoteJid;
     }
 }
-//# sourceMappingURL=JingleSession.js.map

@@ -25,4 +25,3 @@ const CodecMimeType = {
     VP9: 'vp9'
 };
 module.exports = CodecMimeType;
-//# sourceMappingURL=CodecMimeType.js.map

@@ -93,4 +93,3 @@ if (self.RTCTransformEvent) {
         handleTransform(context, operation, transformer.readable, transformer.writable);
     };
 }
-//# sourceMappingURL=Worker.js.map

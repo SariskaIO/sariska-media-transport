@@ -2431,4 +2431,3 @@ TraceablePeerConnection.prototype.usesUnifiedPlan = function () {
 TraceablePeerConnection.prototype.toString = function () {
     return `TPC[id=${this.id},type=${this.isP2P ? 'P2P' : 'JVB'}]`;
 };
-//# sourceMappingURL=TraceablePeerConnection.js.map

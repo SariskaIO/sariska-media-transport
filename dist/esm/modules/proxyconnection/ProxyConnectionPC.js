@@ -333,4 +333,3 @@ export default class ProxyConnectionPC {
         this._peerConnection.addIceCandidates($jingle);
     }
 }
-//# sourceMappingURL=ProxyConnectionPC.js.map

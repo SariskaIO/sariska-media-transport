@@ -317,4 +317,3 @@ function _synthesizeIPv6Addresses1(sessionDescription, ips, lines) {
         type: sessionDescription.type
     });
 }
-//# sourceMappingURL=RTCPeerConnection.js.map

@@ -43,4 +43,3 @@ export class NetworkInfo extends Listenable {
 }
 const networkInfo = new NetworkInfo();
 export default networkInfo;
-//# sourceMappingURL=NetworkInfo.js.map

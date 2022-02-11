@@ -122,4 +122,3 @@ roomPassword }) {
     return process;
 }
 /* eslint-enable no-invalid-this */
-//# sourceMappingURL=authenticateAndUpgradeRole.js.map

@@ -255,4 +255,3 @@ const ScreenObtainer = {
     }
 };
 export default ScreenObtainer;
-//# sourceMappingURL=ScreenObtainer.js.map

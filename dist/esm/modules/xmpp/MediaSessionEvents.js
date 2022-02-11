@@ -4,4 +4,3 @@ export default {
      */
     REMOTE_VIDEO_CONSTRAINTS_CHANGED: 'media_session.REMOTE_VIDEO_CONSTRAINTS_CHANGED'
 };
-//# sourceMappingURL=MediaSessionEvents.js.map

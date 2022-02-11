@@ -559,4 +559,3 @@ function safeJsonParse(data) {
     }
 }
 OlmAdapter.events = OlmAdapterEvents;
-//# sourceMappingURL=OlmAdapter.js.map

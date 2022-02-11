@@ -163,4 +163,3 @@ export default class Storage {
             || AsyncStorage.setItem(`${String(this._keyPrefix)}${key}`, value);
     }
 }
-//# sourceMappingURL=Storage.js.map

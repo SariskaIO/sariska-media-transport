@@ -18,4 +18,3 @@ export const ACTIVE = 'active';
  * @type {string}
  */
 export const ENDED = 'ended';
-//# sourceMappingURL=JingleSessionState.js.map
