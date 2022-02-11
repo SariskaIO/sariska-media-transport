@@ -647,7 +647,7 @@ declare class JitsiConference {
      * received.
      * @param {jQuery} answer a jQuery selector pointing to 'jingle' IQ element
      */
-    onCallAccepted(session: any, answer: any): void;
+    onCallAccepted(session: any, answer: JQueryStatic): void;
     /**
      * Callback called by the Jingle plugin when 'transport-info' is received.
      * @param {JingleSessionPC} session the Jingle session for which the IQ was
@@ -655,7 +655,7 @@ declare class JitsiConference {
      * @param {jQuery} transportInfo a jQuery selector pointing to 'jingle' IQ
      * element
      */
-    onTransportInfo(session: any, transportInfo: any): void;
+    onTransportInfo(session: any, transportInfo: JQueryStatic): void;
     /**
      * Notifies this JitsiConference that a JitsiRemoteTrack was removed from
      * the conference.
@@ -684,7 +684,7 @@ declare class JitsiConference {
      * @param {TraceablePeerConnection} pc the peer connection which will be used
      * to listen for new WebRTC Data Channels (in the 'datachannel' mode).
      */
-    _setBridgeChannel(offerIq: any, pc: any): void;
+    _setBridgeChannel(offerIq: JQueryStatic, pc: any): void;
     private _rejectIncomingCall;
     /**
      * Handles the call ended event.

@@ -1,5 +1,4 @@
 import Logger from '@jitsi/logger';
-
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import JitsiConnection from './JitsiConnection';

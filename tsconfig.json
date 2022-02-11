@@ -24,7 +24,6 @@
     "dom", 
     "**/*.spec.js",
     "*.conf*.js",
-    "webpack*.js",
     "sariska-media-transport.*.js",
     "types"
   ]

@@ -6,5 +6,5 @@ import './core/parseXML.js';
 import './exports/global.js';
 import './manipulation.js';
 
-
+window.$ = jQuery
 export default jQuery;

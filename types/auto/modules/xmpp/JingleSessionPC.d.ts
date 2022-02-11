@@ -40,7 +40,7 @@ export default class JingleSessionPC extends JingleSession {
      * @param {jQuery} jingleContents - A jQuery selector pointing to the '>jingle' element.
      * @returns {Number|null}
      */
-    static parseMaxFrameHeight(jingleContents: any): number | null;
+    static parseMaxFrameHeight(jingleContents: JQueryStatic): number | null;
     /**
      * Creates new <tt>JingleSessionPC</tt>
      * @param {string} sid the Jingle Session ID - random string which identifies the session
@@ -547,7 +547,7 @@ export default class JingleSessionPC extends JingleSession {
      * @see {@link _remoteVideoActive}
      * @see {@link _localVideoActive}
      */
-    modifyContents(jingleContents: any): void;
+    modifyContents(jingleContents: JQueryStatic): void;
     /**
      * Processes new value of remote video "senders" Jingle attribute and tries
      * to apply it for {@link _remoteVideoActive}.
