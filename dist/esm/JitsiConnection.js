@@ -5,7 +5,7 @@ import XMPP from './modules/xmpp/xmpp';
 import { CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED, createConnectionFailedEvent } from './service/statistics/AnalyticsEvents';
 import { jitsiLocalStorage } from '@jitsi/js-utils';
 import { syncWithURL } from "./modules/util/parseURLParams";
-import { connectionConfig, conferenceConfig } from './config';
+import { connectionConfig, conferenceConfig, devConnectionConfig } from './config';
 export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
 /**
  * Creates a new connection object for the Jitsi Meet server side video
@@ -22,7 +22,8 @@ export default function JitsiConnection(token, roomName, isDev) {
     const jwt = this.parseJwt(token);
     this.name = roomName;
     this.user = jwt.context.user;
-    options.serviceUrl = isDev ? `wss://api.dev.sariska.io/api/v1/media/websocket?room=${roomName}` : `${options.serviceUrl}?room=${roomName}`;
+    options = isDev ? devConnectionConfig : conferenceConfig;
+    options.serviceUrl = `${options.serviceUrl}?room=${roomName}`;
     this.options = options;
     this.xmpp = new XMPP(options, token);
     this.token = token;

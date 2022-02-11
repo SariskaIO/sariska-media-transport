@@ -21,6 +21,15 @@ export const connectionConfig = {
     clientNode: 'https://www.sariska.io',
     // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
 };
+export const devConnectionConfig = {
+    hosts: {
+        domain: 'dev.sariska.io',
+        muc: 'muc.dev.sariska.io'
+    },
+    serviceUrl: 'wss://api.dev.sariska.io/api/v1/media/websocket',
+    clientNode: 'https://www.sariska.io',
+    // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
+};
 export const conferenceConfig = {
     enableLocalRecording: true,
     enableVirtualBackground: false,

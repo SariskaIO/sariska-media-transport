@@ -9,6 +9,19 @@ export namespace connectionConfig {
     const serviceUrl: string;
     const clientNode: string;
 }
+export namespace devConnectionConfig {
+    export namespace hosts_1 {
+        const domain_1: string;
+        export { domain_1 as domain };
+        const muc_1: string;
+        export { muc_1 as muc };
+    }
+    export { hosts_1 as hosts };
+    const serviceUrl_1: string;
+    export { serviceUrl_1 as serviceUrl };
+    const clientNode_1: string;
+    export { clientNode_1 as clientNode };
+}
 export namespace conferenceConfig {
     const enableLocalRecording: boolean;
     const enableVirtualBackground: boolean;

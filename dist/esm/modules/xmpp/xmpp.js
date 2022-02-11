@@ -150,11 +150,11 @@ export default class XMPP extends Listenable {
         // they wanted to utilize the connected connection in an unload handler
         // of their own. However, it should be fairly easy for them to do that
         // by registering their unload handler before us.
-        $(window).on(`${this.options.disableBeforeUnloadHandlers ? '' : 'beforeunload '}unload`, ev => {
-            this.disconnect(ev).catch(() => {
-                // ignore errors in order to not brake the unload.
-            });
-        });
+        // $(window).on(`${this.options.disableBeforeUnloadHandlers ? '' : 'beforeunload '}unload`, ev => {
+        //     this.disconnect(ev).catch(() => {
+        //         // ignore errors in order to not brake the unload.
+        //     });
+        // });
     }
     /**
      * Initializes the list of feature advertised through the disco-info
