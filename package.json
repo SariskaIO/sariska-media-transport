@@ -83,7 +83,9 @@
     "dist",
     "types",
     "connection_optimization/external_connect.js",
-    "modules/browser/capabilities.json"
+    "modules/browser/capabilities.json",
+    "webpack-shared-config.js",
+    "webpack.config.js"		
   ],
   "main": "./dist/esm/index.js",
   "license": "Apache-2.0"
