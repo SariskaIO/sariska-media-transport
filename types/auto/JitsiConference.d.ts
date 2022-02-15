@@ -259,8 +259,18 @@ declare class JitsiConference {
      * @returns {Promise}
      */
     leave(): Promise<any>;
-    private _getActiveMediaSession;
-    private _getMediaSessions;
+    /**
+     * Returns the currently active media session if any.
+     *
+     * @returns {JingleSessionPC|undefined}
+     */
+    getActiveMediaSession(): any | undefined;
+    /**
+     * Returns an array containing all media sessions existing in this conference.
+     *
+     * @returns {Array<JingleSessionPC>}
+     */
+    getMediaSessions(): Array<any>;
     private _registerRtcListeners;
     private _sendBridgeVideoTypeMessage;
     /**
@@ -310,6 +320,11 @@ declare class JitsiConference {
      * @return {JitsiLocalTrack|null}
      */
     getLocalVideoTrack(): any | null;
+    /**
+     * Returns all the local video tracks.
+     * @returns {Array<JitsiLocalTrack>}
+     */
+    getLocalVideoTracks(): Array<any>;
     /**
      * Obtains the performance statistics.
      * @returns {Object|null}
@@ -1224,8 +1239,8 @@ import LocalTracksDuration from "./modules/statistics/LocalTracksDuration";
 import { CodecSelection } from "./modules/RTC/CodecSelection";
 import E2ePing from "./modules/e2eping/e2eping";
 import RTC from "./modules/RTC/RTC";
-import { ReceiveVideoController } from "./modules/qualitycontrol/ReceiveVideoController";
-import { SendVideoController } from "./modules/qualitycontrol/SendVideoController";
+import ReceiveVideoController from "./modules/qualitycontrol/ReceiveVideoController";
+import SendVideoController from "./modules/qualitycontrol/SendVideoController";
 import ParticipantConnectionStatusHandler from "./modules/connectivity/ParticipantConnectionStatus";
 import Statistics from "./modules/statistics/statistics";
 import VADAudioAnalyser from "./modules/detection/VADAudioAnalyser";
