@@ -18,7 +18,8 @@ make
 
 
 
-Manaully update SariskaMediaTransport.js w
+Manaully update SariskaMediaTransport.js Manaully updatethe dist folder
+
 
 ```shell
 

@@ -10,7 +10,7 @@ const LASTN_UNLIMITED = -1;
  * This class translates the legacy signaling format between the client and the bridge (that affects bandwidth
  * allocation) to the new format described here https://github.com/jitsi/jitsi-videobridge/blob/master/doc/allocation.md
  */
-export class ReceiverVideoConstraints {
+class ReceiverVideoConstraints {
     /**
      * Creates a new instance.
      */
@@ -138,7 +138,7 @@ export class ReceiverVideoConstraints {
  * determined by the application based on how the remote video streams need to be displayed. This class is responsible
  * for communicating these constraints to the bridge over the bridge channel.
  */
-export class ReceiveVideoController {
+export default class ReceiveVideoController {
     /**
      * Creates a new instance for a given conference.
      *
@@ -244,7 +244,7 @@ export class ReceiveVideoController {
      */
     setPreferredReceiveMaxFrameHeight(maxFrameHeight) {
         this._maxFrameHeight = maxFrameHeight;
-        for (const session of this._conference._getMediaSessions()) {
+        for (const session of this._conference.getMediaSessions()) {
             if (session.isP2P || !this._receiverVideoConstraints) {
                 maxFrameHeight && session.setReceiverVideoConstraint(maxFrameHeight);
             }
@@ -278,7 +278,7 @@ export class ReceiveVideoController {
             this._lastN = (_a = constraints.lastN) !== null && _a !== void 0 ? _a : this._lastN;
             this._selectedEndpoints = (_b = constraints.selectedEndpoints) !== null && _b !== void 0 ? _b : this._selectedEndpoints;
             this._rtc.setNewReceiverVideoConstraints(constraints);
-            const p2pSession = this._conference._getMediaSessions().find(session => session.isP2P);
+            const p2pSession = this._conference.getMediaSessions().find(session => session.isP2P);
             if (p2pSession) {
                 let maxFrameHeight = (_c = Object.values(constraints.constraints)[0]) === null || _c === void 0 ? void 0 : _c.maxHeight;
                 if (!maxFrameHeight) {

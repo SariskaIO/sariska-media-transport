@@ -84,7 +84,7 @@ export class KeyHandler extends Listenable {
      * @private
      */
     _onLocalTrackAdded(track) {
-        for (const session of this.conference._getMediaSessions()) {
+        for (const session of this.conference.getMediaSessions()) {
             this._setupSenderE2EEForTrack(session, track);
         }
     }
@@ -143,7 +143,7 @@ export class KeyHandler extends Listenable {
      */
     _trackMuteChanged(track) {
         if (browser.doesVideoMuteByStreamRemove() && track.isLocal() && track.isVideoTrack() && !track.isMuted()) {
-            for (const session of this.conference._getMediaSessions()) {
+            for (const session of this.conference.getMediaSessions()) {
                 this._setupSenderE2EEForTrack(session, track);
             }
         }

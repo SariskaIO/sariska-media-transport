@@ -1220,22 +1220,23 @@ export default class JingleSessionPC extends JingleSession {
     /**
      * Sets the resolution constraint on the local camera track.
      * @param {number} maxFrameHeight - The user preferred max frame height.
+     * @param {string} sourceName - The source name of the track.
      * @returns {Promise} promise that will be resolved when the operation is
      * successful and rejected otherwise.
      */
-    setSenderVideoConstraint(maxFrameHeight) {
+    setSenderVideoConstraint(maxFrameHeight, sourceName = null) {
         if (this._assertNotEnded()) {
-            logger.info(`${this} setSenderVideoConstraint: ${maxFrameHeight}`);
+            logger.info(`${this} setSenderVideoConstraint: ${maxFrameHeight}, sourceName: ${sourceName}`);
             // RN doesn't support RTCRtpSenders yet, aggresive layer suspension on RN is implemented
             // by changing the media direction in the SDP. This is applicable to jvb sessions only.
             if (!this.isP2P && browser.isReactNative() && typeof maxFrameHeight !== 'undefined') {
                 const videoActive = maxFrameHeight > 0;
                 return this.setMediaTransferActive(true, videoActive);
             }
-            const promise = typeof maxFrameHeight === 'undefined'
-                ? this.peerconnection.configureSenderVideoEncodings()
-                : this.peerconnection.setSenderVideoConstraints(maxFrameHeight);
-            return promise;
+            const jitsiLocalTrack = sourceName
+                ? this.rtc.getLocalVideoTracks().find(track => track.getSourceName() === sourceName)
+                : this.rtc.getLocalVideoTrack();
+            return this.peerconnection.setSenderVideoConstraints(maxFrameHeight, jitsiLocalTrack);
         }
         return Promise.resolve();
     }
@@ -1754,7 +1755,7 @@ export default class JingleSessionPC extends JingleSession {
                     if (newTrack === null || newTrack === void 0 ? void 0 : newTrack.isVideoTrack()) {
                         logger.debug(`${this} replaceTrack worker: configuring video stream`);
                         // Configure the video encodings after the track is replaced.
-                        return this.peerconnection.configureSenderVideoEncodings();
+                        return this.peerconnection.configureSenderVideoEncodings(newTrack);
                     }
                 });
             })
@@ -1874,7 +1875,7 @@ export default class JingleSessionPC extends JingleSession {
             // Configure the video encodings after the track is unmuted. If the user joins the call muted and
             // unmutes it the first time, all the parameters need to be configured.
             if (track.isVideoTrack()) {
-                return this.peerconnection.configureSenderVideoEncodings();
+                return this.peerconnection.configureSenderVideoEncodings(track);
             }
         });
     }

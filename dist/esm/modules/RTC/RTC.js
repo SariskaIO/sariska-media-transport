@@ -458,6 +458,13 @@ export default class RTC extends Listenable {
         return localVideo.length ? localVideo[0] : undefined;
     }
     /**
+     * Returns all the local video tracks.
+     * @returns {Array<JitsiLocalTrack>}
+     */
+    getLocalVideoTracks() {
+        return this.getLocalTracks(MediaType.VIDEO);
+    }
+    /**
      * Get local audio track.
      * @returns {JitsiLocalTrack|undefined}
      */

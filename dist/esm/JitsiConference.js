@@ -623,18 +623,16 @@ JitsiConference.prototype.leave = function () {
  * Returns the currently active media session if any.
  *
  * @returns {JingleSessionPC|undefined}
- * @private
  */
-JitsiConference.prototype._getActiveMediaSession = function () {
+JitsiConference.prototype.getActiveMediaSession = function () {
     return this.isP2PActive() ? this.p2pJingleSession : this.jvbJingleSession;
 };
 /**
  * Returns an array containing all media sessions existing in this conference.
  *
  * @returns {Array<JingleSessionPC>}
- * @private
  */
-JitsiConference.prototype._getMediaSessions = function () {
+JitsiConference.prototype.getMediaSessions = function () {
     const sessions = [];
     this.jvbJingleSession && sessions.push(this.jvbJingleSession);
     this.p2pJingleSession && sessions.push(this.p2pJingleSession);
@@ -754,6 +752,13 @@ JitsiConference.prototype.getLocalAudioTrack = function () {
  */
 JitsiConference.prototype.getLocalVideoTrack = function () {
     return this.rtc ? this.rtc.getLocalVideoTrack() : null;
+};
+/**
+ * Returns all the local video tracks.
+ * @returns {Array<JitsiLocalTrack>}
+ */
+JitsiConference.prototype.getLocalVideoTracks = function () {
+    return this.rtc ? this.rtc.getLocalVideoTracks() : null;
 };
 /**
  * Obtains the performance statistics.
@@ -1102,7 +1107,7 @@ JitsiConference.prototype.replaceTrack = function (oldTrack, newTrack) {
         if (oldTrackBelongsToConference && (oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.isVideoTrack())
             // we do not want to send presence update during setEffect switching, which does remove and then add
             && !((oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack._setEffectInProgress) || (newTrack === null || newTrack === void 0 ? void 0 : newTrack._setEffectInProgress))) {
-            this._updateRoomPresence(this._getActiveMediaSession());
+            this._updateRoomPresence(this.getActiveMediaSession());
         }
         if (newTrack !== null && (this.isMutedByFocus || this.isVideoMutedByFocus)) {
             this._fireMuteChangeEvent(newTrack);
@@ -1644,7 +1649,7 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
         return;
     }
     const participant = this.participants[id];
-    const mediaSessions = this._getMediaSessions();
+    const mediaSessions = this.getMediaSessions();
     let tracksToBeRemoved = [];
     for (const session of mediaSessions) {
         const remoteTracks = session.peerconnection.getRemoteTracks(id);
@@ -2785,7 +2790,7 @@ JitsiConference.prototype._setP2PStatus = function (newStatus) {
     this.dtmfManager = null;
     // Update P2P status
     this.eventEmitter.emit(JitsiConferenceEvents.P2P_STATUS, this, this.p2p);
-    this.eventEmitter.emit(JitsiConferenceEvents._MEDIA_SESSION_ACTIVE_CHANGED, this._getActiveMediaSession());
+    this.eventEmitter.emit(JitsiConferenceEvents._MEDIA_SESSION_ACTIVE_CHANGED, this.getActiveMediaSession());
     // Refresh connection interrupted/restored
     this.eventEmitter.emit(this.isConnectionInterrupted()
         ? JitsiConferenceEvents.CONNECTION_INTERRUPTED
