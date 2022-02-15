@@ -26,7 +26,7 @@ export default function JitsiConnection(token, roomName, isDev) {
     const jwt = this.parseJwt(token);
     this.name = roomName;
     this.user = jwt.context.user;
-    options = isDev ? {...devConnectionConfig} : {...conferenceConfig};
+    options = isDev ? {...devConnectionConfig} : {...connectionConfig};
     options.serviceUrl = `${options.serviceUrl}?room=${roomName}`;
     this.options = options;
     this.xmpp = new XMPP(options, token);

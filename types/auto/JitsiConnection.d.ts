@@ -30,26 +30,6 @@ export default class JitsiConnection {
         };
         serviceUrl: string;
         clientNode: string;
-    } | {
-        enableLocalRecording: boolean;
-        enableVirtualBackground: boolean;
-        enableNoiseCancellation: boolean;
-        enableTalkWhileMuted: boolean;
-        enableNoAudioDetection: boolean;
-        enableNoisyMicDetection: boolean;
-        createVADProcessor: boolean;
-        openBridgeChannel: string;
-        hiddenDomain: string;
-        enableLayerSuspension: boolean;
-        e2eping: {
-            pingInterval: number;
-        };
-        analytics: {
-            disabled: boolean;
-        };
-        p2p: {
-            enabled: boolean;
-        };
     };
     xmpp: XMPP;
     token: any;
