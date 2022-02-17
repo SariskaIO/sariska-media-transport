@@ -46,13 +46,12 @@ function createConnection({
   token,
   websocketKeepAlive,
   websocketKeepAliveUrl,
-  xmppPing,
-  name
+  xmppPing
 }) {
   // Append token as URL param
   if (token) {
     // eslint-disable-next-line no-param-reassign
-    serviceUrl += `${serviceUrl.indexOf('?') === -1 ? '?' : '&'}token=${token}&room=${name}`;
+    serviceUrl += `${serviceUrl.indexOf('?') === -1 ? '?' : '&'}token=${token}`;
   }
 
   return new XmppConnection({
@@ -61,8 +60,7 @@ function createConnection({
     websocketKeepAlive,
     websocketKeepAliveUrl,
     xmppPing,
-    shard,
-    name
+    shard
   });
 }
 /**
@@ -128,7 +126,7 @@ export default class XMPP extends Listenable {
    * @param {Array<Object>} options.p2pStunServers see {@link JingleConnectionPlugin} for more details.
    * @param token
    */
-  constructor(options, token, roomName) {
+  constructor(options, token) {
     var _options$deploymentIn;
 
     super();
@@ -143,7 +141,6 @@ export default class XMPP extends Listenable {
 
     xmppPing.domain = options.hosts.domain;
     this.connection = createConnection({
-      name: roomName,
       enableWebsocketResume: options.enableWebsocketResume,
       // FIXME remove deprecated bosh option at some point
       serviceUrl: options.serviceUrl || options.bosh,

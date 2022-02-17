@@ -151,12 +151,12 @@ export default class JitsiLocalTrack extends JitsiTrack {
       if ( // Mark track as ended for those browsers that do not support
       // "readyState" property. We do not touch tracks created with
       // default device ID "".
-      typeof this.getTrack().readyState === 'undefined' && typeof this._realDeviceId !== 'undefined' && !devices.find(d => d.deviceId === this._realDeviceId) || // If there was an associated realDeviceID and after the device change the realDeviceId is undefined
+      typeof this.getTrack().readyState === 'undefined' && typeof this._realDeviceId !== 'undefined' && !devices.find(d => d.deviceId === this._realDeviceId) // If there was an associated realDeviceID and after the device change the realDeviceId is undefined
       // then the associated device has been disconnected and the _trackEnded flag needs to be set. In
       // addition on some Chrome versions the readyState property is set after the device change event is
       // triggered which causes issues in jitsi-meet with the selection of a new device because we don't
       // detect that the old one was removed.
-      typeof oldRealDeviceId !== 'undefined' && typeof this._realDeviceId === 'undefined') {
+      || typeof oldRealDeviceId !== 'undefined' && typeof this._realDeviceId === 'undefined') {
         this._trackEnded = true;
       }
     }; // Subscribe each created local audio track to

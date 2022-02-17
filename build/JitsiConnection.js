@@ -3,10 +3,10 @@ import * as JitsiConnectionEvents from './JitsiConnectionEvents';
 import Statistics from './modules/statistics/statistics';
 import XMPP from './modules/xmpp/xmpp';
 import { CONNECTION_DISCONNECTED as ANALYTICS_CONNECTION_DISCONNECTED, createConnectionFailedEvent } from './service/statistics/AnalyticsEvents';
-import { connectionConfig, conferenceConfig } from './config';
 import { jitsiLocalStorage } from '@jitsi/js-utils';
 import { syncWithURL } from "./modules/util/parseURLParams";
 export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
+import { connectionConfig, devConnectionConfig, conferenceConfig } from "./config";
 /**
  * Creates a new connection object for the Jitsi Meet server side video
  * conferencing service. Provides access to the JitsiConference interface.
@@ -18,16 +18,16 @@ export const DISCO_JIBRI_FEATURE = 'http://jitsi.org/protocol/jibri';
  * @constructor
  */
 
-export default function JitsiConnection(token, options = {}) {
-  options = { ...connectionConfig,
-    ...options
+export default function JitsiConnection(token, roomName, isDev) {
+  const options = isDev ? { ...devConnectionConfig
+  } : { ...connectionConfig
   };
-  this.token = token;
+  options.serviceUrl = `${options.serviceUrl}?room=${roomName}`;
   const jwt = this.parseJwt(token);
-  this.name = jwt ? jwt.room : null;
+  this.name = roomName;
   this.user = jwt.context.user;
   this.options = options;
-  this.xmpp = new XMPP(options, token, this.name);
+  this.xmpp = new XMPP(options, token);
   this.token = token;
   /* eslint-disable max-params */
 
