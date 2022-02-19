@@ -1,0 +1,15 @@
+node_modules
+*.swp
+.idea/
+*.iml
+.*.tmp
+deploy-local.sh
+.remote-sync.json
+lib-jitsi-meet.*
+npm-*.log
+.sync-config.cson
+.jshintignore
+.jshintrc
+.DS_Store
+stats.json
+.vscode
