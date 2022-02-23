@@ -1221,7 +1221,7 @@ declare namespace JitsiConference {
      * @returns {string}
      * @static
      */
-    function resourceCreator(jid: string, isAuthenticatedUser: boolean): string;
+    function resourceCreator(jid: string): string;
 }
 export default JitsiConference;
 import EventEmitter from "events";

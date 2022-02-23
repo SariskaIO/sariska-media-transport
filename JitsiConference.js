@@ -364,29 +364,8 @@ JitsiConference.prototype.constructor = JitsiConference;
  * @returns {string}
  * @static
  */
-JitsiConference.resourceCreator = function(jid, isAuthenticatedUser) {
-    let mucNickname;
-
-    if (isAuthenticatedUser) {
-        // For authenticated users generate a random ID.
-        mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-    } else {
-        // We try to use the first part of the node (which for anonymous users
-        // on prosody is a UUID) to match the previous behavior (and maybe make
-        // debugging easier).
-        mucNickname = Strophe.getNodeFromJid(jid)?.substr(0, 8)
-            .toLowerCase();
-
-        // But if this doesn't have the required format we just generate a new
-        // random nickname.
-        const re = /[0-9a-f]{8}/g;
-
-        if (!mucNickname || !re.test(mucNickname)) {
-            mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-        }
-    }
-
-    return mucNickname;
+JitsiConference.resourceCreator = function(jid) {
+    return Strophe.getNodeFromJid(jid);
 };
 
 /**

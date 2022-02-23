@@ -48,7 +48,6 @@ import SpeakerStatsCollector from './modules/statistics/SpeakerStatsCollector';
 import Statistics from './modules/statistics/statistics';
 import Transcriber from './modules/transcription/transcriber';
 import GlobalOnErrorHandler from './modules/util/GlobalOnErrorHandler';
-import RandomUtil from './modules/util/RandomUtil';
 import ComponentsVersions from './modules/version/ComponentsVersions';
 import VideoSIPGW from './modules/videosipgw/VideoSIPGW';
 import * as VideoSIPGWConstants from './modules/videosipgw/VideoSIPGWConstants';
@@ -306,26 +305,8 @@ JitsiConference.prototype.constructor = JitsiConference;
  * @returns {string}
  * @static
  */
-JitsiConference.resourceCreator = function (jid, isAuthenticatedUser) {
-    var _a;
-    let mucNickname;
-    if (isAuthenticatedUser) {
-        // For authenticated users generate a random ID.
-        mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-    }
-    else {
-        // We try to use the first part of the node (which for anonymous users
-        // on prosody is a UUID) to match the previous behavior (and maybe make
-        // debugging easier).
-        mucNickname = (_a = Strophe.getNodeFromJid(jid)) === null || _a === void 0 ? void 0 : _a.substr(0, 8).toLowerCase();
-        // But if this doesn't have the required format we just generate a new
-        // random nickname.
-        const re = /[0-9a-f]{8}/g;
-        if (!mucNickname || !re.test(mucNickname)) {
-            mucNickname = RandomUtil.randomHexString(8).toLowerCase();
-        }
-    }
-    return mucNickname;
+JitsiConference.resourceCreator = function (jid) {
+    return Strophe.getNodeFromJid(jid);
 };
 /**
  * Initializes the conference object properties
