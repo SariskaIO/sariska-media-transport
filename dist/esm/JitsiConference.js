@@ -920,38 +920,6 @@ JitsiConference.prototype.getTranscriptionStatus = function () {
  * another video track in the conference.
  */
 JitsiConference.prototype.addTrack = function (track) {
-    if (!track) {
-        return;
-    }
-    if (track.isAudioTrack() && this.options.config.startAudioMuted) {
-        track.mute();
-    }
-    if (track.isVideoTrack() && this.options.config.startVideoMuted) {
-        track.mute();
-    }
-    const mediaType = track.getType();
-    const localTracks = this.rtc.getLocalTracks(mediaType);
-    // Ensure there's exactly 1 local track of each media type in the conference.
-    if (localTracks.length > 0) {
-        // Don't be excessively harsh and severe if the API client happens to attempt to add the same local track twice.
-        if (track === localTracks[0]) {
-            return Promise.resolve(track);
-        }
-        if (FeatureFlags.isMultiStreamSupportEnabled() && mediaType === MediaType.VIDEO) {
-            const addTrackPromises = [];
-            this.p2pJingleSession && addTrackPromises.push(this.p2pJingleSession.addTrack(track));
-            this.jvbJingleSession && addTrackPromises.push(this.jvbJingleSession.addTrack(track));
-            return Promise.all(addTrackPromises)
-                .then(() => {
-                this._setupNewTrack(track);
-                // TODO Update presence and sent videoType message.
-                if (this.isMutedByFocus || this.isVideoMutedByFocus) {
-                    this._fireMuteChangeEvent(track);
-                }
-            });
-        }
-        return Promise.reject(new Error(`Cannot add second ${mediaType} track to the conference`));
-    }
     return this.replaceTrack(null, track);
 };
 /**

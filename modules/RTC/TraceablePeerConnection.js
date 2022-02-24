@@ -1044,7 +1044,9 @@ TraceablePeerConnection.prototype._remoteStreamRemoved = function(stream) {
  * @param {MediaStreamTrack} track - WebRTC MediaStreamTrack which has been removed from the PeerConnection.
  * @returns {void}
  */
-TraceablePeerConnection.prototype._remoteTrackRemoved = function(stream, track) {
+ TraceablePeerConnection.prototype._remoteTrackRemoved = function(
+    stream,
+    track) {
     const streamId = RTC.getStreamID(stream);
     const trackId = track && RTC.getTrackID(track);
 
@@ -1053,6 +1055,7 @@ TraceablePeerConnection.prototype._remoteTrackRemoved = function(stream, track) 
 
         return;
     }
+    logger.info(`${this} remote track removed stream[id=${streamId},trackId=${trackId}]`);
 
     if (!streamId) {
         GlobalOnErrorHandler.callErrorHandler(new Error(`${this} remote track removal failed - no stream ID`));
@@ -1066,9 +1069,20 @@ TraceablePeerConnection.prototype._remoteTrackRemoved = function(stream, track) 
         return;
     }
 
-    const toBeRemoved = this.getRemoteTracks().find(
-        remoteTrack => remoteTrack.getStreamId() === streamId
-        && remoteTrack.getTrackId() === trackId);
+    if (!this._removeRemoteTrackById(streamId, trackId)) {
+        // NOTE this warning is always printed when user leaves the room,
+        // because we remove remote tracks manually on MUC member left event,
+        // before the SSRCs are removed by Jicofo. In most cases it is fine to
+        // ignore this warning, but still it's better to keep it printed for
+        // debugging purposes.
+        //
+        // We could change the behaviour to emit track removed only from here,
+        // but the order of the events will change and consuming apps could
+        // behave unexpectedly (the "user left" event would come before "track
+        // removed" events).
+        logger.warn(`${this} Removed track not found for stream[id=${streamId},trackId=${trackId}]`);
+    }
+};
 
 /**
  * Finds remote track by it's stream and track ids.
@@ -1117,9 +1131,6 @@ TraceablePeerConnection.prototype.removeRemoteTracks = function(owner) {
         removedTracks.concat(Array.from(userTracksByMedia.get(MediaType.AUDIO)));
         removedTracks.concat(Array.from(userTracksByMedia.get(MediaType.VIDEO)));
 
-    if (remoteTracksByMedia) {
-        removedTracks = removedTracks.concat(Array.from(remoteTracksByMedia.get(MediaType.AUDIO)));
-        removedTracks = removedTracks.concat(Array.from(remoteTracksByMedia.get(MediaType.VIDEO)));
         this.remoteTracks.delete(owner);
     }
     logger.debug(`${this} removed remote tracks[endpoint=${owner},count=${removedTracks.length}`);

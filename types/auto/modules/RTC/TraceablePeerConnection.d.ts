@@ -125,8 +125,9 @@ export default class TraceablePeerConnection {
      */
     isP2P: boolean;
     /**
-     * The map holds remote tracks associated with this peer connection. It maps user's JID to media type and a set of
-     * remote tracks.
+     * The map holds remote tracks associated with this peer connection.
+     * It maps user's JID to media type and remote track
+     * (one track per media type per user's JID).
      * @type {Map<string, Map<MediaType, Set<JitsiRemoteTrack>>>}
      */
     remoteTracks: Map<string, Map<typeof MediaType, Set<JitsiRemoteTrack>>>;
@@ -234,8 +235,8 @@ export default class TraceablePeerConnection {
      * 300 values, i.e. 5 minutes; set to 0 to disable
      */
     maxstats: number;
-    interop: any;
-    simulcast: any;
+    interop: Interop;
+    simulcast: SdpSimulcast | import("../sdp-simulcast");
     sdpConsistency: SdpConsistency;
     /**
      * Munges local SDP provided to the Jingle Session in order to prevent from
@@ -404,6 +405,7 @@ export default class TraceablePeerConnection {
      * @returns {void}
      */
     _remoteTrackRemoved(stream: MediaStream, track: MediaStreamTrack): void;
+    private _getRemoteTrackById;
     /**
      * Removes all JitsiRemoteTracks associated with given MUC nickname (resource part of the JID).
      *
@@ -479,6 +481,12 @@ export default class TraceablePeerConnection {
      * @returns {RTCSessionDescription} the munged description.
      */
     _mungeCodecOrder(description: RTCSessionDescription): RTCSessionDescription;
+    /**
+     * Checks if given track belongs to this peerconnection instance.
+     *
+     * @param {JitsiLocalTrack|JitsiRemoteTrack} track - The track to be checked.
+     * @returns {boolean}
+     */
     /**
      * Add {@link JitsiLocalTrack} to this TPC.
      * @param {JitsiLocalTrack} track
@@ -775,6 +783,8 @@ import RTC from "./RTC";
 import * as MediaType from "../../service/RTC/MediaType";
 import JitsiRemoteTrack from "./JitsiRemoteTrack";
 import { TPCUtils } from "./TPCUtils";
+import { Interop } from "../sdp-interop/interop";
+import SdpSimulcast from "../sdp/SdpSimulcast";
 import SdpConsistency from "../sdp/SdpConsistency";
 import LocalSdpMunger from "../sdp/LocalSdpMunger";
 import RtxModifier from "../sdp/RtxModifier";

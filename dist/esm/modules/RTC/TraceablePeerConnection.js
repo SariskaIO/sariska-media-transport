@@ -1,5 +1,4 @@
 import { getLogger } from '@jitsi/logger';
-import { Interop } from '@jitsi/sdp-interop';
 import transform from 'sdp-transform';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
 import MediaDirection from '../../service/RTC/MediaDirection';
@@ -11,6 +10,7 @@ import * as VideoType from '../../service/RTC/VideoType';
 import { SS_DEFAULT_FRAME_RATE } from '../RTC/ScreenObtainer';
 import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
+import { Interop } from '../sdp-interop';
 import LocalSdpMunger from '../sdp/LocalSdpMunger';
 import RtxModifier from '../sdp/RtxModifier';
 import SDP from '../sdp/SDP';
@@ -114,8 +114,9 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
      */
     this.isP2P = isP2P;
     /**
-     * The map holds remote tracks associated with this peer connection. It maps user's JID to media type and a set of
-     * remote tracks.
+     * The map holds remote tracks associated with this peer connection.
+     * It maps user's JID to media type and remote track
+     * (one track per media type per user's JID).
      * @type {Map<string, Map<MediaType, Set<JitsiRemoteTrack>>>}
      */
     this.remoteTracks = new Map();
@@ -213,6 +214,7 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
      */
     this.maxstats = options.maxstats;
     this.interop = new Interop();
+    const Simulcast = require('../sdp-simulcast');
     if (this._usesUnifiedPlan) {
         this.simulcast = new SdpSimulcast({ numOfLayers: SIM_LAYER_RIDS.length });
     }
@@ -543,7 +545,7 @@ TraceablePeerConnection.prototype.hasAnyTracksOfType = function (mediaType) {
  * @return {Array<JitsiRemoteTrack>}
  */
 TraceablePeerConnection.prototype.getRemoteTracks = function (endpointId, mediaType) {
-    let remoteTracks = [];
+    const remoteTracks = [];
     const endpoints = endpointId ? [endpointId] : this.remoteTracks.keys();
     for (const endpoint of endpoints) {
         const endpointTracksByMediaType = this.remoteTracks.get(endpoint);
@@ -551,7 +553,7 @@ TraceablePeerConnection.prototype.getRemoteTracks = function (endpointId, mediaT
             for (const trackMediaType of endpointTracksByMediaType.keys()) {
                 // per media type filtering
                 if (!mediaType || mediaType === trackMediaType) {
-                    remoteTracks = remoteTracks.concat(Array.from(endpointTracksByMediaType.get(trackMediaType)));
+                    remoteTracks.concat(Array.from(endpointTracksByMediaType.get(trackMediaType)));
                 }
             }
         }
@@ -791,23 +793,14 @@ TraceablePeerConnection.prototype._createRemoteTrack = function (ownerEndpointId
         remoteTracksMap.set(MediaType.VIDEO, new Set());
         this.remoteTracks.set(ownerEndpointId, remoteTracksMap);
     }
-    const userTracksByMediaType = remoteTracksMap.get(mediaType);
-    if ((userTracksByMediaType === null || userTracksByMediaType === void 0 ? void 0 : userTracksByMediaType.size)
-        && Array.from(userTracksByMediaType).find(jitsiTrack => jitsiTrack.getTrack() === track)) {
+    const userTracksOfMediaType = remoteTracksMap.get(mediaType);
+    if (userTracksOfMediaType.has(track)) {
         // Ignore duplicated event which can originate either from 'onStreamAdded' or 'onTrackAdded'.
         logger.info(`${this} ignored duplicated track event for track[endpoint=${ownerEndpointId},type=${mediaType}]`);
         return;
     }
-    else if ((userTracksByMediaType === null || userTracksByMediaType === void 0 ? void 0 : userTracksByMediaType.size) && !FeatureFlags.isSourceNameSignalingEnabled()) {
-        logger.error(`${this} received a second remote track for track[endpoint=${ownerEndpointId},type=${mediaType}]`
-            + 'deleting the existing track');
-        const existingTrack = Array.from(userTracksByMediaType)[0];
-        // The exisiting track needs to be removed here. This happens on Safari sometimes when a SSRC is removed from
-        // the remote description and the browser doesn't fire a 'removetrack' event on the associated MediaStream.
-        this._remoteTrackRemoved(existingTrack.getOriginalStream(), existingTrack.getTrack());
-    }
     const remoteTrack = new JitsiRemoteTrack(this.rtc, this.rtc.conference, ownerEndpointId, stream, track, mediaType, videoType, ssrc, muted, this.isP2P, sourceName);
-    userTracksByMediaType.add(remoteTrack);
+    userTracksOfMediaType.add(remoteTrack);
     this.eventEmitter.emit(RTCEvents.REMOTE_TRACK_ADDED, remoteTrack, this);
 };
 /* eslint-enable max-params */
@@ -846,6 +839,7 @@ TraceablePeerConnection.prototype._remoteTrackRemoved = function (stream, track)
         logger.info(`${this} ignored remote 'stream removed' event for non-user stream[id=${streamId}]`);
         return;
     }
+    logger.info(`${this} remote track removed stream[id=${streamId},trackId=${trackId}]`);
     if (!streamId) {
         GlobalOnErrorHandler.callErrorHandler(new Error(`${this} remote track removal failed - no stream ID`));
         return;
@@ -854,11 +848,43 @@ TraceablePeerConnection.prototype._remoteTrackRemoved = function (stream, track)
         GlobalOnErrorHandler.callErrorHandler(new Error(`${this} remote track removal failed - no track ID`));
         return;
     }
-    const toBeRemoved = this.getRemoteTracks().find(remoteTrack => remoteTrack.getStreamId() === streamId
-        && remoteTrack.getTrackId() === trackId);
-    if (!toBeRemoved) {
-        GlobalOnErrorHandler.callErrorHandler(new Error(`${this} remote track removal failed - track not found`));
-        return;
+    if (!this._removeRemoteTrackById(streamId, trackId)) {
+        // NOTE this warning is always printed when user leaves the room,
+        // because we remove remote tracks manually on MUC member left event,
+        // before the SSRCs are removed by Jicofo. In most cases it is fine to
+        // ignore this warning, but still it's better to keep it printed for
+        // debugging purposes.
+        //
+        // We could change the behaviour to emit track removed only from here,
+        // but the order of the events will change and consuming apps could
+        // behave unexpectedly (the "user left" event would come before "track
+        // removed" events).
+        logger.warn(`${this} Removed track not found for stream[id=${streamId},trackId=${trackId}]`);
+    }
+};
+/**
+ * Finds remote track by it's stream and track ids.
+ * @param {string} streamId the media stream id as defined by the WebRTC
+ * @param {string} trackId the media track id as defined by the WebRTC
+ * @return {JitsiRemoteTrack|undefined} the track's instance or
+ * <tt>undefined</tt> if not found.
+ * @private
+ */
+TraceablePeerConnection.prototype._getRemoteTrackById = function (streamId, trackId) {
+    // TODO try to get rid of this method altogether
+    // .find will break the loop once the first match is found
+    for (const endpointTracksByType of this.remoteTracks.values()) {
+        for (const endpointTracksOfMediaType of endpointTracksByType.values()) {
+            for (const mediaTrack of endpointTracksOfMediaType) {
+                // FIXME verify and try to use ===
+                /* eslint-disable eqeqeq */
+                if (mediaTrack.getStreamId() == streamId
+                    && mediaTrack.getTrackId() == trackId) {
+                    return mediaTrack;
+                }
+                /* eslint-enable eqeqeq */
+            }
+        }
     }
     logger.info(`${this} remote track removed stream[id=${streamId},trackId=${trackId}]`);
     this._removeRemoteTrack(toBeRemoved);
@@ -870,11 +896,11 @@ TraceablePeerConnection.prototype._remoteTrackRemoved = function (stream, track)
  * @returns {JitsiRemoteTrack[]} - The array of removed tracks.
  */
 TraceablePeerConnection.prototype.removeRemoteTracks = function (owner) {
-    let removedTracks = [];
-    const remoteTracksByMedia = this.remoteTracks.get(owner);
-    if (remoteTracksByMedia) {
-        removedTracks = removedTracks.concat(Array.from(remoteTracksByMedia.get(MediaType.AUDIO)));
-        removedTracks = removedTracks.concat(Array.from(remoteTracksByMedia.get(MediaType.VIDEO)));
+    const removedTracks = [];
+    const userTracksByMedia = this.remoteTracks.get(owner);
+    if (userTracksByMedia) {
+        removedTracks.concat(Array.from(userTracksByMedia.get(MediaType.AUDIO)));
+        removedTracks.concat(Array.from(userTracksByMedia.get(MediaType.VIDEO)));
         this.remoteTracks.delete(owner);
     }
     logger.debug(`${this} removed remote tracks[endpoint=${owner},count=${removedTracks.length}`);
@@ -887,14 +913,13 @@ TraceablePeerConnection.prototype.removeRemoteTracks = function (owner) {
  * @returns {void}
  */
 TraceablePeerConnection.prototype._removeRemoteTrack = function (toBeRemoved) {
-    var _a;
     toBeRemoved.dispose();
     const participantId = toBeRemoved.getParticipantId();
     const userTracksByMediaType = this.remoteTracks.get(participantId);
     if (!userTracksByMediaType) {
         logger.error(`${this} removeRemoteTrack: no remote tracks map for endpoint=${participantId}`);
     }
-    else if (!((_a = userTracksByMediaType.get(toBeRemoved.getType())) === null || _a === void 0 ? void 0 : _a.delete(toBeRemoved))) {
+    else if (!userTracksByMediaType.get(toBeRemoved.getType()).delete(toBeRemoved)) {
         logger.error(`${this} Failed to remove ${toBeRemoved} - type mapping messed up ?`);
     }
     this.eventEmitter.emit(RTCEvents.REMOTE_TRACK_REMOVED, toBeRemoved);
@@ -1322,6 +1347,23 @@ TraceablePeerConnection.prototype._mungeCodecOrder = function (description) {
         sdp: transform.write(parsedSdp)
     });
 };
+/**
+ * Checks if given track belongs to this peerconnection instance.
+ *
+ * @param {JitsiLocalTrack|JitsiRemoteTrack} track - The track to be checked.
+ * @returns {boolean}
+ */
+// TODO unused method push upstream
+/* TraceablePeerConnection.prototype.containsTrack = function(track) {
+    if (track.isLocal()) {
+        return this.localTracks.has(track.rtcId);
+    }
+
+    const participantId = track.getParticipantId();
+    const remoteTracksMap = this.remoteTracks.get(participantId);
+
+    return Boolean(remoteTracksMap && remoteTracksMap.get(track.getType()) === track);
+}; */
 /**
  * Add {@link JitsiLocalTrack} to this TPC.
  * @param {JitsiLocalTrack} track

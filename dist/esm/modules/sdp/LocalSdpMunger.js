@@ -158,10 +158,13 @@ export default class LocalSdpMunger {
      * @private
      */
     _transformMediaIdentifiers(mediaSection) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d, _e, _f, _g;
         const mediaType = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.type;
         const pcId = this.tpc.id;
         const sourceToMsidMap = new Map();
+        // TODO fix and remove quick and dirty hack
+        const trackToMsid = new Map();
+        let counter = 100;
         for (const ssrcLine of mediaSection.ssrcs) {
             switch (ssrcLine.attribute) {
                 case 'cname':
@@ -172,21 +175,32 @@ export default class LocalSdpMunger {
                 case 'msid': {
                     if (ssrcLine.value) {
                         const streamAndTrackIDs = ssrcLine.value.split(' ');
-                        let streamId = streamAndTrackIDs[0];
-                        const trackId = streamAndTrackIDs[1];
-                        // eslint-disable-next-line max-depth
-                        if (FeatureFlags.isMultiStreamSupportEnabled()
-                            && this.tpc.usesUnifiedPlan()
-                            && mediaType === MediaType.VIDEO) {
+                        if (streamAndTrackIDs.length === 2) {
+                            // FIXME
+                            // The problem here is that Chrome in unified gives `-` as the stream ID.
+                            // This code generates different stream IDs for each track. This is needed because when a video
+                            // is rendered stream ID is used to bind specific video. Without this change both camera and
+                            // desktop shared the same stream ID created by `this._generateMsidAttribute` which assumes only
+                            // one track per media type.
+                            const streamId = streamAndTrackIDs[0];
+                            const trackId = streamAndTrackIDs[1];
+                            const mediaType = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.type;
                             // eslint-disable-next-line max-depth
                             if (streamId === '-' || !streamId) {
-                                streamId = `${this.localEndpointId}-${mediaType}`;
+                                // eslint-disable-next-line max-depth
+                                if (!trackToMsid.has(trackId)) {
+                                    // eslint-disable-next-line max-len
+                                    trackToMsid.set(trackId, `${this.localEndpointId}-${mediaType}-${counter} ${trackId}-${pcId}`);
+                                    counter += 1;
+                                }
+                                ssrcLine.value = trackToMsid.get(trackId);
+                                break;
                             }
-                            // eslint-disable-next-line max-depth
-                            if (!sourceToMsidMap.has(trackId)) {
-                                streamId = `${streamId}-${sourceToMsidMap.size}`;
-                                sourceToMsidMap.set(trackId, streamId);
-                            }
+                            ssrcLine.value
+                                = this._generateMsidAttribute((_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.type, streamAndTrackIDs[1], streamAndTrackIDs[0]);
+                        }
+                        else {
+                            logger.warn(`Unable to munge local MSID - weird format detected: ${ssrcLine.value}`);
                         }
                         ssrcLine.value = this._generateMsidAttribute(mediaType, trackId, sourceToMsidMap.get(trackId));
                     }
@@ -204,7 +218,7 @@ export default class LocalSdpMunger {
         // If the msid attribute is missing, then remove the ssrc from the transformed description so that a
         // source-remove is signaled to Jicofo. This happens when the direction of the transceiver (or m-line)
         // is set to 'inactive' or 'recvonly' on Firefox, Chrome (unified) and Safari.
-        const mediaDirection = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.direction;
+        const mediaDirection = (_d = mediaSection.mLine) === null || _d === void 0 ? void 0 : _d.direction;
         if (mediaDirection === MediaDirection.RECVONLY || mediaDirection === MediaDirection.INACTIVE) {
             mediaSection.ssrcs = undefined;
             mediaSection.ssrcGroups = undefined;
@@ -212,9 +226,9 @@ export default class LocalSdpMunger {
             // a=ssrc line with msid attribute for p2p connection.
         }
         else {
-            const msidLine = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.msid;
+            const msidLine = (_e = mediaSection.mLine) === null || _e === void 0 ? void 0 : _e.msid;
             const trackId = msidLine && msidLine.split(' ')[1];
-            const sources = [...new Set((_e = (_d = mediaSection.mLine) === null || _d === void 0 ? void 0 : _d.ssrcs) === null || _e === void 0 ? void 0 : _e.map(s => s.id))];
+            const sources = [...new Set((_g = (_f = mediaSection.mLine) === null || _f === void 0 ? void 0 : _f.ssrcs) === null || _g === void 0 ? void 0 : _g.map(s => s.id))];
             for (const source of sources) {
                 const msidExists = mediaSection.ssrcs
                     .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');

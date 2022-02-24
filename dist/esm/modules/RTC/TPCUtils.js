@@ -340,8 +340,18 @@ export class TPCUtils {
             return Promise.reject(new Error('replace track failed'));
         }
         logger.debug(`${this.pc} Replacing ${oldTrack} with ${newTrack}`);
-        return transceiver.sender.replaceTrack(track)
-            .then(() => Promise.resolve(transceiver));
+        // FIXME a hack to send DESKTOP on the 2nd video transceiver
+        if (newTrack.getVideoType() === VideoType.DESKTOP) {
+            const transceiver = this.pc.peerconnection
+                .getTransceivers()
+                .filter(t => { var _a, _b; return ((_b = (_a = t.receiver) === null || _a === void 0 ? void 0 : _a.track) === null || _b === void 0 ? void 0 : _b.kind) === MediaType.VIDEO; })[1];
+            transceiver.direction = MediaDirection.SENDRECV;
+            return transceiver.sender.replaceTrack(newTrack.getTrack())
+                .then(() => {
+                this.pc.localTracks.set(newTrack.rtcId, newTrack);
+            });
+        }
+        return transceiver.sender.replaceTrack(track);
     }
     /**
     * Enables/disables audio transmission on the peer connection. When
