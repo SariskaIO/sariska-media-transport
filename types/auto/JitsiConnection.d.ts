@@ -33,6 +33,7 @@ export default class JitsiConnection {
     };
     xmpp: XMPP;
     token: any;
+    isDev: any;
     parseJwt(token: any): any;
     /**
      * Connect the client with the server.

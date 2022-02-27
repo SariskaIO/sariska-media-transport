@@ -31,6 +31,7 @@ export default function JitsiConnection(token, roomName, isDev) {
     this.options = options;
     this.xmpp = new XMPP(options, token);
     this.token = token;
+    this.isDev = isDev;
 
     /* eslint-disable max-params */
     this.addEventListener(JitsiConnectionEvents.CONNECTION_FAILED,
@@ -139,13 +140,16 @@ JitsiConnection.prototype.setToken = function(token) {
  */
 JitsiConnection.prototype.initJitsiConference = function(options={}) {
     options = { ...conferenceConfig,
-    ...options
+        ...options
     };
     options = syncWithURL(options);
     const name = this.name;
-
+    if (this.isDev) {
+        options = {...options, hiddenDomain: "recorder.dev.sariska.io"}
+    }
+    
     if (options.iAmRecorder) {
-    this.addFeature(DISCO_JIBRI_FEATURE);
+        this.addFeature(DISCO_JIBRI_FEATURE);
     }
 
     return new JitsiConference({
