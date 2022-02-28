@@ -47,6 +47,7 @@ import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import { createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
 import { initSDKConfig } from './config';
+import * as createAnalyticsEvent from './modules/util/createAnalyticsEvent';
 const logger = Logger.getLogger(__filename);
 /**
  * The amount of time to wait until firing
