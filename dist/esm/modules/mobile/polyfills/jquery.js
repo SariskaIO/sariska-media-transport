@@ -1,4 +1,4 @@
-import jQuery from 'sariska-media-transport/build/dom/jquery';
+import jQuery from 'sariska-media-transport/dist/esm/dom/jquery';
 (global => {
     if (typeof global.$ === 'undefined') {
         jQuery(global);
