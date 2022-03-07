@@ -23,6 +23,7 @@
     "libs",
     "dom", 
     "**/*.spec.js",
+    "**/*.spec.ts",
     "*.conf*.js",
     "sariska-media-transport.*.js",
     "types"

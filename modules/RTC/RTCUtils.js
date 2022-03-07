@@ -7,7 +7,7 @@ import * as JitsiTrackErrors from '../../JitsiTrackErrors';
 import CameraFacingMode from '../../service/RTC/CameraFacingMode';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import Resolutions from '../../service/RTC/Resolutions';
-import VideoType from '../../service/RTC/VideoType';
+import { VideoType } from '../../service/RTC/VideoType';
 import { AVAILABLE_DEVICE } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';
 import SDPUtil from '../sdp/SDPUtil';
@@ -457,7 +457,7 @@ class RTCUtils extends Listenable {
                         if (typeof gumTimeout !== 'undefined') {
                             clearTimeout(gumTimeout);
                         }
-                        reject(error);
+                        reject(jitsiError);
                     }
 
                     if (jitsiError.name === JitsiTrackErrors.PERMISSION_DENIED) {
