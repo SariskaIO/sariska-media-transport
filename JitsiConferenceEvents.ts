@@ -463,7 +463,14 @@ export enum JitsiConferenceEvents {
     /**
      * Event fired when the breakout rooms data was updated.
      */
-    BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated'
+    BREAKOUT_ROOMS_UPDATED = 'conference.breakout-rooms.updated',
+
+    SUBTITLES_RECEIVED = 'conference.subtitles.received',
+
+    ANALYTICS_EVENT_RECEIVED = 'analytics.event.received',
+
+    TRACK_UPDATED = 'conference.track.updated'
+
 };
 
 // exported for backward compatibility
@@ -539,3 +546,6 @@ export const AV_MODERATION_PARTICIPANT_REJECTED = JitsiConferenceEvents.AV_MODER
 export const FACIAL_EXPRESSION_ADDED = JitsiConferenceEvents.FACIAL_EXPRESSION_ADDED;
 export const BREAKOUT_ROOMS_MOVE_TO_ROOM = JitsiConferenceEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM;
 export const BREAKOUT_ROOMS_UPDATED = JitsiConferenceEvents.BREAKOUT_ROOMS_UPDATED;
+export const SUBTITLES_RECEIVED = JitsiConferenceEvents.SUBTITLES_RECEIVED;
+export const ANALYTICS_EVENT_RECEIVED = JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED;
+export const TRACK_UPDATED = JitsiConferenceEvents.TRACK_UPDATED;

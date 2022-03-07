@@ -12,8 +12,8 @@ var __rest = (this && this.__rest) || function (s, e) {
 };
 import { getLogger } from '@jitsi/logger';
 import { $iq } from 'strophe.js';
-import * as MediaType from '../../service/RTC/MediaType';
-import VideoType from '../../service/RTC/VideoType';
+import { MediaType } from '../../service/RTC/MediaType';
+import { VideoType } from '../../service/RTC/VideoType';
 import RTC from '../RTC/RTC';
 import ProxyConnectionPC from './ProxyConnectionPC';
 import { ACTIONS } from './constants';

@@ -5,12 +5,12 @@ import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import { SPEAKERS_AUDIO_LEVELS } from './modules/statistics/constants';
 import Statistics from './modules/statistics/statistics';
 import EventEmitterForwarder from './modules/util/EventEmitterForwarder';
-import * as MediaType from './service/RTC/MediaType';
+import { MediaType } from './service/RTC/MediaType';
 import RTCEvents from './service/RTC/RTCEvents';
-import VideoType from './service/RTC/VideoType';
+import { VideoType } from './service/RTC/VideoType';
 import AuthenticationEvents from './service/authentication/AuthenticationEvents';
 import { ACTION_JINGLE_SA_TIMEOUT, createBridgeDownEvent, createConnectionStageReachedEvent, createFocusLeftEvent, createJingleEvent, createRemotelyMutedEvent } from './service/statistics/AnalyticsEvents';
-import XMPPEvents from './service/xmpp/XMPPEvents';
+import { XMPPEvents } from './service/xmpp/XMPPEvents';
 const logger = getLogger(__filename);
 /**
  * Setups all event listeners related to conference

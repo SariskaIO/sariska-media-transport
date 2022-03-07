@@ -1,5 +1,5 @@
 import MediaDirection from '../../service/RTC/MediaDirection';
-import * as MediaType from '../../service/RTC/MediaType';
+import { MediaType } from '../../service/RTC/MediaType';
 import * as transform from 'sdp-transform';
 const DEFAULT_NUM_OF_LAYERS = 3;
 /**

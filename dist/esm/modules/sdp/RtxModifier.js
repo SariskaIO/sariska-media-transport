@@ -1,6 +1,6 @@
 import { getLogger } from '@jitsi/logger';
 import MediaDirection from '../../service/RTC/MediaDirection';
-import * as MediaType from '../../service/RTC/MediaType';
+import { MediaType } from '../../service/RTC/MediaType';
 import SDPUtil from './SDPUtil';
 import { parseSecondarySSRC, SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);

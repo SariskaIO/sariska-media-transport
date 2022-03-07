@@ -4,7 +4,7 @@ import { $msg, Strophe } from 'strophe.js';
 import 'strophejs-plugin-disco';
 import * as JitsiConnectionErrors from '../../JitsiConnectionErrors';
 import * as JitsiConnectionEvents from '../../JitsiConnectionEvents';
-import XMPPEvents from '../../service/xmpp/XMPPEvents';
+import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import browser from '../browser';
 import { E2EEncryption } from '../e2ee/E2EEncryption';
 import Statistics from '../statistics/statistics';

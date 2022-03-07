@@ -5,8 +5,8 @@ import * as RTCEvents from '../../service/RTC/RTCEvents';
 import * as ConnectionQualityEvents from '../../service/connectivity/ConnectionQualityEvents';
 import browser from '../browser';
 const Resolutions = require('../../service/RTC/Resolutions');
-const VideoType = require('../../service/RTC/VideoType');
-const XMPPEvents = require('../../service/xmpp/XMPPEvents');
+const { VideoType } = require('../../service/RTC/VideoType');
+const { XMPPEvents } = require('../../service/xmpp/XMPPEvents');
 const logger = getLogger(__filename);
 /**
  * The value to use for the "type" field for messages sent by ConnectionQuality

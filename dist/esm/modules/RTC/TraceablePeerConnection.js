@@ -3,11 +3,11 @@ import { Interop } from '@jitsi/sdp-interop';
 import transform from 'sdp-transform';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
 import MediaDirection from '../../service/RTC/MediaDirection';
-import * as MediaType from '../../service/RTC/MediaType';
+import { MediaType } from '../../service/RTC/MediaType';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import * as SignalingEvents from '../../service/RTC/SignalingEvents';
 import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
-import * as VideoType from '../../service/RTC/VideoType';
+import { VideoType } from '../../service/RTC/VideoType';
 import { SS_DEFAULT_FRAME_RATE } from '../RTC/ScreenObtainer';
 import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
@@ -1338,14 +1338,12 @@ TraceablePeerConnection.prototype.addTrack = function (track, isInitiator = fals
     const webrtcStream = track.getOriginalStream();
     if (this._usesUnifiedPlan) {
         logger.debug(`${this} TPC.addTrack using unified plan`);
-        if (webrtcStream || !this.isP2P) {
-            try {
-                this.tpcUtils.addTrack(track, isInitiator);
-            }
-            catch (error) {
-                logger.error(`${this} Adding track=${track} failed: ${error === null || error === void 0 ? void 0 : error.message}`);
-                return Promise.reject(error);
-            }
+        try {
+            this.tpcUtils.addTrack(track, isInitiator);
+        }
+        catch (error) {
+            logger.error(`${this} Adding track=${track} failed: ${error === null || error === void 0 ? void 0 : error.message}`);
+            return Promise.reject(error);
         }
     }
     else {
@@ -1406,7 +1404,7 @@ TraceablePeerConnection.prototype.addTrackUnmute = function (track) {
         return Promise.reject('Stream not found');
     }
     if (this._usesUnifiedPlan) {
-        return this.tpcUtils.replaceTrack(null, track).then(() => this.isP2P);
+        return this.tpcUtils.replaceTrack(null, track).then(() => false);
     }
     this._addStream(webRtcStream);
     return Promise.resolve(true);
@@ -1618,8 +1616,8 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
             const configureEncodingsPromise = browser.usesSdpMungingForSimulcast() || !newTrack
                 ? Promise.resolve()
                 : this.tpcUtils.setEncodings(newTrack);
-            // Renegotiate only in the case of P2P. We rely on 'negotiationeeded' to be fired for JVB.
-            return configureEncodingsPromise.then(() => this.isP2P || negotiationNeeded);
+            // Force renegotiation only when the source is added for the first time.
+            return configureEncodingsPromise.then(() => negotiationNeeded);
         });
     }
     logger.debug(`${this} TPC.replaceTrack using plan B`);
@@ -1648,7 +1646,7 @@ TraceablePeerConnection.prototype.removeTrackMute = function (localTrack) {
         return Promise.reject('Track not found in the peerconnection');
     }
     if (this._usesUnifiedPlan) {
-        return this.tpcUtils.replaceTrack(localTrack, null);
+        return this.tpcUtils.replaceTrack(localTrack, null).then(() => false);
     }
     if (webRtcStream) {
         logger.info(`${this} Removing track=${localTrack} as mute`);

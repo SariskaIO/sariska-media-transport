@@ -76,6 +76,9 @@ describe( "/JitsiConferenceEvents members", () => {
         FACIAL_EXPRESSION_ADDED,
         BREAKOUT_ROOMS_MOVE_TO_ROOM,
         BREAKOUT_ROOMS_UPDATED,
+        SUBTITLES_RECEIVED,
+        ANALYTICS_EVENT_RECEIVED,
+        TRACK_UPDATED,
         JitsiConferenceEvents,
         ...others
     } = exported;
@@ -153,7 +156,10 @@ describe( "/JitsiConferenceEvents members", () => {
         expect( FACIAL_EXPRESSION_ADDED ).toBe( 'conference.facial_expression.added' );
         expect( BREAKOUT_ROOMS_MOVE_TO_ROOM ).toBe( 'conference.breakout-rooms.move-to-room' );
         expect( BREAKOUT_ROOMS_UPDATED ).toBe( 'conference.breakout-rooms.updated' );
-
+        expect( SUBTITLES_RECEIVED ).toBe( 'conference.subtitles.received');
+        expect( ANALYTICS_EVENT_RECEIVED ).toBe( 'analytics.event.received' );
+        expect( TRACK_UPDATED ).toBe( 'conference.track.updated' );
+        
         expect( JitsiConferenceEvents ).toBeDefined();
 
         expect( JitsiConferenceEvents.AUDIO_INPUT_STATE_CHANGE ).toBe( 'conference.audio_input_state_changed' );
@@ -228,6 +234,10 @@ describe( "/JitsiConferenceEvents members", () => {
         expect( JitsiConferenceEvents.FACIAL_EXPRESSION_ADDED ).toBe( 'conference.facial_expression.added' );
         expect( JitsiConferenceEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM ).toBe( 'conference.breakout-rooms.move-to-room' );
         expect( JitsiConferenceEvents.BREAKOUT_ROOMS_UPDATED ).toBe( 'conference.breakout-rooms.updated' );
+        expect( JitsiConferenceEvents.SUBTITLES_RECEIVED ).toBe( 'conference.subtitles.received');
+        expect( JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED ).toBe( 'analytics.event.received' );
+        expect( JitsiConferenceEvents.TRACK_UPDATED ).toBe( 'conference.track.updated' );
+
     } );
 
 it( "unknown members", () => {

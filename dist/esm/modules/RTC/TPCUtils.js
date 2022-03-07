@@ -1,9 +1,10 @@
 import { getLogger } from '@jitsi/logger';
 import transform from 'sdp-transform';
 import MediaDirection from '../../service/RTC/MediaDirection';
-import * as MediaType from '../../service/RTC/MediaType';
-import VideoType from '../../service/RTC/VideoType';
+import { MediaType } from '../../service/RTC/MediaType';
+import { VideoType } from '../../service/RTC/VideoType';
 import browser from '../browser';
+import FeatureFlags from '../flags/FeatureFlags';
 const logger = getLogger(__filename);
 const DESKTOP_SHARE_RATE = 500000;
 const LD_BITRATE = 200000;
@@ -210,11 +211,15 @@ export class TPCUtils {
     addTrack(localTrack, isInitiator) {
         const track = localTrack.getTrack();
         if (isInitiator) {
+            const streams = [];
+            if (localTrack.getOriginalStream()) {
+                streams.push(localTrack.getOriginalStream());
+            }
             // Use pc.addTransceiver() for the initiator case when local tracks are getting added
             // to the peerconnection before a session-initiate is sent over to the peer.
             const transceiverInit = {
                 direction: MediaDirection.SENDRECV,
-                streams: [localTrack.getOriginalStream()],
+                streams,
                 sendEncodings: []
             };
             if (!browser.isFirefox()) {
@@ -311,13 +316,15 @@ export class TPCUtils {
         const track = (_b = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getTrack()) !== null && _b !== void 0 ? _b : null;
         let transceiver;
         // If old track exists, replace the track on the corresponding sender.
-        if (oldTrack) {
+        if (oldTrack && !oldTrack.isMuted()) {
             transceiver = this.pc.peerconnection.getTransceivers().find(t => t.sender.track === oldTrack.getTrack());
             // Find the first recvonly transceiver when more than one track of the same media type is being added to the pc.
             // As part of the track addition, a new m-line was added to the remote description with direction set to
             // recvonly.
         }
-        else if (((_c = this.pc.getLocalTracks(mediaType)) === null || _c === void 0 ? void 0 : _c.length) && !newTrack.conference) {
+        else if (FeatureFlags.isMultiStreamSupportEnabled()
+            && ((_c = this.pc.getLocalTracks(mediaType)) === null || _c === void 0 ? void 0 : _c.length)
+            && !newTrack.conference) {
             transceiver = this.pc.peerconnection.getTransceivers().find(t => t.receiver.track.kind === mediaType
                 && t.direction === MediaDirection.RECVONLY
                 && t.currentDirection === MediaDirection.INACTIVE);
@@ -326,7 +333,7 @@ export class TPCUtils {
         }
         else {
             transceiver = this.pc.peerconnection.getTransceivers().find(t => t.receiver.track.kind === mediaType);
-            const sourceName = newTrack.getSourceName();
+            const sourceName = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getSourceName();
             if (sourceName) {
                 const trackIndex = Number(sourceName.split('-')[1].substring(1));
                 if (trackIndex) {

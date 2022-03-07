@@ -1,7 +1,7 @@
 import { Strophe } from 'strophe.js';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import { ParticipantConnectionStatus } from './modules/connectivity/ParticipantConnectionStatus';
-import * as MediaType from './service/RTC/MediaType';
+import { MediaType } from './service/RTC/MediaType';
 /**
  * Represents a participant in (i.e. a member of) a conference.
  */
@@ -158,7 +158,16 @@ export default class JitsiParticipant {
         return this._hidden;
     }
     /**
-     * @returns {Boolean} Wheter this participants replaces another participant
+     * @returns {Boolean} Whether this participant is a hidden participant. Some
+     * special system participants may want to join hidden (like for example the
+     * recorder).
+     */
+    isHiddenFromRecorder() {
+        var _a, _b;
+        return Boolean((_b = (_a = this._identity) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b['hidden-from-recorder']);
+    }
+    /**
+     * @returns {Boolean} Whether this participant replaces another participant
      * from the meeting.
      */
     isReplacing() {

@@ -9,7 +9,6 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
-import "./dom/jquery"
 import Logger from '@jitsi/logger';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
@@ -26,6 +25,7 @@ import RTC from './modules/RTC/RTC';
 import browser from './modules/browser';
 import NetworkInfo from './modules/connectivity/NetworkInfo';
 import { ParticipantConnectionStatus } from './modules/connectivity/ParticipantConnectionStatus';
+import { TrackStreamingStatus } from './modules/connectivity/TrackStreamingStatus';
 import getActiveAudioDevice from './modules/detection/ActiveDeviceDetector';
 import * as DetectionEvents from './modules/detection/DetectionEvents';
 import TrackVADEmitter from './modules/detection/TrackVADEmitter';
@@ -41,7 +41,7 @@ import GlobalOnErrorHandler from './modules/util/GlobalOnErrorHandler';
 import ScriptUtil from './modules/util/ScriptUtil';
 import * as VideoSIPGWConstants from './modules/videosipgw/VideoSIPGWConstants';
 import AudioMixer from './modules/webaudio/AudioMixer';
-import * as MediaType from './service/RTC/MediaType';
+import { MediaType } from './service/RTC/MediaType';
 import * as ConnectionQualityEvents from './service/connectivity/ConnectionQualityEvents';
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
@@ -121,7 +121,8 @@ export default _mergeNamespaceAndModule({
         participantConnectionStatus: ParticipantConnectionStatus,
         recording: recordingConstants,
         sipVideoGW: VideoSIPGWConstants,
-        transcriptionStatus: JitsiTranscriptionStatus
+        transcriptionStatus: JitsiTranscriptionStatus,
+        trackStreamingStatus: TrackStreamingStatus
     },
     events: {
         conference: JitsiConferenceEvents,

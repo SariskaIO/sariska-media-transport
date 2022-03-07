@@ -1,5 +1,5 @@
 import { getLogger } from '@jitsi/logger';
-import * as MediaType from '../../service/RTC/MediaType';
+import { MediaType } from '../../service/RTC/MediaType';
 import * as StatisticsEvents from '../../service/statistics/Events';
 import browser from '../browser';
 const GlobalOnErrorHandler = require('../util/GlobalOnErrorHandler');

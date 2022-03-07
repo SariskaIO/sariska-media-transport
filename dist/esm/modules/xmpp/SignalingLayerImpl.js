@@ -1,10 +1,10 @@
 import { getLogger } from '@jitsi/logger';
 import { Strophe } from 'strophe.js';
-import * as MediaType from '../../service/RTC/MediaType';
+import { MediaType } from '../../service/RTC/MediaType';
 import * as SignalingEvents from '../../service/RTC/SignalingEvents';
 import SignalingLayer, { getMediaTypeFromSourceName } from '../../service/RTC/SignalingLayer';
-import VideoType from '../../service/RTC/VideoType';
-import XMPPEvents from '../../service/xmpp/XMPPEvents';
+import { VideoType } from '../../service/RTC/VideoType';
+import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import FeatureFlags from '../flags/FeatureFlags';
 import { filterNodeFromPresenceJSON } from './ChatRoom';
 const logger = getLogger(__filename);
@@ -61,8 +61,9 @@ export default class SignalingLayerImpl extends SignalingLayer {
      */
     _addLocalSourceInfoToPresence() {
         if (this.chatRoom) {
-            this.chatRoom.addOrReplaceInPresence(SOURCE_INFO_PRESENCE_ELEMENT, { value: JSON.stringify(this._localSourceState) });
+            return this.chatRoom.addOrReplaceInPresence(SOURCE_INFO_PRESENCE_ELEMENT, { value: JSON.stringify(this._localSourceState) });
         }
+        return false;
     }
     /**
      * Check is given endpoint has advertised <SourceInfo/> in it's presence which means that the source name signaling
@@ -152,8 +153,11 @@ export default class SignalingLayerImpl extends SignalingLayer {
                 emitVideoTypeEvent(from, node.value);
             }
         };
-        room.addPresenceListener('videoType', this._videoTypeHandler);
+        if (!FeatureFlags.isMultiStreamSupportEnabled()) {
+            room.addPresenceListener('videoType', this._videoTypeHandler);
+        }
         this._sourceInfoHandler = (node, mucNick) => {
+            var _a;
             const endpointId = mucNick;
             const { value } = node;
             const sourceInfoJSON = JSON.parse(value);
@@ -173,10 +177,17 @@ export default class SignalingLayerImpl extends SignalingLayer {
                         emitVideoMutedEvent(endpointId, newMutedState);
                     }
                 }
-                const newVideoType = sourceInfoJSON[sourceName].videoType;
+                // Assume a default videoType of 'camera' for video sources.
+                const newVideoType = mediaType === MediaType.VIDEO
+                    ? (_a = sourceInfoJSON[sourceName].videoType) !== null && _a !== void 0 ? _a : VideoType.CAMERA
+                    : undefined;
                 if (oldSourceState.videoType !== newVideoType) {
                     oldSourceState.videoType = newVideoType;
-                    emitEventsFromHere && emitVideoTypeEvent(endpointId, newVideoType);
+                    // videoType is not allowed to change on a given JitsiLocalTrack when multi stream support is
+                    // enabled.
+                    emitEventsFromHere
+                        && !FeatureFlags.isMultiStreamSupportEnabled()
+                        && emitVideoTypeEvent(endpointId, newVideoType);
                 }
             }
             // Cleanup removed source names
@@ -312,13 +323,15 @@ export default class SignalingLayerImpl extends SignalingLayer {
             // FIXME This only adjusts the presence, but doesn't actually send it. Here we temporarily rely on
             // the legacy signaling part to send the presence. Remember to add "send presence" here when the legacy
             // signaling is removed.
-            this._addLocalSourceInfoToPresence();
+            return this._addLocalSourceInfoToPresence();
         }
+        return false;
     }
     /**
      * Sets track's video type.
      * @param {SourceName} sourceName - the track's source name.
      * @param {VideoType} videoType - the new video type.
+     * @returns {boolean}
      */
     setTrackVideoType(sourceName, videoType) {
         if (!this._localSourceState[sourceName]) {
@@ -330,8 +343,9 @@ export default class SignalingLayerImpl extends SignalingLayer {
             // NOTE this doesn't send the actual presence, because is called from the same place where the legacy video
             // type is emitted which does the actual sending. A send presence statement needs to be added when
             // the legacy part is removed.
-            this._addLocalSourceInfoToPresence();
+            return this._addLocalSourceInfoToPresence();
         }
+        return false;
     }
     /**
      * @inheritDoc
