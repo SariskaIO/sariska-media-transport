@@ -2,7 +2,7 @@ import { getLogger } from '@jitsi/logger';
 import { Interop } from '@jitsi/sdp-interop';
 import transform from 'sdp-transform';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
-import MediaDirection from '../../service/RTC/MediaDirection';
+import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import * as SignalingEvents from '../../service/RTC/SignalingEvents';
@@ -1640,8 +1640,8 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
  */
 TraceablePeerConnection.prototype.removeTrackMute = function (localTrack) {
     const webRtcStream = localTrack.getOriginalStream();
-    this.trace('removeStreamMute', localTrack.rtcId, webRtcStream ? webRtcStream.id : null);
-    if (!this._assertTrackBelongs('removeStreamMute', localTrack)) {
+    this.trace('removeTrackMute', localTrack.rtcId, webRtcStream ? webRtcStream.id : null);
+    if (!this._assertTrackBelongs('removeTrackMute', localTrack)) {
         // Abort - nothing to be done here
         return Promise.reject('Track not found in the peerconnection');
     }
@@ -1653,7 +1653,7 @@ TraceablePeerConnection.prototype.removeTrackMute = function (localTrack) {
         this._removeStream(webRtcStream);
         return Promise.resolve(true);
     }
-    logger.error(`${this} removeStreamMute - no WebRTC stream for track=${localTrack}`);
+    logger.error(`${this} removeTrackMute - no WebRTC stream for track=${localTrack}`);
     return Promise.reject('Stream not found');
 };
 TraceablePeerConnection.prototype.createDataChannel = function (label, opts) {

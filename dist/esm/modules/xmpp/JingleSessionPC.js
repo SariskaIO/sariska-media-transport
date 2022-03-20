@@ -2,7 +2,7 @@
 import { getLogger } from '@jitsi/logger';
 import { $iq, Strophe } from 'strophe.js';
 import * as CodecMimeType from '../../service/RTC/CodecMimeType';
-import MediaDirection from '../../service/RTC/MediaDirection';
+import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import { ICE_DURATION, ICE_STATE_CHANGED } from '../../service/statistics/AnalyticsEvents';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
@@ -1646,16 +1646,19 @@ export default class JingleSessionPC extends JingleSession {
      * otherwise.
      */
     addTrack(localTrack) {
-        if (!FeatureFlags.isMultiStreamSupportEnabled()
-            || !this.usesUnifiedPlan
-            || localTrack.type !== MediaType.VIDEO) {
+        if (!FeatureFlags.isMultiStreamSupportEnabled() || localTrack.type !== MediaType.VIDEO) {
             return Promise.reject(new Error('Multiple tracks of a given media type are not supported'));
         }
         const workFunction = finishedCallback => {
             const remoteSdp = new SDP(this.peerconnection.peerconnection.remoteDescription.sdp);
             // Add a new transceiver by adding a new mline in the remote description.
             remoteSdp.addMlineForNewLocalSource(MediaType.VIDEO);
-            this._renegotiate(remoteSdp.raw)
+            // Always initiate a responder renegotiate since the new m-line is added to remote SDP.
+            const remoteDescription = new RTCSessionDescription({
+                type: 'offer',
+                sdp: remoteSdp.raw
+            });
+            this._responderRenegotiate(remoteDescription)
                 .then(() => finishedCallback(), error => finishedCallback(error));
         };
         return new Promise((resolve, reject) => {

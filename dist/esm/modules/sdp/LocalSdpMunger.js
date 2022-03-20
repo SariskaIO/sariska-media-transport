@@ -1,5 +1,5 @@
 import { getLogger } from '@jitsi/logger';
-import MediaDirection from '../../service/RTC/MediaDirection';
+import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import { VideoType } from '../../service/RTC/VideoType';
@@ -136,7 +136,7 @@ export default class LocalSdpMunger {
      */
     _generateMsidAttribute(mediaType, trackId, streamId = null) {
         if (!(mediaType && trackId)) {
-            logger.warn(`Unable to munge local MSID - track id=${trackId} or media type=${mediaType} is missing`);
+            logger.error(`Unable to munge local MSID - track id=${trackId} or media type=${mediaType} is missing`);
             return null;
         }
         const pcId = this.tpc.id;
@@ -175,9 +175,7 @@ export default class LocalSdpMunger {
                         let streamId = streamAndTrackIDs[0];
                         const trackId = streamAndTrackIDs[1];
                         // eslint-disable-next-line max-depth
-                        if (FeatureFlags.isMultiStreamSupportEnabled()
-                            && this.tpc.usesUnifiedPlan()
-                            && mediaType === MediaType.VIDEO) {
+                        if (FeatureFlags.isMultiStreamSupportEnabled() && mediaType === MediaType.VIDEO) {
                             // eslint-disable-next-line max-depth
                             if (streamId === '-' || !streamId) {
                                 streamId = `${this.localEndpointId}-${mediaType}`;
@@ -218,7 +216,7 @@ export default class LocalSdpMunger {
             for (const source of sources) {
                 const msidExists = mediaSection.ssrcs
                     .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
-                if (!msidExists) {
+                if (!msidExists && trackId) {
                     const generatedMsid = this._generateMsidAttribute(mediaType, trackId);
                     mediaSection.ssrcs.push({
                         id: source,
@@ -266,7 +264,7 @@ export default class LocalSdpMunger {
      * (a modified copy of the one given as the input).
      */
     transformStreamIdentifiers(sessionDesc) {
-        var _a, _b;
+        var _a;
         // FIXME similar check is probably duplicated in all other transformers
         if (!sessionDesc || !sessionDesc.sdp || !sessionDesc.type) {
             return sessionDesc;
@@ -277,8 +275,11 @@ export default class LocalSdpMunger {
             this._transformMediaIdentifiers(audioMLine);
             this._injectSourceNames(audioMLine);
         }
-        const videoMLine = (_b = transformer.selectMedia(MediaType.VIDEO)) === null || _b === void 0 ? void 0 : _b[0];
-        if (videoMLine) {
+        const videoMlines = transformer.selectMedia(MediaType.VIDEO);
+        if (!FeatureFlags.isMultiStreamSupportEnabled()) {
+            videoMlines.splice(1);
+        }
+        for (const videoMLine of videoMlines) {
             this._transformMediaIdentifiers(videoMLine);
             this._injectSourceNames(videoMLine);
         }
@@ -298,7 +299,7 @@ export default class LocalSdpMunger {
      * @private
      */
     _injectSourceNames(mediaSection) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         if (!FeatureFlags.isSourceNameSignalingEnabled()) {
             return;
         }
@@ -309,12 +310,14 @@ export default class LocalSdpMunger {
         }
         for (const source of sources) {
             const nameExists = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'name');
+            const msid = (_d = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'msid')) === null || _d === void 0 ? void 0 : _d.value;
+            const trackIndex = msid ? msid.split('-')[2] : null;
             if (!nameExists) {
                 // Inject source names as a=ssrc:3124985624 name:endpointA-v0
                 mediaSection.ssrcs.push({
                     id: source,
                     attribute: 'name',
-                    value: getSourceNameForJitsiTrack(this.localEndpointId, mediaType, 0)
+                    value: getSourceNameForJitsiTrack(this.localEndpointId, mediaType, trackIndex)
                 });
             }
         }

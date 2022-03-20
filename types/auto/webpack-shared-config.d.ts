@@ -14,9 +14,7 @@ declare function _exports(minimize: any, analyzeBundle: any): {
                 presets?: undefined;
             };
             test: string;
-            exclude?: undefined;
         } | {
-            exclude: RegExp[];
             loader: string;
             options: {
                 presets: (string | (string | {

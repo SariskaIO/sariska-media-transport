@@ -9,7 +9,6 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
-import './dom/jquery';
 import Logger from '@jitsi/logger';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
@@ -152,6 +151,11 @@ export default _mergeNamespaceAndModule({
         options = Object.assign(Object.assign({}, initSDKConfig), options);
         Settings.init(options.externalStorage);
         Statistics.init(options);
+        // Multi-stream is supported only on endpoints running in Unified plan mode and the flag to disable unified
+        // plan also needs to be taken into consideration.
+        if (typeof options.enableUnifiedOnChrome !== 'undefined' && options.flags) {
+            options.flags.enableUnifiedOnChrome = options.enableUnifiedOnChrome;
+        }
         // Configure the feature flags.
         FeatureFlags.init(options.flags || {});
         // Initialize global window.connectionTimes

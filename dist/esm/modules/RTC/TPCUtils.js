@@ -1,6 +1,6 @@
 import { getLogger } from '@jitsi/logger';
 import transform from 'sdp-transform';
-import MediaDirection from '../../service/RTC/MediaDirection';
+import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import { VideoType } from '../../service/RTC/VideoType';
 import browser from '../browser';
@@ -311,9 +311,14 @@ export class TPCUtils {
      * @returns {Promise<RTCRtpTransceiver>} - resolved with the associated transceiver when done, rejected otherwise.
      */
     replaceTrack(oldTrack, newTrack) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         const mediaType = (_a = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getType()) !== null && _a !== void 0 ? _a : oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.getType();
         const track = (_b = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getTrack()) !== null && _b !== void 0 ? _b : null;
+        const isNewLocalSource = FeatureFlags.isMultiStreamSupportEnabled()
+            && ((_c = this.pc.getLocalTracks(mediaType)) === null || _c === void 0 ? void 0 : _c.length)
+            && !oldTrack
+            && newTrack
+            && !newTrack.conference;
         let transceiver;
         // If old track exists, replace the track on the corresponding sender.
         if (oldTrack && !oldTrack.isMuted()) {
@@ -322,18 +327,16 @@ export class TPCUtils {
             // As part of the track addition, a new m-line was added to the remote description with direction set to
             // recvonly.
         }
-        else if (FeatureFlags.isMultiStreamSupportEnabled()
-            && ((_c = this.pc.getLocalTracks(mediaType)) === null || _c === void 0 ? void 0 : _c.length)
-            && !newTrack.conference) {
+        else if (isNewLocalSource) {
             transceiver = this.pc.peerconnection.getTransceivers().find(t => t.receiver.track.kind === mediaType
                 && t.direction === MediaDirection.RECVONLY
                 && t.currentDirection === MediaDirection.INACTIVE);
-            // For unmute operations, find the transceiver based on the track index in the source name if present, otherwise
-            // it is assumed to be the first local track that was added to the peerconnection.
+            // For mute/unmute operations, find the transceiver based on the track index in the source name if present,
+            // otherwise it is assumed to be the first local track that was added to the peerconnection.
         }
         else {
             transceiver = this.pc.peerconnection.getTransceivers().find(t => t.receiver.track.kind === mediaType);
-            const sourceName = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getSourceName();
+            const sourceName = (_d = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getSourceName()) !== null && _d !== void 0 ? _d : oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.getSourceName();
             if (sourceName) {
                 const trackIndex = Number(sourceName.split('-')[1].substring(1));
                 if (trackIndex) {

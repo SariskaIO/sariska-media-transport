@@ -314,6 +314,7 @@ JitsiConference.resourceCreator = function (jid) {
  * @param options.connection {JitsiConnection} overrides this.connection
  */
 JitsiConference.prototype._init = function (options = {}) {
+    var _a;
     this.eventManager.setupXMPPListeners();
     const { config } = this.options;
     // Get the codec preference settings from config.js.
@@ -353,14 +354,16 @@ JitsiConference.prototype._init = function (options = {}) {
     this.room.addListener(XMPPEvents.SOURCE_ADD, this._updateRoomPresence);
     this.room.addListener(XMPPEvents.SOURCE_ADD_ERROR, this._removeLocalSourceOnReject);
     this.room.addListener(XMPPEvents.SOURCE_REMOVE, this._updateRoomPresence);
-    this.e2eping = new E2ePing(this, config, (message, to) => {
-        try {
-            this.sendMessage(message, to, true /* sendThroughVideobridge */);
-        }
-        catch (error) {
-            logger.warn('Failed to send E2E ping request or response.', error && error.msg);
-        }
-    });
+    if ((_a = config.e2eping) === null || _a === void 0 ? void 0 : _a.enabled) {
+        this.e2eping = new E2ePing(this, config, (message, to) => {
+            try {
+                this.sendMessage(message, to, true /* sendThroughVideobridge */);
+            }
+            catch (error) {
+                logger.warn('Failed to send E2E ping request or response.', error && error.msg);
+            }
+        });
+    }
     if (!this.rtc) {
         this.rtc = new RTC(this, options);
         this.eventManager.setupRTCListeners();
@@ -944,7 +947,8 @@ JitsiConference.prototype.addTrack = function (track) {
             return Promise.all(addTrackPromises)
                 .then(() => {
                 this._setupNewTrack(track);
-                // TODO Update presence and sent videoType message.
+                this._sendBridgeVideoTypeMessage(track);
+                this._updateRoomPresence(this.getActiveMediaSession());
                 if (this.isMutedByFocus || this.isVideoMutedByFocus) {
                     this._fireMuteChangeEvent(track);
                 }
@@ -1080,6 +1084,9 @@ JitsiConference.prototype.replaceTrack = function (oldTrack, newTrack) {
     }
     if (oldTrack && !oldTrackBelongsToConference) {
         logger.warn(`JitsiConference.replaceTrack oldTrack (${oldTrack} does not belong to this conference`);
+    }
+    if (FeatureFlags.isMultiStreamSupportEnabled() && oldTrack && newTrack && oldTrack.isVideoTrack()) {
+        newTrack.setSourceName(oldTrack.getSourceName());
     }
     // Now replace the stream at the lower levels
     return this._doReplaceTrack(oldTrackBelongsToConference ? oldTrack : null, newTrack)
