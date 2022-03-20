@@ -24,13 +24,10 @@ module.exports = (minimize, analyzeBundle) => {
                         process.env.LIB_JITSI_MEET_COMMIT_HASH || 'development',
                     search: '{#COMMIT_HASH#}'
                 },
-                test: `${__dirname}/SariskMediaTransport.js`
+                test: path.join(__dirname, 'SariskMediaTransport.js')
             }, {
                 // Transpile ES2015 (aka ES6) to ES5.
 
-                exclude: [
-                    new RegExp(`${__dirname}/node_modules/(?!@jitsi/js-utils)`)
-                ],
                 loader: 'babel-loader',
                 options: {
                     presets: [

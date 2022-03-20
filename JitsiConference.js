@@ -434,17 +434,18 @@ JitsiConference.prototype._init = function(options = {}) {
     this.room.addListener(XMPPEvents.SOURCE_ADD_ERROR, this._removeLocalSourceOnReject);
     this.room.addListener(XMPPEvents.SOURCE_REMOVE, this._updateRoomPresence);
 
-    this.e2eping = new E2ePing(
-        this,
-        config,
-        (message, to) => {
-            try {
-                this.sendMessage(
-                    message, to, true /* sendThroughVideobridge */);
-            } catch (error) {
-                logger.warn('Failed to send E2E ping request or response.', error && error.msg);
-            }
-        });
+    if (config.e2eping?.enabled) {
+        this.e2eping = new E2ePing(
+            this,
+            config,
+            (message, to) => {
+                try {
+                    this.sendMessage(message, to, true /* sendThroughVideobridge */);
+                } catch (error) {
+                    logger.warn('Failed to send E2E ping request or response.', error && error.msg);
+                }
+            });
+    }
 
     if (!this.rtc) {
         this.rtc = new RTC(this, options);
@@ -1143,8 +1144,9 @@ JitsiConference.prototype.addTrack = function(track) {
             return Promise.all(addTrackPromises)
                 .then(() => {
                     this._setupNewTrack(track);
+                    this._sendBridgeVideoTypeMessage(track);
+                    this._updateRoomPresence(this.getActiveMediaSession());
 
-                    // TODO Update presence and sent videoType message.
                     if (this.isMutedByFocus || this.isVideoMutedByFocus) {
                         this._fireMuteChangeEvent(track);
                     }
@@ -1303,6 +1305,10 @@ JitsiConference.prototype.replaceTrack = function(oldTrack, newTrack) {
 
     if (oldTrack && !oldTrackBelongsToConference) {
         logger.warn(`JitsiConference.replaceTrack oldTrack (${oldTrack} does not belong to this conference`);
+    }
+
+    if (FeatureFlags.isMultiStreamSupportEnabled() && oldTrack && newTrack && oldTrack.isVideoTrack()) {
+        newTrack.setSourceName(oldTrack.getSourceName());
     }
 
     // Now replace the stream at the lower levels
