@@ -170,11 +170,8 @@ export default class SignalingLayerImpl extends SignalingLayer {
                     || (endpointSourceState[sourceName] = { sourceName });
                 if (oldSourceState.muted !== newMutedState) {
                     oldSourceState.muted = newMutedState;
-                    if (emitEventsFromHere && mediaType === MediaType.AUDIO) {
-                        emitAudioMutedEvent(endpointId, newMutedState);
-                    }
-                    else {
-                        emitVideoMutedEvent(endpointId, newMutedState);
+                    if (emitEventsFromHere && !this._localSourceState[sourceName]) {
+                        this.eventEmitter.emit(SignalingEvents.SOURCE_MUTED_CHANGED, sourceName, newMutedState);
                     }
                 }
                 // Assume a default videoType of 'camera' for video sources.
@@ -183,11 +180,11 @@ export default class SignalingLayerImpl extends SignalingLayer {
                     : undefined;
                 if (oldSourceState.videoType !== newVideoType) {
                     oldSourceState.videoType = newVideoType;
-                    // videoType is not allowed to change on a given JitsiLocalTrack when multi stream support is
-                    // enabled.
-                    emitEventsFromHere
-                        && !FeatureFlags.isMultiStreamSupportEnabled()
-                        && emitVideoTypeEvent(endpointId, newVideoType);
+                    // Since having a mix of eps that do/don't support multi-stream in the same call is supported, emit
+                    // SOURCE_VIDEO_TYPE_CHANGED event when the remote source changes videoType.
+                    if (emitEventsFromHere && !this._localSourceState[sourceName]) {
+                        this.eventEmitter.emit(SignalingEvents.SOURCE_VIDEO_TYPE_CHANGED, sourceName, newVideoType);
+                    }
                 }
             }
             // Cleanup removed source names
@@ -281,7 +278,14 @@ export default class SignalingLayerImpl extends SignalingLayer {
      * @inheritDoc
      */
     getPeerSourceInfo(owner, sourceName) {
-        return this._remoteSourceState[owner] ? this._remoteSourceState[owner][sourceName] : undefined;
+        var _a;
+        const mediaInfo = {
+            muted: true,
+            videoType: VideoType.CAMERA // 'camera' by default
+        };
+        return this._remoteSourceState[owner]
+            ? (_a = this._remoteSourceState[owner][sourceName]) !== null && _a !== void 0 ? _a : mediaInfo
+            : undefined;
     }
     /**
      * @inheritDoc

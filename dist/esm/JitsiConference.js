@@ -373,15 +373,18 @@ JitsiConference.prototype._init = function (options = {}) {
     }
     this.receiveVideoController = new ReceiveVideoController(this, this.rtc);
     this.sendVideoController = new SendVideoController(this, this.rtc);
-    this.participantConnectionStatus
-        = new ParticipantConnectionStatusHandler(this.rtc, this, {
-            // These options are not public API, leaving it here only as an entry point through config for tuning
-            // up purposes. Default values should be adjusted as soon as optimal values are discovered.
-            p2pRtcMuteTimeout: config._p2pConnStatusRtcMuteTimeout,
-            rtcMuteTimeout: config._peerConnStatusRtcMuteTimeout,
-            outOfLastNTimeout: config._peerConnStatusOutOfLastNTimeout
-        });
-    this.participantConnectionStatus.init();
+    // Do not initialize ParticipantConnectionStatusHandler when source-name signaling is enabled.
+    if (!FeatureFlags.isSourceNameSignalingEnabled()) {
+        this.participantConnectionStatus
+            = new ParticipantConnectionStatusHandler(this.rtc, this, {
+                // These options are not public API, leaving it here only as an entry point through config for tuning
+                // up purposes. Default values should be adjusted as soon as optimal values are discovered.
+                p2pRtcMuteTimeout: config._p2pConnStatusRtcMuteTimeout,
+                rtcMuteTimeout: config._peerConnStatusRtcMuteTimeout,
+                outOfLastNTimeout: config._peerConnStatusOutOfLastNTimeout
+            });
+        this.participantConnectionStatus.init();
+    }
     // Add the ability to enable callStats only on a percentage of users based on config.js settings.
     let enableCallStats = true;
     if (config.testing && config.testing.callStatsThreshold) {
@@ -942,8 +945,8 @@ JitsiConference.prototype.addTrack = function (track) {
         }
         if (FeatureFlags.isMultiStreamSupportEnabled() && mediaType === MediaType.VIDEO) {
             const addTrackPromises = [];
-            this.p2pJingleSession && addTrackPromises.push(this.p2pJingleSession.addTrack(track));
-            this.jvbJingleSession && addTrackPromises.push(this.jvbJingleSession.addTrack(track));
+            this.p2pJingleSession && addTrackPromises.push(this.p2pJingleSession.addTracks([track]));
+            this.jvbJingleSession && addTrackPromises.push(this.jvbJingleSession.addTracks([track]));
             return Promise.all(addTrackPromises)
                 .then(() => {
                 this._setupNewTrack(track);
@@ -1473,7 +1476,7 @@ JitsiConference.prototype.grantOwner = function (id) {
     if (!participant) {
         return;
     }
-    this.room.setAffiliation(participant.getJid(), 'owner');
+    this.room.setAffiliation(participant.getConnectionJid(), 'owner');
 };
 /**
  * Revoke owner rights to the participant or local Participant as
@@ -1485,10 +1488,10 @@ JitsiConference.prototype.revokeOwner = function (id) {
     const isMyself = this.myUserId() === id;
     const role = this.isMembersOnly() ? 'member' : 'none';
     if (isMyself) {
-        this.room.setAffiliation(this.room.myroomjid, role);
+        this.room.setAffiliation(this.connection.getJid(), role);
     }
     else if (participant) {
-        this.room.setAffiliation(participant.getJid(), role);
+        this.room.setAffiliation(participant.getConnectionJid(), role);
     }
 };
 /**
@@ -1576,6 +1579,7 @@ JitsiConference.prototype.onMemberJoined = function (jid, nick, role, isHidden, 
         return;
     }
     const participant = new JitsiParticipant(jid, this, nick, isHidden, statsID, status, identity);
+    participant.setConnectionJid(fullJid);
     participant.setRole(role);
     participant.setBotType(botType);
     participant.setFeatures(features);

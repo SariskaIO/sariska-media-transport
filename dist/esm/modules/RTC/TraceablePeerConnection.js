@@ -175,6 +175,9 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
     this._peerMutedChanged = this._peerMutedChanged.bind(this);
     this.signalingLayer.on(SignalingEvents.PEER_MUTED_CHANGED, this._peerMutedChanged);
     this.options = options;
+    // Setup SignalingLayer listeners for source-name based events.
+    this.signalingLayer.on(SignalingEvents.SOURCE_MUTED_CHANGED, (sourceName, isMuted) => this._sourceMutedChanged(sourceName, isMuted));
+    this.signalingLayer.on(SignalingEvents.SOURCE_VIDEO_TYPE_CHANGED, (sourceName, videoType) => this._sourceVideoTypeChanged(sourceName, videoType));
     // Make sure constraints is properly formatted in order to provide information about whether or not this
     // connection is P2P to rtcstats.
     const safeConstraints = constraints || {};
@@ -477,6 +480,32 @@ TraceablePeerConnection.prototype._peerMutedChanged = function (endpointId, medi
     }
 };
 /**
+ * Handles remote source mute and unmute changed events.
+ *
+ * @param {string} sourceName - The name of the remote source.
+ * @param {boolean} isMuted - The new mute state.
+ */
+TraceablePeerConnection.prototype._sourceMutedChanged = function (sourceName, isMuted) {
+    const track = this.getRemoteTracks().find(t => t.getSourceName() === sourceName);
+    if (!track) {
+        return;
+    }
+    track.setMute(isMuted);
+};
+/**
+ * Handles remote source videoType changed events.
+ *
+ * @param {string} sourceName - The name of the remote source.
+ * @param {boolean} isMuted - The new value.
+ */
+TraceablePeerConnection.prototype._sourceVideoTypeChanged = function (sourceName, videoType) {
+    const track = this.getRemoteTracks().find(t => t.getSourceName() === sourceName);
+    if (!track) {
+        return;
+    }
+    track._setVideoType(videoType);
+};
+/**
  * Obtains audio levels of the remote audio tracks by getting the source information on the RTCRtpReceivers.
  * The information relevant to the ssrc is updated each time a RTP packet constaining the ssrc is received.
  * @param {Array<string>} speakerList list of endpoint ids for which audio levels are to be gathered.
@@ -758,7 +787,9 @@ TraceablePeerConnection.prototype._remoteTrackAdded = function (stream, track, t
     // eslint-disable-next-line no-undef
     logger.info(`${this} creating remote track[endpoint=${ownerEndpointId},ssrc=${trackSsrc},`
         + `type=${mediaType},sourceName=${sourceName}]`);
-    const peerMediaInfo = this.signalingLayer.getPeerMediaInfo(ownerEndpointId, mediaType);
+    const peerMediaInfo = FeatureFlags.isSourceNameSignalingEnabled()
+        ? this.signalingLayer.getPeerSourceInfo(ownerEndpointId, sourceName)
+        : this.signalingLayer.getPeerMediaInfo(ownerEndpointId, mediaType);
     if (!peerMediaInfo) {
         GlobalOnErrorHandler.callErrorHandler(new Error(`${this}: no peer media info available for ${ownerEndpointId}`));
         return;
@@ -1588,7 +1619,11 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
     // Jicofo before the mute state is sent over presence. Therefore, trigger a renegotiation in this case. If we
     // rely on "negotiationneeded" fired by the browser to signal new ssrcs, the mute state in presence will be sent
     // before the source signaling which is undesirable.
-    const negotiationNeeded = Boolean(!oldTrack || !this.localTracks.has(oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.rtcId));
+    // Send the presence before signaling for a new screenshare source. This is needed for multi-stream support since
+    // videoType needs to be availble at remote track creation time so that a fake tile for screenshare can be added.
+    // FIXME - This check needs to be removed when the client switches to the bridge based signaling for tracks.
+    const isNewTrackScreenshare = !oldTrack && (newTrack === null || newTrack === void 0 ? void 0 : newTrack.getVideoType()) === VideoType.DESKTOP;
+    const negotiationNeeded = !isNewTrackScreenshare && Boolean(!oldTrack || !this.localTracks.has(oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.rtcId));
     if (this._usesUnifiedPlan) {
         logger.debug(`${this} TPC.replaceTrack using unified plan`);
         const mediaType = (_a = newTrack === null || newTrack === void 0 ? void 0 : newTrack.getType()) !== null && _a !== void 0 ? _a : oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.getType();
@@ -1602,6 +1637,15 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
             .then(transceiver => {
             oldTrack && this.localTracks.delete(oldTrack.rtcId);
             newTrack && this.localTracks.set(newTrack.rtcId, newTrack);
+            // Update the local SSRC cache for the case when one track gets replaced with another and no
+            // renegotiation is triggered as a result of this.
+            if (oldTrack && newTrack) {
+                const oldTrackSSRC = this.localSSRCs.get(oldTrack.rtcId);
+                if (oldTrackSSRC) {
+                    this.localSSRCs.delete(oldTrack.rtcId);
+                    this.localSSRCs.set(newTrack.rtcId, oldTrackSSRC);
+                }
+            }
             const mediaActive = mediaType === MediaType.AUDIO
                 ? this.audioTransferActive
                 : this.videoTransferActive;
