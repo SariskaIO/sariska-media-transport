@@ -2,6 +2,9 @@ declare function _exports(minimize: any, analyzeBundle: any): {
     devtool: string;
     resolve: {
         extensions: string[];
+        alias: {
+            $: string;
+        };
     };
     mode: string;
     module: {
