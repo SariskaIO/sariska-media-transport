@@ -286,7 +286,7 @@ export default function JitsiConference(options) {
                 return self.connectionQuality.getStats();
             },
             getConnectionState() {
-                this.getConnectionState();
+                return self.getConnectionState();
             }
         }
     };
