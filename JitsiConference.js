@@ -341,12 +341,13 @@ export default function JitsiConference(options) {
             },
             getStats() {
                 return self.connectionQuality.getStats();
+            },
+            getConnectionState() {
+                this.getConnectionState();
             }
         }
     };
-    for ( let i in this) {
-        window.APP.conference[i] = this[i];
-    }
+    
     this.localTracksDuration = new LocalTracksDuration(this);
     this.sessions = {};
     this.user = options.user;
