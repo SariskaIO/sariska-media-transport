@@ -341,7 +341,8 @@ export default function JitsiConference(options) {
             },
             getStats() {
                 return self.connectionQuality.getStats();
-            }
+            },
+            ...this 
         }
     };
     this.localTracksDuration = new LocalTracksDuration(this);
