@@ -343,11 +343,11 @@ export default function JitsiConference(options) {
                 return self.connectionQuality.getStats();
             },
             getConnectionState() {
-                this.getConnectionState();
+                return self.getConnectionState();
             }
         }
     };
-    
+
     this.localTracksDuration = new LocalTracksDuration(this);
     this.sessions = {};
     this.user = options.user;
