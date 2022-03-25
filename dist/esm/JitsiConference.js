@@ -277,15 +277,12 @@ export default function JitsiConference(options) {
     }
     const self = this;
     window.APP = {
-        conference: {
-            _room: this,
-            get membersCount() {
+        conference: Object.assign({ _room: this, get membersCount() {
                 return self.getParticipantsWithoutHidden().length + 1;
             },
             getStats() {
                 return self.connectionQuality.getStats();
-            }
-        }
+            } }, this)
     };
     this.localTracksDuration = new LocalTracksDuration(this);
     this.sessions = {};
