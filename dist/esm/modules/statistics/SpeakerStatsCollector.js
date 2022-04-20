@@ -27,7 +27,7 @@ export default class SpeakerStatsCollector {
         conference.addEventListener(JitsiConferenceEvents.USER_JOINED, this._onUserJoin.bind(this));
         conference.addEventListener(JitsiConferenceEvents.USER_LEFT, this._onUserLeave.bind(this));
         conference.addEventListener(JitsiConferenceEvents.DISPLAY_NAME_CHANGED, this._onDisplayNameChange.bind(this));
-        conference.addEventListener(JitsiConferenceEvents.FACIAL_EXPRESSION_ADDED, this._onFacialExpressionAdd.bind(this));
+        conference.addEventListener(JitsiConferenceEvents.FACE_LANDMARK_ADDED, this._onFaceLandmarkAdd.bind(this));
         if (conference.xmpp) {
             conference.xmpp.addListener(XMPPEvents.SPEAKER_STATS_RECEIVED, this._updateStats.bind(this));
         }
@@ -93,17 +93,17 @@ export default class SpeakerStatsCollector {
         }
     }
     /**
-     * Adds a new facial expression with its duration of a remote user.
+     * Processes a new face landmark object of a remote user.
      *
      * @param {string} userId - The user id of the user that left.
-     * @param {Object} data - The facial expression with its duration.
+     * @param {Object} data - The face landmark object.
      * @returns {void}
      * @private
      */
-    _onFacialExpressionAdd(userId, data) {
+    _onFaceLandmarkAdd(userId, data) {
         const savedUser = this.stats.users[userId];
-        if (savedUser) {
-            savedUser.addFacialExpression(data.facialExpression, data.duration);
+        if (savedUser && data.faceExpression) {
+            savedUser.addFaceExpression(data.faceExpression, data.duration);
         }
     }
     /**
@@ -142,7 +142,7 @@ export default class SpeakerStatsCollector {
             }
             speakerStatsToUpdate.totalDominantSpeakerTime
                 = newStats[userId].totalDominantSpeakerTime;
-            speakerStatsToUpdate.setFacialExpressions(newStats[userId].facialExpressions);
+            speakerStatsToUpdate.setFaceExpressions(newStats[userId].faceExpressions);
         }
     }
 }

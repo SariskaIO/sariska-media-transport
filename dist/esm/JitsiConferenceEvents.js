@@ -382,9 +382,9 @@ export var JitsiConferenceEvents;
      */
     JitsiConferenceEvents["AV_MODERATION_PARTICIPANT_REJECTED"] = "conference.av_moderation.participant.rejected";
     /**
-     * A new facial expression is added with its duration for a participant
+     * A new face landmark object is added for a participant
      */
-    JitsiConferenceEvents["FACIAL_EXPRESSION_ADDED"] = "conference.facial_expression.added";
+    JitsiConferenceEvents["FACE_LANDMARK_ADDED"] = "conference.face_landmark.added";
     /**
      * Event fired when a participant is requested to join a given (breakout) room.
      */
@@ -468,7 +468,7 @@ export const AV_MODERATION_REJECTED = JitsiConferenceEvents.AV_MODERATION_REJECT
 export const AV_MODERATION_CHANGED = JitsiConferenceEvents.AV_MODERATION_CHANGED;
 export const AV_MODERATION_PARTICIPANT_APPROVED = JitsiConferenceEvents.AV_MODERATION_PARTICIPANT_APPROVED;
 export const AV_MODERATION_PARTICIPANT_REJECTED = JitsiConferenceEvents.AV_MODERATION_PARTICIPANT_REJECTED;
-export const FACIAL_EXPRESSION_ADDED = JitsiConferenceEvents.FACIAL_EXPRESSION_ADDED;
+export const FACE_LANDMARK_ADDED = JitsiConferenceEvents.FACE_LANDMARK_ADDED;
 export const BREAKOUT_ROOMS_MOVE_TO_ROOM = JitsiConferenceEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM;
 export const BREAKOUT_ROOMS_UPDATED = JitsiConferenceEvents.BREAKOUT_ROOMS_UPDATED;
 export const SUBTITLES_RECEIVED = JitsiConferenceEvents.SUBTITLES_RECEIVED;

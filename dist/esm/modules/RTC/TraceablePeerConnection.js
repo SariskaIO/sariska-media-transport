@@ -787,9 +787,7 @@ TraceablePeerConnection.prototype._remoteTrackAdded = function (stream, track, t
     // eslint-disable-next-line no-undef
     logger.info(`${this} creating remote track[endpoint=${ownerEndpointId},ssrc=${trackSsrc},`
         + `type=${mediaType},sourceName=${sourceName}]`);
-    const peerMediaInfo = FeatureFlags.isSourceNameSignalingEnabled()
-        ? this.signalingLayer.getPeerSourceInfo(ownerEndpointId, sourceName)
-        : this.signalingLayer.getPeerMediaInfo(ownerEndpointId, mediaType);
+    const peerMediaInfo = this.signalingLayer.getPeerMediaInfo(ownerEndpointId, mediaType, sourceName);
     if (!peerMediaInfo) {
         GlobalOnErrorHandler.callErrorHandler(new Error(`${this}: no peer media info available for ${ownerEndpointId}`));
         return;
@@ -1622,7 +1620,10 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
     // Send the presence before signaling for a new screenshare source. This is needed for multi-stream support since
     // videoType needs to be availble at remote track creation time so that a fake tile for screenshare can be added.
     // FIXME - This check needs to be removed when the client switches to the bridge based signaling for tracks.
-    const isNewTrackScreenshare = !oldTrack && (newTrack === null || newTrack === void 0 ? void 0 : newTrack.getVideoType()) === VideoType.DESKTOP;
+    const isNewTrackScreenshare = !oldTrack
+        && (newTrack === null || newTrack === void 0 ? void 0 : newTrack.getVideoType()) === VideoType.DESKTOP
+        && FeatureFlags.isMultiStreamSupportEnabled()
+        && !this.isP2P; // negotiationneeded is not fired on p2p peerconnection
     const negotiationNeeded = !isNewTrackScreenshare && Boolean(!oldTrack || !this.localTracks.has(oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.rtcId));
     if (this._usesUnifiedPlan) {
         logger.debug(`${this} TPC.replaceTrack using unified plan`);
@@ -1654,6 +1655,9 @@ TraceablePeerConnection.prototype.replaceTrack = function (oldTrack, newTrack) {
             // this connection again.
             if (transceiver && mediaActive) {
                 transceiver.direction = newTrack ? MediaDirection.SENDRECV : MediaDirection.RECVONLY;
+            }
+            else if (transceiver) {
+                transceiver.direction = MediaDirection.INACTIVE;
             }
             // Avoid configuring the encodings on Chromium/Safari until simulcast is configured
             // for the newly added track using SDP munging which happens during the renegotiation.

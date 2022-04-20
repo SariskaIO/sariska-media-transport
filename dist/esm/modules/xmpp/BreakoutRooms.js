@@ -1,5 +1,5 @@
 import { getLogger } from '@jitsi/logger';
-import { $msg } from 'strophe.js';
+import { $msg, Strophe } from 'strophe.js';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 const FEATURE_KEY = 'features/breakout-rooms';
 const BREAKOUT_ROOM_ACTIONS = {
@@ -114,7 +114,11 @@ export default class BreakoutRooms {
      * @returns True if the room is a breakout room, false otherwise.
      */
     isBreakoutRoom() {
-        return this._isBreakoutRoom;
+        if (typeof this._isBreakoutRoom !== 'undefined') {
+            return this._isBreakoutRoom;
+        }
+        // Use heuristic, helpful for checking in the MUC_JOINED event.
+        return Strophe.getDomainFromJid(this.room.myroomjid) === this.getComponentAddress();
     }
     /**
      * Sets the main room JID associated with this breakout room. Only applies when

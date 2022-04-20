@@ -1,5 +1,6 @@
 import { getLogger } from '@jitsi/logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
+import * as JitsiE2EPingEvents from '../../service/e2eping/E2ePingEvents';
 const logger = getLogger(__filename);
 /**
  * The 'type' of a message which designates an e2e ping request.
@@ -133,6 +134,7 @@ class ParticipantWrapper {
         if (numRequestsWithResponses >= this.e2eping.numRequests) {
             logger.info(`Measured RTT=${rtt} ms to ${this.id} (in ${this.participant.getProperty('region')})`);
             this.stop();
+            this.e2eping.conference.eventEmitter.emit(JitsiE2EPingEvents.E2E_RTT_CHANGED, this.participant, rtt);
             return;
         }
         else if (totalNumRequests > 2 * this.e2eping.numRequests) {

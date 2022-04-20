@@ -279,6 +279,9 @@ export default class JitsiTrack extends EventEmitter {
      * which this JitsiTrack is currently attached.
      */
     detach(container) {
+        if (!container) {
+            return;
+        }
         for (let cs = this.containers, i = cs.length - 1; i >= 0; --i) {
             const c = cs[i];
             if (!container) {

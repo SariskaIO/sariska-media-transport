@@ -24,6 +24,8 @@ export default class LocalSdpMunger {
     constructor(tpc, localEndpointId) {
         this.tpc = tpc;
         this.localEndpointId = localEndpointId;
+        this.audioSourcesToMsidMap = new Map();
+        this.videoSourcesToMsidMap = new Map();
     }
     /**
      * Makes sure that muted local video tracks associated with the parent
@@ -161,7 +163,6 @@ export default class LocalSdpMunger {
         var _a, _b, _c, _d, _e;
         const mediaType = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.type;
         const pcId = this.tpc.id;
-        const sourceToMsidMap = new Map();
         for (const ssrcLine of mediaSection.ssrcs) {
             switch (ssrcLine.attribute) {
                 case 'cname':
@@ -174,19 +175,27 @@ export default class LocalSdpMunger {
                         const streamAndTrackIDs = ssrcLine.value.split(' ');
                         let streamId = streamAndTrackIDs[0];
                         const trackId = streamAndTrackIDs[1];
-                        // eslint-disable-next-line max-depth
                         if (FeatureFlags.isSourceNameSignalingEnabled()) {
+                            // Always overwrite streamId since we want the msid to be in this format even if the browser
+                            // generates one (in p2p mode).
+                            streamId = `${this.localEndpointId}-${mediaType}`;
                             // eslint-disable-next-line max-depth
-                            if (streamId === '-' || !streamId) {
-                                streamId = `${this.localEndpointId}-${mediaType}`;
+                            if (mediaType === MediaType.VIDEO) {
+                                // eslint-disable-next-line max-depth
+                                if (!this.videoSourcesToMsidMap.has(trackId)) {
+                                    streamId = `${streamId}-${this.videoSourcesToMsidMap.size}`;
+                                    this.videoSourcesToMsidMap.set(trackId, streamId);
+                                }
                             }
-                            // eslint-disable-next-line max-depth
-                            if (!sourceToMsidMap.has(trackId)) {
-                                streamId = `${streamId}-${sourceToMsidMap.size}`;
-                                sourceToMsidMap.set(trackId, streamId);
+                            else if (!this.audioSourcesToMsidMap.has(trackId)) {
+                                streamId = `${streamId}-${this.audioSourcesToMsidMap.size}`;
+                                this.audioSourcesToMsidMap.set(trackId, streamId);
                             }
+                            streamId = mediaType === MediaType.VIDEO
+                                ? this.videoSourcesToMsidMap.get(trackId)
+                                : this.audioSourcesToMsidMap.get(trackId);
                         }
-                        ssrcLine.value = this._generateMsidAttribute(mediaType, trackId, sourceToMsidMap.get(trackId));
+                        ssrcLine.value = this._generateMsidAttribute(mediaType, trackId, streamId);
                     }
                     else {
                         logger.warn(`Unable to munge local MSID - weird format detected: ${ssrcLine.value}`);

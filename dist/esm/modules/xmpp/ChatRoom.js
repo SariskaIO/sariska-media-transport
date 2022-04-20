@@ -947,7 +947,6 @@ export default class ChatRoom extends Listenable {
         else if ($(pres).find('>error>service-unavailable').length) {
             logger.warn('Maximum users limit for the room has been reached', pres);
             this.eventEmitter.emit(XMPPEvents.ROOM_MAX_USERS_ERROR);
-            this.connection.emuc.doLeave(this.roomjid);
         }
         else if ($(pres)
             .find('>error[type="auth"]'
@@ -1320,7 +1319,7 @@ export default class ChatRoom extends Listenable {
         }
         const data = {
             muted: true,
-            videoType: VideoType.CAMERA // 'camera' by default
+            videoType: mediaType === MediaType.VIDEO ? VideoType.CAMERA : undefined // 'camera' by default
         };
         let mutedNode = null;
         if (mediaType === MediaType.AUDIO) {

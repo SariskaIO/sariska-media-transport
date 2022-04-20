@@ -124,6 +124,7 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
     this.chatRoomForwarder.forward(XMPPEvents.ROOM_CONNECT_NOT_ALLOWED_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.NOT_ALLOWED_ERROR);
     this.chatRoomForwarder.forward(XMPPEvents.ROOM_CONNECT_MEMBERS_ONLY_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.MEMBERS_ONLY_ERROR);
     this.chatRoomForwarder.forward(XMPPEvents.ROOM_MAX_USERS_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.CONFERENCE_MAX_USERS);
+    chatRoom.addListener(XMPPEvents.ROOM_MAX_USERS_ERROR, () => conference.leave());
     this.chatRoomForwarder.forward(XMPPEvents.PASSWORD_REQUIRED, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.PASSWORD_REQUIRED);
     this.chatRoomForwarder.forward(XMPPEvents.AUTHENTICATION_REQUIRED, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.AUTHENTICATION_REQUIRED);
     this.chatRoomForwarder.forward(XMPPEvents.BRIDGE_DOWN, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.VIDEOBRIDGE_NOT_AVAILABLE);
@@ -132,9 +133,7 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
         conference._onConferenceRestarted(jingleSession);
     });
     this.chatRoomForwarder.forward(XMPPEvents.RESERVATION_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.RESERVATION_ERROR);
-    chatRoom.addListener(XMPPEvents.RESERVATION_ERROR, () => {
-        conference.xmpp.connection.emuc.doLeave(conference.room.roomjid);
-    });
+    chatRoom.addListener(XMPPEvents.RESERVATION_ERROR, () => conference.leave());
     this.chatRoomForwarder.forward(XMPPEvents.GRACEFUL_SHUTDOWN, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.GRACEFUL_SHUTDOWN);
     chatRoom.addListener(XMPPEvents.CONNECTION_ICE_FAILED, jingleSession => {
         conference._onIceConnectionFailed(jingleSession);

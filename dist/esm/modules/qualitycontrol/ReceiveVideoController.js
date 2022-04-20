@@ -1,6 +1,7 @@
 import { getLogger } from '@jitsi/logger';
 import isEqual from 'lodash.isequal';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
+import { MediaType } from '../../service/RTC/MediaType';
 import FeatureFlags from '../flags/FeatureFlags';
 const logger = getLogger(__filename);
 const MAX_HEIGHT_ONSTAGE = 2160;
@@ -155,6 +156,13 @@ export default class ReceiveVideoController {
         this._lastN = (_a = config === null || config === void 0 ? void 0 : config.startLastN) !== null && _a !== void 0 ? _a : ((config === null || config === void 0 ? void 0 : config.channelLastN) || LASTN_UNLIMITED);
         // The number representing the maximum video height the local client should receive from the bridge.
         this._maxFrameHeight = MAX_HEIGHT_ONSTAGE;
+        /**
+         * The map that holds the max frame height requested for each remote source when source-name signaling is
+         * enabled.
+         *
+         * @type Map<string, number>
+         */
+        this._sourceReceiverConstraints = new Map();
         // Enable new receiver constraints by default unless it is explicitly disabled through config.js.
         const useNewReceiverConstraints = (_b = config === null || config === void 0 ? void 0 : config.useNewBandwidthAllocationStrategy) !== null && _b !== void 0 ? _b : true;
         if (useNewReceiverConstraints) {
@@ -170,6 +178,24 @@ export default class ReceiveVideoController {
         this._conference.on(JitsiConferenceEvents._MEDIA_SESSION_STARTED, session => this._onMediaSessionStarted(session));
     }
     /**
+     * Returns a map of all the remote source names and the corresponding max frame heights.
+     *
+     * @param {number} maxFrameHeight
+     * @returns
+     */
+    _getDefaultSourceReceiverConstraints(mediaSession, maxFrameHeight) {
+        var _a;
+        if (!FeatureFlags.isSourceNameSignalingEnabled()) {
+            return null;
+        }
+        const remoteVideoTracks = ((_a = mediaSession.peerconnection) === null || _a === void 0 ? void 0 : _a.getRemoteTracks(null, MediaType.VIDEO)) || [];
+        const receiverConstraints = new Map();
+        for (const track of remoteVideoTracks) {
+            receiverConstraints.set(track.getSourceName(), maxFrameHeight);
+        }
+        return receiverConstraints;
+    }
+    /**
      * Handles the {@link JitsiConferenceEvents.MEDIA_SESSION_STARTED}, that is when the conference creates new media
      * session. The preferred receive frameHeight is applied on the media session.
      *
@@ -179,7 +205,7 @@ export default class ReceiveVideoController {
      */
     _onMediaSessionStarted(mediaSession) {
         if (mediaSession.isP2P || !this._receiverVideoConstraints) {
-            mediaSession.setReceiverVideoConstraint(this._maxFrameHeight);
+            mediaSession.setReceiverVideoConstraint(this._maxFrameHeight, this._sourceReceiverConstraints);
         }
         else {
             this._receiverVideoConstraints.updateReceiveResolution(this._maxFrameHeight);
@@ -246,7 +272,7 @@ export default class ReceiveVideoController {
         this._maxFrameHeight = maxFrameHeight;
         for (const session of this._conference.getMediaSessions()) {
             if (session.isP2P || !this._receiverVideoConstraints) {
-                maxFrameHeight && session.setReceiverVideoConstraint(maxFrameHeight);
+                session.setReceiverVideoConstraint(maxFrameHeight, this._getDefaultSourceReceiverConstraints(this._maxFrameHeight));
             }
             else {
                 const resolutionUpdated = this._receiverVideoConstraints.updateReceiveResolution(maxFrameHeight);
@@ -279,7 +305,20 @@ export default class ReceiveVideoController {
             this._selectedEndpoints = (_b = constraints.selectedEndpoints) !== null && _b !== void 0 ? _b : this._selectedEndpoints;
             this._rtc.setNewReceiverVideoConstraints(constraints);
             const p2pSession = this._conference.getMediaSessions().find(session => session.isP2P);
-            if (p2pSession) {
+            if (!p2pSession) {
+                return;
+            }
+            if (FeatureFlags.isSourceNameSignalingEnabled()) {
+                const mappedConstraints = Array.from(Object.entries(constraints.constraints))
+                    .map(constraint => {
+                    constraint[1] = constraint[1].maxHeight;
+                    return constraint;
+                });
+                this._sourceReceiverConstraints = new Map(mappedConstraints);
+                // Send the receiver constraints to the peer through a "content-modify" message.
+                p2pSession.setReceiverVideoConstraint(null, this._sourceReceiverConstraints);
+            }
+            else {
                 let maxFrameHeight = (_c = Object.values(constraints.constraints)[0]) === null || _c === void 0 ? void 0 : _c.maxHeight;
                 if (!maxFrameHeight) {
                     maxFrameHeight = (_d = constraints.defaultConstraints) === null || _d === void 0 ? void 0 : _d.maxHeight;

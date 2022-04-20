@@ -121,7 +121,7 @@ export default function JitsiConference(options) {
     this.connection = options.connection;
     this.xmpp = (_a = this.connection) === null || _a === void 0 ? void 0 : _a.xmpp;
     if (this.xmpp.isRoomCreated(options.name, options.customDomain)) {
-        const errmsg = 'A coference with the same name has already been created!';
+        const errmsg = 'A conference with the same name has already been created!';
         delete this.connection;
         delete this.xmpp;
         logger.error(errmsg);
@@ -962,7 +962,15 @@ JitsiConference.prototype.addTrack = function (track) {
         }
         return Promise.reject(new Error(`Cannot add second ${mediaType} track to the conference`));
     }
-    return this.replaceTrack(null, track);
+    return this.replaceTrack(null, track)
+        .then(() => {
+        // Presence needs to be sent here for desktop track since we need the presence to reach the remote peer
+        // before signaling so that a fake participant tile is created for screenshare. Otherwise, presence will
+        // only be sent after a session-accept or source-add is ack'ed.
+        if (track.getVideoType() === VideoType.DESKTOP && FeatureFlags.isMultiStreamSupportEnabled()) {
+            this._updateRoomPresence(this.getActiveMediaSession());
+        }
+    });
 };
 /**
  * Fires TRACK_AUDIO_LEVEL_CHANGED change conference event (for local tracks).
@@ -1827,12 +1835,27 @@ JitsiConference.prototype.onRemoteTrackRemoved = function (removedTrack) {
  * Handles an incoming call event for the P2P jingle session.
  */
 JitsiConference.prototype._onIncomingCallP2P = function (jingleSession, jingleOffer) {
+    var _a;
     let rejectReason;
-    if ((!this.isP2PEnabled() && !this.isP2PTestModeEnabled()) || browser.isFirefox() || browser.isWebKitBased()) {
+    const usesUnifiedPlan = browser.supportsUnifiedPlan()
+        && (!browser.isChromiumBased() || ((_a = this.options.config.enableUnifiedOnChrome) !== null && _a !== void 0 ? _a : true));
+    const contentName = jingleOffer.find('>content').attr('name');
+    const peerUsesUnifiedPlan = contentName === '0' || contentName === '1';
+    // Reject P2P between endpoints that are not running in the same mode w.r.t to SDPs (plan-b and unified plan).
+    if (usesUnifiedPlan !== peerUsesUnifiedPlan) {
         rejectReason = {
             reason: 'decline',
             reasonDescription: 'P2P disabled',
-            errorMsg: 'P2P mode disabled in the configuration'
+            errorMsg: 'P2P across two endpoints in different SDP modes is disabled'
+        };
+    }
+    else if ((!this.isP2PEnabled() && !this.isP2PTestModeEnabled())
+        || browser.isFirefox()
+        || browser.isWebKitBased()) {
+        rejectReason = {
+            reason: 'decline',
+            reasonDescription: 'P2P disabled',
+            errorMsg: 'P2P mode disabled in the configuration or browser unsupported'
         };
     }
     else if (this.p2pJingleSession) {
@@ -3008,20 +3031,27 @@ JitsiConference.prototype._updateRoomPresence = function (jingleSession, ctx) {
     let presenceChanged = false;
     let muteStatusChanged, videoTypeChanged;
     const localTracks = this.getLocalTracks();
+    const localAudioTracks = jingleSession.peerconnection.getLocalTracks(MediaType.AUDIO);
+    const localVideoTracks = jingleSession.peerconnection.getLocalTracks(MediaType.VIDEO);
     // Set presence for all the available local tracks.
     for (const track of localTracks) {
         muteStatusChanged = this._setTrackMuteStatus(track.getType(), track, track.isMuted());
         if (track.getType() === MediaType.VIDEO) {
             videoTypeChanged = this._setNewVideoType(track);
         }
-        presenceChanged = presenceChanged || muteStatusChanged || videoTypeChanged;
+        presenceChanged = muteStatusChanged || videoTypeChanged;
     }
     // Set the presence in the legacy format if there are no local tracks and multi stream support is not enabled.
-    if (!localTracks.length && !FeatureFlags.isMultiStreamSupportEnabled()) {
-        const audioMuteStatusChanged = this._setTrackMuteStatus(MediaType.AUDIO, undefined, true);
-        const videoMuteStatusChanged = this._setTrackMuteStatus(MediaType.VIDEO, undefined, true);
-        videoTypeChanged = this._setNewVideoType();
-        presenceChanged = audioMuteStatusChanged || videoMuteStatusChanged || videoTypeChanged;
+    if (!FeatureFlags.isMultiStreamSupportEnabled()) {
+        let audioMuteStatusChanged, videoMuteStatusChanged;
+        if (!(localAudioTracks === null || localAudioTracks === void 0 ? void 0 : localAudioTracks.length)) {
+            audioMuteStatusChanged = this._setTrackMuteStatus(MediaType.AUDIO, undefined, true);
+        }
+        if (!(localVideoTracks === null || localVideoTracks === void 0 ? void 0 : localVideoTracks.length)) {
+            videoMuteStatusChanged = this._setTrackMuteStatus(MediaType.VIDEO, undefined, true);
+            videoTypeChanged = this._setNewVideoType();
+        }
+        presenceChanged = presenceChanged || audioMuteStatusChanged || videoMuteStatusChanged || videoTypeChanged;
     }
     presenceChanged && this.room.sendPresence();
 };
@@ -3092,11 +3122,13 @@ JitsiConference.prototype.getSpeakerStats = function () {
     return this.speakerStatsCollector.getStats();
 };
 /**
- * Sends a facial expression with its duration to the xmpp server.
+ * Sends a face landmarks object to the xmpp server.
  * @param {Object} payload
  */
-JitsiConference.prototype.sendFacialExpression = function (payload) {
-    this.xmpp.sendFacialExpressionEvent(this.room.roomjid, payload);
+JitsiConference.prototype.sendFaceLandmarks = function (payload) {
+    if (payload.faceExpression) {
+        this.xmpp.sendFaceExpressionEvent(this.room.roomjid, payload);
+    }
 };
 /**
  * Sets the constraints for the video that is requested from the bridge.
