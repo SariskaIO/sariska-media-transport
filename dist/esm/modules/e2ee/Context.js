@@ -177,7 +177,7 @@ export class Context {
      * @param {RTCEncodedVideoFrame|RTCEncodedAudioFrame} encodedFrame - Encoded video frame.
      * @param {number} keyIndex - the index of the decryption data in _cryptoKeyRing array.
      * @param {number} ratchetCount - the number of retries after ratcheting the key.
-     * @returns {RTCEncodedVideoFrame|RTCEncodedAudioFrame} - The decrypted frame.
+     * @returns {Promise<RTCEncodedVideoFrame|RTCEncodedAudioFrame>} - The decrypted frame.
      * @private
      */
     _decryptFrame(encodedFrame, keyIndex, initialKey = undefined, ratchetCount = 0) {
@@ -215,10 +215,11 @@ export class Context {
                     return encodedFrame;
                 }
                 if (ratchetCount < RATCHET_WINDOW_SIZE) {
+                    const currentKey = this._cryptoKeyRing[this._currentKeyIndex];
                     material = yield importKey(yield ratchet(material));
                     const newKey = yield deriveKeys(material);
                     this._setKeys(newKey);
-                    return yield this._decryptFrame(encodedFrame, keyIndex, initialKey || this._cryptoKeyRing[this._currentKeyIndex], ratchetCount + 1);
+                    return yield this._decryptFrame(encodedFrame, keyIndex, initialKey || currentKey, ratchetCount + 1);
                 }
                 /**
                  * Since the key it is first send and only afterwards actually used for encrypting, there were

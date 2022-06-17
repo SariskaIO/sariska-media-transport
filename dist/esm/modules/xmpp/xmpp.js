@@ -109,7 +109,6 @@ export default class XMPP extends Listenable {
      * @param token
      */
     constructor(options, token) {
-        var _a;
         super();
         this.connection = null;
         this.disconnectInProgress = false;
@@ -117,6 +116,9 @@ export default class XMPP extends Listenable {
         this.options = options;
         this.token = token;
         this.authenticatedUser = false;
+        if (!this.options.deploymentInfo) {
+            this.options.deploymentInfo = {};
+        }
         initStropheNativePlugins();
         const xmppPing = options.xmppPing || {};
         // let's ping the main domain (in case a guest one is used for the connection)
@@ -129,7 +131,7 @@ export default class XMPP extends Listenable {
             websocketKeepAlive: options.websocketKeepAlive,
             websocketKeepAliveUrl: options.websocketKeepAliveUrl,
             xmppPing,
-            shard: (_a = options.deploymentInfo) === null || _a === void 0 ? void 0 : _a.shard
+            shard: options.deploymentInfo.shard
         });
         // forwards the shard changed event
         this.connection.on(XmppConnection.Events.CONN_SHARD_CHANGED, () => {
@@ -208,6 +210,10 @@ export default class XMPP extends Listenable {
         if (FeatureFlags.isSourceNameSignalingEnabled()) {
             logger.info('Source-name signaling is enabled');
             this.caps.addFeature('http://jitsi.org/source-name');
+        }
+        if (FeatureFlags.isSsrcRewritingSupported()) {
+            logger.info('SSRC rewriting is supported');
+            this.caps.addFeature('http://jitsi.org/ssrc-rewriting');
         }
     }
     /**
@@ -369,6 +375,9 @@ export default class XMPP extends Listenable {
             }
             if (identity.type === 'region') {
                 this.options.deploymentInfo.region = this.connection.region = identity.name;
+            }
+            if (identity.type === 'release') {
+                this.options.deploymentInfo.backendRelease = identity.name;
             }
             if (identity.type === 'breakout_rooms') {
                 this.breakoutRoomsComponentAddress = identity.name;
@@ -859,12 +868,14 @@ export default class XMPP extends Listenable {
         const aprops = this.options.deploymentInfo;
         if (aprops && Object.keys(aprops).length > 0) {
             const logObject = {};
-            logObject.id = 'deployment_info';
             for (const attr in aprops) {
                 if (aprops.hasOwnProperty(attr)) {
                     logObject[attr] = aprops[attr];
                 }
             }
+            // Let's push to analytics any updates that may have come from the backend
+            Statistics.analytics.addPermanentProperties(Object.assign({}, logObject));
+            logObject.id = 'deployment_info';
             Statistics.sendLog(JSON.stringify(logObject));
         }
         this.sendDeploymentInfo = false;

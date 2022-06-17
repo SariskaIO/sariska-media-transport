@@ -160,7 +160,7 @@ export default class LocalSdpMunger {
      * @private
      */
     _transformMediaIdentifiers(mediaSection) {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         const mediaType = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.type;
         const pcId = this.tpc.id;
         for (const ssrcLine of mediaSection.ssrcs) {
@@ -208,31 +208,21 @@ export default class LocalSdpMunger {
         if (!this.tpc.usesUnifiedPlan()) {
             return;
         }
-        // If the msid attribute is missing, then remove the ssrc from the transformed description so that a
-        // source-remove is signaled to Jicofo. This happens when the direction of the transceiver (or m-line)
-        // is set to 'inactive' or 'recvonly' on Firefox, Chrome (unified) and Safari.
-        const mediaDirection = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.direction;
-        if (mediaDirection === MediaDirection.RECVONLY || mediaDirection === MediaDirection.INACTIVE) {
-            mediaSection.ssrcs = undefined;
-            mediaSection.ssrcGroups = undefined;
-            // Add the msid attribute if it is missing when the direction is sendrecv/sendonly. Firefox doesn't produce a
-            // a=ssrc line with msid attribute for p2p connection.
-        }
-        else {
-            const msidLine = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.msid;
-            const trackId = msidLine && msidLine.split(' ')[1];
-            const sources = [...new Set((_e = (_d = mediaSection.mLine) === null || _d === void 0 ? void 0 : _d.ssrcs) === null || _e === void 0 ? void 0 : _e.map(s => s.id))];
-            for (const source of sources) {
-                const msidExists = mediaSection.ssrcs
-                    .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
-                if (!msidExists && trackId) {
-                    const generatedMsid = this._generateMsidAttribute(mediaType, trackId);
-                    mediaSection.ssrcs.push({
-                        id: source,
-                        attribute: 'msid',
-                        value: generatedMsid
-                    });
-                }
+        // Add the msid attribute if it is missing when the direction is sendrecv/sendonly. Firefox doesn't produce a
+        // a=ssrc line with msid attribute for p2p connection.
+        const msidLine = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.msid;
+        const trackId = msidLine && msidLine.split(' ')[1];
+        const sources = [...new Set((_d = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.ssrcs) === null || _d === void 0 ? void 0 : _d.map(s => s.id))];
+        for (const source of sources) {
+            const msidExists = mediaSection.ssrcs
+                .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
+            if (!msidExists && trackId) {
+                const generatedMsid = this._generateMsidAttribute(mediaType, trackId);
+                mediaSection.ssrcs.push({
+                    id: source,
+                    attribute: 'msid',
+                    value: generatedMsid
+                });
             }
         }
     }
@@ -291,6 +281,12 @@ export default class LocalSdpMunger {
         for (const videoMLine of videoMlines) {
             this._transformMediaIdentifiers(videoMLine);
             this._injectSourceNames(videoMLine);
+        }
+        // Plan-b clients generate new SSRCs and trackIds whenever tracks are removed and added back to the
+        // peerconnection, therefore local track based map for msids needs to be reset after every transformation.
+        if (FeatureFlags.isSourceNameSignalingEnabled() && !this.tpc._usesUnifiedPlan) {
+            this.audioSourcesToMsidMap.clear();
+            this.videoSourcesToMsidMap.clear();
         }
         return new RTCSessionDescription({
             type: sessionDesc.type,

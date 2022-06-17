@@ -40,7 +40,7 @@ export default class JingleSessionPC extends JingleSession {
      * @param {jQuery} jingleContents - A jQuery selector pointing to the '>jingle' element.
      * @returns {Number|null}
      */
-    static parseMaxFrameHeight(jingleContents: JQueryStatic): number | null;
+    static parseMaxFrameHeight(jingleContents: any): number | null;
     /**
      * Parses the source-name and max frame height value of the 'content-modify' IQ when source-name signaling
      * is enabled.
@@ -48,7 +48,7 @@ export default class JingleSessionPC extends JingleSession {
      * @param {jQuery} jingleContents - A jQuery selector pointing to the '>jingle' element.
      * @returns {Object|null}
      */
-    static parseSourceMaxFrameHeight(jingleContents: JQueryStatic): any | null;
+    static parseSourceMaxFrameHeight(jingleContents: any): any | null;
     /**
      * Creates new <tt>JingleSessionPC</tt>
      * @param {string} sid the Jingle Session ID - random string which identifies the session
@@ -576,7 +576,7 @@ export default class JingleSessionPC extends JingleSession {
      * @see {@link _remoteVideoActive}
      * @see {@link _localVideoActive}
      */
-    modifyContents(jingleContents: JQueryStatic): void;
+    modifyContents(jingleContents: any): void;
     /**
      * Processes new value of remote video "senders" Jingle attribute and tries
      * to apply it for {@link _remoteVideoActive}.

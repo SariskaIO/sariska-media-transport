@@ -485,8 +485,9 @@ export default class JitsiLocalTrack extends JitsiTrack {
         if (this._streamEffect) {
             promise = this.setEffect();
         }
+        let removeTrackPromise = Promise.resolve();
         if (this.conference) {
-            promise = promise.then(() => this.conference.removeTrack(this));
+            removeTrackPromise = this.conference.removeTrack(this);
         }
         if (this.stream) {
             this.stopStream();
@@ -496,7 +497,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
         if (this._onAudioOutputDeviceChanged) {
             RTCUtils.removeListener(RTCEvents.AUDIO_OUTPUT_DEVICE_CHANGED, this._onAudioOutputDeviceChanged);
         }
-        return promise.then(() => super.dispose());
+        return Promise.allSettled([promise, removeTrackPromise]).then(() => super.dispose());
     }
     /**
      * Returns facing mode for video track from camera. For other cases (e.g. audio track or 'desktop' video track)

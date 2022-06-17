@@ -444,6 +444,13 @@ export class OlmAdapter extends Listenable {
                             yield this._sendSessionInit(participant);
                             const olmData = this._getParticipantOlmData(participant);
                             const uuid = uuidv4();
+                            const d = new Deferred();
+                            d.setRejectTimeout(REQ_TIMEOUT);
+                            d.catch(() => {
+                                this._reqs.delete(uuid);
+                                olmData.pendingSessionUuid = undefined;
+                            });
+                            this._reqs.set(uuid, d);
                             const data = {
                                 [JITSI_MEET_MUC_TYPE]: OLM_MESSAGE_TYPE,
                                 olm: {

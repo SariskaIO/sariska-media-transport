@@ -4,6 +4,10 @@
  */
 const CodecMimeType = {
     /**
+     * AV1 codec mime type.
+     */
+    AV1: 'av1',
+    /**
      * The h264 codec mime type.
      */
     H264: 'h264',

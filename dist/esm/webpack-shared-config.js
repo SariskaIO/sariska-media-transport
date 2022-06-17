@@ -80,7 +80,7 @@ module.exports = (minimize, analyzeBundle) => {
                 }),
             !minimize
                 && new ProvidePlugin({
-                    process: 'process/browser'
+                    process: require.resolve('process/browser')
                 })
         ].filter(Boolean)
     };

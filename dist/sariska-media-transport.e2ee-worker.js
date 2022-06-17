@@ -35,7 +35,7 @@ async function deriveKeys(material) {
  * Ratchets a key. See
  * https://tools.ietf.org/html/draft-omara-sframe-00#section-4.3.5.1
  * @param {CryptoKey} material - base key material
- * @returns {ArrayBuffer} - ratcheted key material
+ * @returns {Promise<ArrayBuffer>} - ratcheted key material
  */
 async function ratchet(material) {
     const textEncoder = new TextEncoder();
@@ -54,7 +54,7 @@ async function ratchet(material) {
  * suitable for our usage.
  * @param {ArrayBuffer} keyBytes - raw key
  * @param {Array} keyUsages - key usages, see importKey documentation
- * @returns {CryptoKey} - the WebCrypto key.
+ * @returns {Promise<CryptoKey>} - the WebCrypto key.
  */
 async function importKey(keyBytes) {
     // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey
@@ -268,7 +268,7 @@ class Context {
      * @param {RTCEncodedVideoFrame|RTCEncodedAudioFrame} encodedFrame - Encoded video frame.
      * @param {number} keyIndex - the index of the decryption data in _cryptoKeyRing array.
      * @param {number} ratchetCount - the number of retries after ratcheting the key.
-     * @returns {RTCEncodedVideoFrame|RTCEncodedAudioFrame} - The decrypted frame.
+     * @returns {Promise<RTCEncodedVideoFrame|RTCEncodedAudioFrame>} - The decrypted frame.
      * @private
      */
     async _decryptFrame(
@@ -323,6 +323,8 @@ class Context {
             }
 
             if (ratchetCount < RATCHET_WINDOW_SIZE) {
+                const currentKey = this._cryptoKeyRing[this._currentKeyIndex];
+
                 material = await importKey(await ratchet(material));
 
                 const newKey = await deriveKeys(material);
@@ -332,7 +334,7 @@ class Context {
                 return await this._decryptFrame(
                     encodedFrame,
                     keyIndex,
-                    initialKey || this._cryptoKeyRing[this._currentKeyIndex],
+                    initialKey || currentKey,
                     ratchetCount + 1);
             }
 

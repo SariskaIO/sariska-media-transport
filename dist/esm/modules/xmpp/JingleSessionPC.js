@@ -1859,6 +1859,13 @@ export default class JingleSessionPC extends JingleSession {
                     });
                 }
                 return promise.then(() => {
+                    // Set the source name of the new track.
+                    if (FeatureFlags.isSourceNameSignalingEnabled()
+                        && oldTrack
+                        && newTrack
+                        && oldTrack.isVideoTrack()) {
+                        newTrack.setSourceName(oldTrack.getSourceName());
+                    }
                     if (newTrack === null || newTrack === void 0 ? void 0 : newTrack.isVideoTrack()) {
                         logger.debug(`${this} replaceTrack worker: configuring video stream`);
                         // Configure the video encodings after the track is replaced.
