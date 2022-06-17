@@ -85,9 +85,9 @@ module.exports = (minimize, analyzeBundle) => {
                 generateStatsFile: true
             }),
             !minimize
-            && new ProvidePlugin({
-                process: 'process/browser'
-            })
+                && new ProvidePlugin({
+                    process: require.resolve('process/browser')
+                })
         ].filter(Boolean)
     }
 };

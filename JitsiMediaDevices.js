@@ -262,7 +262,10 @@ class JitsiMediaDevices {
      * @returns {boolean}
      */
     isMultipleAudioInputSupported() {
-        return !(browser.isFirefox() || browser.isIosBrowser());
+        return !(
+            (browser.isFirefox() && browser.isVersionLessThan('101'))
+            || browser.isIosBrowser()
+        );
     }
 
     /**

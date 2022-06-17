@@ -1143,6 +1143,12 @@ JitsiConference.prototype.addTrack = function(track) {
         }
 
         if (FeatureFlags.isMultiStreamSupportEnabled() && mediaType === MediaType.VIDEO) {
+            const sourceName = getSourceNameForJitsiTrack(
+                this.myUserId(),
+                mediaType,
+                this.getLocalTracks(mediaType)?.length);
+
+            track.setSourceName(sourceName);
             const addTrackPromises = [];
 
             this.p2pJingleSession && addTrackPromises.push(this.p2pJingleSession.addTracks([ track ]));
@@ -1303,11 +1309,25 @@ JitsiConference.prototype.removeTrack = function(track) {
  */
 JitsiConference.prototype.replaceTrack = function(oldTrack, newTrack) {
     const oldVideoType = oldTrack?.getVideoType();
+    const mediaType = oldTrack?.getType() || newTrack?.getType();
     const newVideoType = newTrack?.getVideoType();
 
     if (FeatureFlags.isMultiStreamSupportEnabled() && oldTrack && newTrack && oldVideoType !== newVideoType) {
         throw new Error(`Replacing a track of videoType=${oldVideoType} with a track of videoType=${newVideoType} is`
             + ' not supported in this mode.');
+    }
+
+    if (FeatureFlags.isSourceNameSignalingEnabled() && newTrack) {
+        if (oldTrack) {
+            newTrack.setSourceName(oldTrack.getSourceName());
+        } else {
+            const sourceName = getSourceNameForJitsiTrack(
+                this.myUserId(),
+                mediaType,
+                this.getLocalTracks(mediaType)?.length);
+
+            newTrack.setSourceName(sourceName);
+        }
     }
     const oldTrackBelongsToConference = this === oldTrack?.conference;
 
@@ -1322,10 +1342,6 @@ JitsiConference.prototype.replaceTrack = function(oldTrack, newTrack) {
         logger.warn(`JitsiConference.replaceTrack oldTrack (${oldTrack} does not belong to this conference`);
     }
 
-    if (FeatureFlags.isMultiStreamSupportEnabled() && oldTrack && newTrack && oldTrack.isVideoTrack()) {
-        newTrack.setSourceName(oldTrack.getSourceName());
-    }
-
     // Now replace the stream at the lower levels
     return this._doReplaceTrack(oldTrackBelongsToConference ? oldTrack : null, newTrack)
         .then(() => {
@@ -1337,11 +1353,9 @@ JitsiConference.prototype.replaceTrack = function(oldTrack, newTrack) {
                 this._sendBridgeVideoTypeMessage(newTrack);
             }
 
-            // updates presence when we replace the video tracks desktop with screen and screen with desktop
-            if (oldTrackBelongsToConference && oldTrack?.isVideoTrack()
-
-                // we do not want to send presence update during setEffect switching, which does remove and then add
-                && !(oldTrack?._setEffectInProgress || newTrack?._setEffectInProgress)) {
+            // We do not want to send presence update during setEffect switching, which removes and then adds the same
+            // track back to the conference.
+            if (!(oldTrack?._setEffectInProgress || newTrack?._setEffectInProgress)) {
                 this._updateRoomPresence(this.getActiveMediaSession());
             }
 
@@ -2433,8 +2447,8 @@ JitsiConference.prototype._setBridgeChannel = function(offerIq, pc) {
  * @private
  */
 JitsiConference.prototype._rejectIncomingCall = function(jingleSession, options) {
-    if (options && options.errorMsg) {
-        GlobalOnErrorHandler.callErrorHandler(new Error(options.errorMsg));
+    if (options?.errorMsg) {
+        logger.warn(options.errorMsg);
     }
 
     // Terminate the jingle session with a reason
@@ -3707,9 +3721,9 @@ JitsiConference.prototype._updateRoomPresence = function(jingleSession, ctx) {
 
     let presenceChanged = false;
     let muteStatusChanged, videoTypeChanged;
-    const localTracks = this.getLocalTracks();
-    const localAudioTracks = jingleSession.peerconnection.getLocalTracks(MediaType.AUDIO);
-    const localVideoTracks = jingleSession.peerconnection.getLocalTracks(MediaType.VIDEO);
+    const localTracks = jingleSession.peerconnection.getLocalTracks();
+    const localAudioTracks = localTracks.filter(track => track.getType() === MediaType.AUDIO);
+    const localVideoTracks = localTracks.filter(track => track.getType() === MediaType.VIDEO);
 
     // Set presence for all the available local tracks.
     for (const track of localTracks) {
@@ -3717,7 +3731,7 @@ JitsiConference.prototype._updateRoomPresence = function(jingleSession, ctx) {
         if (track.getType() === MediaType.VIDEO) {
             videoTypeChanged = this._setNewVideoType(track);
         }
-        presenceChanged = muteStatusChanged || videoTypeChanged;
+        presenceChanged = presenceChanged || muteStatusChanged || videoTypeChanged;
     }
 
     // Set the presence in the legacy format if there are no local tracks and multi stream support is not enabled.
