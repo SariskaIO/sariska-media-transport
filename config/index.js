@@ -1,6 +1,10 @@
 // enable/disable different features by changing this configuration file
 export const initSDKConfig = {
     disableAudioLevels: false,
+    flags: {
+        sendMultipleVideoStreams: true,
+        sourceNameSignaling: true
+    }
     // useIPv6 - boolean property
     // disableSimulcast: true //boolean property. Enables/disables simulcast.
     // enableWindowOnErrorHandler - boolean property (default false). Enables/disables attaching global onerror handler (window.onerror).
