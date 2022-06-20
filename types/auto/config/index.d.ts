@@ -1,5 +1,9 @@
 export namespace initSDKConfig {
     const disableAudioLevels: boolean;
+    namespace flags {
+        const sendMultipleVideoStreams: boolean;
+        const sourceNameSignaling: boolean;
+    }
 }
 export namespace connectionConfig {
     namespace hosts {
