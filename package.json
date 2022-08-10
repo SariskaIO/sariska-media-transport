@@ -1,6 +1,6 @@
 {
   "name": "sariska-media-transport",
-  "version": "0.0.0",
+  "version": "1.0.6",
   "description": "JS library for accessing Jitsi server side deployments",
   "repository": {
     "type": "git",

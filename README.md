@@ -1,32 +1,11 @@
 # Sariska Media Transport API library
 
 **sariska-media-transport** is powerful JavaScript API's for developing Real time applications. You can integrate
-audio/video, live streaming ,transciptions, language translation, virtual background and many other services on the fly. The API supports all modern Browsers, React Native,
-Electron.js, NW.js and many more. This API documentation describes all possibe features supported by
-sariska-media-transport which possibliy covers any of your use cases.
-
+audio/video conferencing, live streaming ,cloud recording, transciptions, language translation, virtual background and many other services on the fly. The API supports all modern Browsers, React Native,Electron.js, NW.js and many more. This API documentation describes all possibe features supported by
+sariska-media-transport which possibliy covers any of your use cases. 
+this API also supports unreal/unity/3D plugin to capture or transports stream from different gaming engines.
 
 ## Installation
-
-To build library
-
-```shell
-
-make 
-
-```
-
-
-
-Manaully update SariskaMediaTransport.js Manaully updatethe dist folder
-
-
-```shell
-
-at the top of the file import "./dom/jquery";
-
-```
-
 
 To install library
 
@@ -36,15 +15,15 @@ npm i sariska-media-transport
 
 ```
 
-For complete explaination of all API's. Please checkout documentation [a link](https://www.sariska.io/docs/sariska-media-javascript)
+For complete explaination of all API's. Please checkout documentation [link](https://docs.sariska.io/media/development/javascript)
 
 
+[Checkout live demo here](https://meet.sariska.io/)
+
+[Checkout unreal/unity/3D demo here](https://docs.sariska.io/setup/unreal-engine)
 
 
-
-
-
-
+For any query reachout to us: admin@sariska.io
 
 
 
