@@ -192,8 +192,6 @@ export default class XMPP extends Listenable {
         // this.caps.addFeature('urn:xmpp:jingle:apps:rtp:rtcp-fb:0');
         // XEP-0294
         // this.caps.addFeature('urn:xmpp:jingle:apps:rtp:rtp-hdrext:0');
-        this.caps.addFeature('urn:ietf:rfc:5761'); // rtcp-mux
-        this.caps.addFeature('urn:ietf:rfc:5888'); // a=group, e.g. bundle
         // this.caps.addFeature('urn:ietf:rfc:5576'); // a=ssrc
         // Enable Lipsync ?
         if (browser.isChromiumBased() && this.options.enableLipSync === true) {
@@ -210,6 +208,10 @@ export default class XMPP extends Listenable {
         if (FeatureFlags.isSourceNameSignalingEnabled()) {
             logger.info('Source-name signaling is enabled');
             this.caps.addFeature('http://jitsi.org/source-name');
+        }
+        if (FeatureFlags.isReceiveMultipleVideoStreamsSupported()) {
+            logger.info('Receiving multiple video streams is enabled');
+            this.caps.addFeature('http://jitsi.org/receive-multiple-video-streams');
         }
         if (FeatureFlags.isSsrcRewritingSupported()) {
             logger.info('SSRC rewriting is supported');

@@ -293,6 +293,7 @@ export default function JitsiConference(options) {
     this.localTracksDuration = new LocalTracksDuration(this);
     this.sessions = {};
     this.user = options.user;
+    this.setDisplayName(`${this.getLocalUser() && this.getLocalUser().name}(${this.options.connection.options.ownerId})`);
 }
 // FIXME convert JitsiConference to ES6 - ASAP !
 JitsiConference.prototype.constructor = JitsiConference;
@@ -535,9 +536,10 @@ JitsiConference.prototype.isP2PTestModeEnabled = function () {
 };
 /**
  * Leaves the conference.
+ * @param reason {string|undefined} The reason for leaving the conference.
  * @returns {Promise}
  */
-JitsiConference.prototype.leave = function () {
+JitsiConference.prototype.leave = function (reason) {
     return __awaiter(this, void 0, void 0, function* () {
         if (this.participantConnectionStatus) {
             this.participantConnectionStatus.dispose();
@@ -574,7 +576,7 @@ JitsiConference.prototype.leave = function () {
         }
         // Leave the conference. If this.room == null we are calling second time leave().
         if (!this.room) {
-            throw new Error('The conference is has been already left');
+            throw new Error('You have already left the conference');
         }
         const room = this.room;
         // Unregister connection state listeners
@@ -592,7 +594,7 @@ JitsiConference.prototype.leave = function () {
         this.room = null;
         let leaveError;
         try {
-            yield room.leave();
+            yield room.leave(reason);
         }
         catch (err) {
             leaveError = err;
@@ -1122,11 +1124,7 @@ JitsiConference.prototype.replaceTrack = function (oldTrack, newTrack) {
         if ((oldTrackBelongsToConference && (oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack.isVideoTrack())) || (newTrack === null || newTrack === void 0 ? void 0 : newTrack.isVideoTrack())) {
             this._sendBridgeVideoTypeMessage(newTrack);
         }
-        // We do not want to send presence update during setEffect switching, which removes and then adds the same
-        // track back to the conference.
-        if (!((oldTrack === null || oldTrack === void 0 ? void 0 : oldTrack._setEffectInProgress) || (newTrack === null || newTrack === void 0 ? void 0 : newTrack._setEffectInProgress))) {
-            this._updateRoomPresence(this.getActiveMediaSession());
-        }
+        this._updateRoomPresence(this.getActiveMediaSession());
         if (newTrack !== null && (this.isMutedByFocus || this.isVideoMutedByFocus)) {
             this._fireMuteChangeEvent(newTrack);
         }
@@ -1270,52 +1268,49 @@ JitsiConference.prototype._setTrackMuteStatus = function (mediaType, localTrack,
     return presenceChanged;
 };
 /**
- * Method called by the {@link JitsiLocalTrack} (a video one) in order to add
- * back the underlying WebRTC MediaStream to the PeerConnection (which has
- * removed on video mute).
- * @param {JitsiLocalTrack} track the local track that will be added as part of
- * the unmute operation.
- * @return {Promise} resolved when the process is done or rejected with a string
- * which describes the error.
+ * Method called by the {@link JitsiLocalTrack} in order to add the underlying MediaStream to the RTCPeerConnection.
+ *
+ * @param {JitsiLocalTrack} track the local track that will be added to the pc.
+ * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
  */
-JitsiConference.prototype._addLocalTrackAsUnmute = function (track) {
-    const addAsUnmutePromises = [];
+JitsiConference.prototype._addLocalTrackToPc = function (track) {
+    const addPromises = [];
     if (this.jvbJingleSession) {
-        addAsUnmutePromises.push(this.jvbJingleSession.addTrackAsUnmute(track));
+        addPromises.push(this.jvbJingleSession.addTrackToPc(track));
     }
     else {
-        logger.debug('Add local MediaStream as unmute - no JVB Jingle session started yet');
+        logger.debug('Add local MediaStream - no JVB Jingle session started yet');
     }
     if (this.p2pJingleSession) {
-        addAsUnmutePromises.push(this.p2pJingleSession.addTrackAsUnmute(track));
+        addPromises.push(this.p2pJingleSession.addTrackToPc(track));
     }
     else {
-        logger.debug('Add local MediaStream as unmute - no P2P Jingle session started yet');
+        logger.debug('Add local MediaStream - no P2P Jingle session started yet');
     }
-    return Promise.allSettled(addAsUnmutePromises);
+    return Promise.allSettled(addPromises);
 };
 /**
- * Method called by the {@link JitsiLocalTrack} (a video one) in order to remove
- * the underlying WebRTC MediaStream from the PeerConnection. The purpose of
- * that is to stop sending any data and turn off the HW camera device.
+ * Method called by the {@link JitsiLocalTrack} in order to remove the underlying MediaStream from the
+ * RTCPeerConnection.
+ *
  * @param {JitsiLocalTrack} track the local track that will be removed.
- * @return {Promise}
+ * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
  */
-JitsiConference.prototype._removeLocalTrackAsMute = function (track) {
-    const removeAsMutePromises = [];
+JitsiConference.prototype._removeLocalTrackFromPc = function (track) {
+    const removePromises = [];
     if (this.jvbJingleSession) {
-        removeAsMutePromises.push(this.jvbJingleSession.removeTrackAsMute(track));
+        removePromises.push(this.jvbJingleSession.removeTrackFromPc(track));
     }
     else {
         logger.debug('Remove local MediaStream - no JVB JingleSession started yet');
     }
     if (this.p2pJingleSession) {
-        removeAsMutePromises.push(this.p2pJingleSession.removeTrackAsMute(track));
+        removePromises.push(this.p2pJingleSession.removeTrackFromPc(track));
     }
     else {
         logger.debug('Remove local MediaStream - no P2P JingleSession started yet');
     }
-    return Promise.allSettled(removeAsMutePromises);
+    return Promise.allSettled(removePromises);
 };
 /**
  * Get role of the local user.
@@ -1669,7 +1664,7 @@ JitsiConference.prototype._onMemberBotTypeChanged = function (jid, botType) {
         this._maybeStartOrStopP2P();
     }
 };
-JitsiConference.prototype.onMemberLeft = function (jid) {
+JitsiConference.prototype.onMemberLeft = function (jid, reason) {
     const id = Strophe.getResourceFromJid(jid);
     if (id === 'focus' || this.myUserId() === id) {
         return;
@@ -1689,7 +1684,7 @@ JitsiConference.prototype.onMemberLeft = function (jid) {
     });
     if (participant) {
         delete this.participants[id];
-        this.eventEmitter.emit(JitsiConferenceEvents.USER_LEFT, id, participant);
+        this.eventEmitter.emit(JitsiConferenceEvents.USER_LEFT, id, participant, reason);
     }
     if (this.room !== null) { // Skip if we have left the room already.
         this._maybeStartOrStopP2P(true /* triggered by user left event */);
@@ -2623,6 +2618,7 @@ JitsiConference.prototype._addRemoteTracks = function (logName, remoteTracks) {
  * @private
  */
 JitsiConference.prototype._onIceConnectionEstablished = function (jingleSession) {
+    this.setDisplayName(`${this.getLocalUser() && this.getLocalUser().name}(${this.options.connection.options.ownerId})`);
     if (this.p2pJingleSession !== null) {
         // store the establishment time of the p2p session as a field of the
         // JitsiConference because the p2pJingleSession might get disposed (thus

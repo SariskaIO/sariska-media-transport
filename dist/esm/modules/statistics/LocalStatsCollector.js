@@ -1,6 +1,16 @@
 /**
  * Provides statistics for the local stream.
  */
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const logger = require('@jitsi/logger').getLogger(__filename);
 /**
  * Size of the webaudio analyzer buffer.
  * @type {number}
@@ -12,19 +22,11 @@ const WEBAUDIO_ANALYZER_FFT_SIZE = 2048;
  */
 const WEBAUDIO_ANALYZER_SMOOTING_TIME = 0.8;
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
+/**
+ * The audio context.
+ * @type {AudioContext}
+ */
 let context = null;
-if (window.AudioContext) {
-    context = new AudioContext();
-    // XXX Not all browsers define a suspend method on AudioContext. As the
-    // invocation is at the (ES6 module) global execution level, it breaks the
-    // loading of the lib-jitsi-meet library in such browsers and, consequently,
-    // the loading of the very Web app that uses the lib-jitsi-meet library. For
-    // example, Google Chrome 40 on Android does not define the method but we
-    // still want to be able to load the lib-jitsi-meet library there and
-    // display a page which notifies the user that the Web app is not supported
-    // there.
-    context.suspend && context.suspend();
-}
 /**
  * Converts time domain data array to audio level.
  * @param samples the time domain data array.
@@ -74,6 +76,8 @@ export default function LocalStatsCollector(stream, interval, callback) {
     this.intervalMilis = interval;
     this.audioLevel = 0;
     this.callback = callback;
+    this.source = null;
+    this.analyser = null;
 }
 /**
  * Starts the collecting the statistics.
@@ -83,14 +87,14 @@ LocalStatsCollector.prototype.start = function () {
         return;
     }
     context.resume();
-    const analyser = context.createAnalyser();
-    analyser.smoothingTimeConstant = WEBAUDIO_ANALYZER_SMOOTING_TIME;
-    analyser.fftSize = WEBAUDIO_ANALYZER_FFT_SIZE;
-    const source = context.createMediaStreamSource(this.stream);
-    source.connect(analyser);
+    this.analyser = context.createAnalyser();
+    this.analyser.smoothingTimeConstant = WEBAUDIO_ANALYZER_SMOOTING_TIME;
+    this.analyser.fftSize = WEBAUDIO_ANALYZER_FFT_SIZE;
+    this.source = context.createMediaStreamSource(this.stream);
+    this.source.connect(this.analyser);
     this.intervalId = setInterval(() => {
-        const array = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteTimeDomainData(array);
+        const array = new Uint8Array(this.analyser.frequencyBinCount);
+        this.analyser.getByteTimeDomainData(array);
         const audioLevel = timeDomainDataToAudioLevel(array);
         // Set the audio levels always as NoAudioSignalDetection now
         // uses audio levels from LocalStatsCollector and waits for
@@ -104,10 +108,15 @@ LocalStatsCollector.prototype.start = function () {
  * Stops collecting the statistics.
  */
 LocalStatsCollector.prototype.stop = function () {
+    var _a, _b;
     if (this.intervalId) {
         clearInterval(this.intervalId);
         this.intervalId = null;
     }
+    (_a = this.analyser) === null || _a === void 0 ? void 0 : _a.disconnect();
+    this.analyser = null;
+    (_b = this.source) === null || _b === void 0 ? void 0 : _b.disconnect();
+    this.source = null;
 };
 /**
  * Checks if the environment has the necessary conditions to support
@@ -116,5 +125,32 @@ LocalStatsCollector.prototype.stop = function () {
  * @returns {boolean}
  */
 LocalStatsCollector.isLocalStatsSupported = function () {
-    return Boolean(context);
+    return Boolean(window.AudioContext);
 };
+/**
+ * Disconnects the audio context.
+ */
+LocalStatsCollector.disconnectAudioContext = function () {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (context) {
+            logger.info('Disconnecting audio context');
+            yield context.close();
+            context = null;
+        }
+    });
+};
+/**
+ * Connects the audio context.
+ */
+LocalStatsCollector.connectAudioContext = function () {
+    if (!LocalStatsCollector.isLocalStatsSupported()) {
+        return;
+    }
+    logger.info('Connecting audio context');
+    context = new AudioContext();
+    context.suspend();
+};
+/**
+ * Initialize the audio context on startup.
+ */
+LocalStatsCollector.connectAudioContext();

@@ -164,7 +164,7 @@ export default class JitsiParticipant {
      */
     isHiddenFromRecorder() {
         var _a, _b;
-        return Boolean((_b = (_a = this._identity) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b['hidden-from-recorder']);
+        return ((_b = (_a = this._identity) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b['hidden-from-recorder']) === 'true';
     }
     /**
      * @returns {Boolean} Whether this participant replaces another participant

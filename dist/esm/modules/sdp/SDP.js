@@ -44,7 +44,7 @@ SDP.prototype.removeUdpCandidates = false;
  * Adds a new m-line to the description so that a new local source can then be attached to the transceiver that gets
  * added after a reneogtiation cycle.
  *
- * @param {Mediatype} mediaType media type of the new source that is being added.
+ * @param {MediaType} mediaType media type of the new source that is being added.
  */
 SDP.prototype.addMlineForNewLocalSource = function (mediaType) {
     const mid = this.media.length;
@@ -189,9 +189,11 @@ SDP.prototype.toJingle = function (elem, thecreator) {
                 const ssrcMap = SDPUtil.parseSSRC(this.media[i]);
                 for (const [availableSsrc, ssrcParameters] of ssrcMap) {
                     const sourceName = SDPUtil.parseSourceNameLine(ssrcParameters);
+                    const videoType = SDPUtil.parseVideoTypeLine(ssrcParameters);
                     elem.c('source', {
                         ssrc: availableSsrc,
                         name: FeatureFlags.isSourceNameSignalingEnabled() ? sourceName : undefined,
+                        videoType,
                         xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0'
                     });
                     const msid = SDPUtil.parseMSIDAttribute(ssrcParameters);

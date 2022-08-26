@@ -184,6 +184,7 @@ export default class ProxyConnectionPC {
          * @type {Object}
          */
         const roomStub = {
+            addEventListener: () => { },
             addPresenceListener: () => { },
             connectionTimes: [],
             eventEmitter: { emit: emitter },
@@ -191,6 +192,7 @@ export default class ProxyConnectionPC {
                 // Errors occur if this function does not return an object
                 return {};
             },
+            removeEventListener: () => { },
             removePresenceListener: () => { },
             supportsRestartByTerminate: () => false
         };

@@ -38,7 +38,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
     constructor({ deviceId, facingMode, mediaType, resolution, rtcId, sourceId, sourceType, stream, track, videoType, effects = [] }) {
         super(
         /* conference */ null, stream, track, 
-        /* streamInactiveHandler */ () => this.emit(LOCAL_TRACK_STOPPED), mediaType, videoType);
+        /* streamInactiveHandler */ () => this.emit(LOCAL_TRACK_STOPPED, this), mediaType, videoType);
         this._setEffectInProgress = false;
         const effect = effects.find(e => e.isEnabled(this));
         if (effect) {
@@ -163,7 +163,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
         // TPC and JingleSessionPC which would contain the queue and would notify the signaling layer when local SSRCs
         // are changed. This would help to separate XMPP from the RTC module.
         return new Promise((resolve, reject) => {
-            this.conference._addLocalTrackAsUnmute(this)
+            this.conference._addLocalTrackToPc(this)
                 .then(resolve, error => reject(new Error(error)));
         });
     }
@@ -250,7 +250,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
             successCallback();
             return;
         }
-        this.conference._removeLocalTrackAsMute(this).then(successCallback, error => errorCallback(new Error(error)));
+        this.conference._removeLocalTrackFromPc(this).then(successCallback, error => errorCallback(new Error(error)));
     }
     /**
      * Sends mute status for a track to conference if any.
@@ -705,14 +705,13 @@ export default class JitsiLocalTrack extends JitsiTrack {
             return Promise.resolve();
         }
         this._setEffectInProgress = true;
-        // TODO: Create new JingleSessionPC method for replacing a stream in JitsiLocalTrack without offer answer.
-        return conference.removeTrack(this)
+        return conference._removeLocalTrackFromPc(this)
             .then(() => {
             this._switchStreamEffect(effect);
             if (this.isVideoTrack()) {
                 this.containers.forEach(cont => RTCUtils.attachMediaStream(cont, this.stream));
             }
-            return conference.addTrack(this);
+            return conference._addLocalTrackToPc(this);
         })
             .then(() => {
             this._setEffectInProgress = false;

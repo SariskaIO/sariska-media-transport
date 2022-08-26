@@ -421,6 +421,12 @@ JitsiConferenceEventManager.prototype.setupXMPPListeners = function () {
         }
         conference.startAudioMuted = audioMuted;
         conference.startVideoMuted = videoMuted;
+        if (audioMuted) {
+            conference.isMutedByFocus = true;
+        }
+        if (videoMuted) {
+            conference.isVideoMutedByFocus = true;
+        }
         // mute existing local tracks because this is initial mute from
         // Jicofo
         conference.getLocalTracks().forEach(track => {

@@ -108,12 +108,13 @@ const ScreenObtainer = {
      *
      * @param onSuccess - Success callback.
      * @param onFailure - Failure callback.
+     * @param {Object} options - Optional parameters.
      */
-    obtainScreenOnElectron(onSuccess, onFailure) {
+    obtainScreenOnElectron(onSuccess, onFailure, options = {}) {
         if (window.JitsiMeetScreenObtainer && window.JitsiMeetScreenObtainer.openDesktopPicker) {
             const { desktopSharingFrameRate, desktopSharingSources } = this.options;
             window.JitsiMeetScreenObtainer.openDesktopPicker({
-                desktopSharingSources: desktopSharingSources || ['screen', 'window']
+                desktopSharingSources: options.desktopSharingSources || desktopSharingSources || ['screen', 'window']
             }, (streamId, streamType, screenShareAudio = false) => {
                 var _a, _b;
                 if (streamId) {
@@ -194,7 +195,9 @@ const ScreenObtainer = {
         if (typeof desktopSharingFrameRate === 'object') {
             video.frameRate = desktopSharingFrameRate;
         }
-        if (setScreenSharingResolutionConstraints) {
+        // Capturing the screenshare at very high resolutions restricts the framerate. Therefore, skip this hack when
+        // the capture framerate is > 5 fps.
+        if (setScreenSharingResolutionConstraints && !((desktopSharingFrameRate === null || desktopSharingFrameRate === void 0 ? void 0 : desktopSharingFrameRate.max) > SS_DEFAULT_FRAME_RATE)) {
             // Set bogus resolution constraints to work around
             // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311
             video.height = 99999;

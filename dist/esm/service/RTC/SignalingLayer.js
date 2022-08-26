@@ -73,6 +73,7 @@ export default class SignalingLayer extends Listenable {
      * @param {string} owner the MUC jid of the participant for whom
      * {@link PeerMediaInfo} will be obtained.
      * @param {MediaType} mediaType the type of the media for which presence
+     * @param {SourceName} sourceName - The name of the source for which the info is to be obtained.
      * info will be obtained.
      * @return {PeerMediaInfo|null} presenceInfo an object with media presence
      * info or <tt>null</tt> either if there is no presence available for given
@@ -80,7 +81,7 @@ export default class SignalingLayer extends Listenable {
      *
      * @deprecated This method is to be replaced with getPeerSourceInfo.
      */
-    getPeerMediaInfo(owner, mediaType) {
+    getPeerMediaInfo(owner, mediaType, sourceName) {
         throw new Error('not implemented');
     }
     /**

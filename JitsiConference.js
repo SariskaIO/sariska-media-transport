@@ -351,6 +351,7 @@ export default function JitsiConference(options) {
     this.localTracksDuration = new LocalTracksDuration(this);
     this.sessions = {};
     this.user = options.user;
+    this.setDisplayName(`${this.getLocalUser() && this.getLocalUser().name}(${this.options.connection.options.ownerId})`);
 }
 
 // FIXME convert JitsiConference to ES6 - ASAP !
@@ -3173,6 +3174,7 @@ JitsiConference.prototype._addRemoteTracks = function(logName, remoteTracks) {
  * @private
  */
 JitsiConference.prototype._onIceConnectionEstablished = function(jingleSession) {
+    this.setDisplayName(`${this.getLocalUser() && this.getLocalUser().name}(${this.options.connection.options.ownerId})`);
     if (this.p2pJingleSession !== null) {
         // store the establishment time of the p2p session as a field of the
         // JitsiConference because the p2pJingleSession might get disposed (thus

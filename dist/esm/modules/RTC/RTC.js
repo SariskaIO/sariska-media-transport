@@ -588,20 +588,6 @@ export default class RTC extends Listenable {
         return RTCUtils.attachMediaStream(elSelector, stream);
     }
     /**
-     * Returns the id of the given stream.
-     * @param {MediaStream} stream
-     */
-    static getStreamID(stream) {
-        return RTCUtils.getStreamID(stream);
-    }
-    /**
-     * Returns the id of the given track.
-     * @param {MediaStreamTrack} track
-     */
-    static getTrackID(track) {
-        return RTCUtils.getTrackID(track);
-    }
-    /**
      * Returns true if retrieving the list of input devices is supported
      * and false if not.
      */
@@ -682,7 +668,7 @@ export default class RTC extends Listenable {
      * @returns {boolean}
      */
     static isUserStream(stream) {
-        return RTC.isUserStreamById(RTCUtils.getStreamID(stream));
+        return RTC.isUserStreamById(stream.id);
     }
     /**
      * Returns <tt>true<tt/> if a WebRTC MediaStream identified by given stream

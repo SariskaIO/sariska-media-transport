@@ -339,21 +339,11 @@ export default class JitsiTrack extends EventEmitter {
         return Promise.resolve();
     }
     /**
-     * Returns true if this is a video track and the source of the video is a
-     * screen capture as opposed to a camera.
-     */
-    isScreenSharing() {
-        // FIXME: Should be fixed or removed.
-    }
-    /**
      * Returns id of the track.
      * @returns {string|null} id of the track or null if this is fake track.
      */
     getId() {
-        if (this.stream) {
-            return RTCUtils.getStreamID(this.stream);
-        }
-        return null;
+        return this.getStreamId();
     }
     /**
      * Checks whether the MediaStream is active/not ended.

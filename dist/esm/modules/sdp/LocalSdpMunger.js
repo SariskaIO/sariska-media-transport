@@ -3,6 +3,7 @@ import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import { VideoType } from '../../service/RTC/VideoType';
+import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
 import { SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);
@@ -160,7 +161,7 @@ export default class LocalSdpMunger {
      * @private
      */
     _transformMediaIdentifiers(mediaSection) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         const mediaType = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.type;
         const pcId = this.tpc.id;
         for (const ssrcLine of mediaSection.ssrcs) {
@@ -208,11 +209,26 @@ export default class LocalSdpMunger {
         if (!this.tpc.usesUnifiedPlan()) {
             return;
         }
-        // Add the msid attribute if it is missing when the direction is sendrecv/sendonly. Firefox doesn't produce a
-        // a=ssrc line with msid attribute for p2p connection.
-        const msidLine = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.msid;
+        const mediaDirection = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.direction;
+        // On FF when the user has started muted create answer will generate a recv only SSRC. We don't want to signal
+        // this SSRC in order to reduce the load of the xmpp server for large calls. Therefore the SSRC needs to be
+        // removed from the SDP.
+        //
+        // For all other use cases (when the user has had media but then the user has stopped it) we want to keep the
+        // receive only SSRCs in the SDP. Otherwise source-remove will be triggered and the next time the user add a
+        // track we will reuse the SSRCs and send source-add with the same SSRCs. This is problematic because of issues
+        // on Chrome and FF (https://bugzilla.mozilla.org/show_bug.cgi?id=1768729) when removing and then adding the
+        // same SSRC in the remote sdp the remote track is not rendered.
+        if (browser.isFirefox()
+            && (mediaDirection === MediaDirection.RECVONLY || mediaDirection === MediaDirection.INACTIVE)
+            && ((mediaType === MediaType.VIDEO && !this.tpc._hasHadVideoTrack)
+                || (mediaType === MediaType.AUDIO && !this.tpc._hasHadAudioTrack))) {
+            mediaSection.ssrcs = undefined;
+            mediaSection.ssrcGroups = undefined;
+        }
+        const msidLine = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.msid;
         const trackId = msidLine && msidLine.split(' ')[1];
-        const sources = [...new Set((_d = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.ssrcs) === null || _d === void 0 ? void 0 : _d.map(s => s.id))];
+        const sources = [...new Set((_e = (_d = mediaSection.mLine) === null || _d === void 0 ? void 0 : _d.ssrcs) === null || _e === void 0 ? void 0 : _e.map(s => s.id))];
         for (const source of sources) {
             const msidExists = mediaSection.ssrcs
                 .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
@@ -304,7 +320,7 @@ export default class LocalSdpMunger {
      * @private
      */
     _injectSourceNames(mediaSection) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         if (!FeatureFlags.isSourceNameSignalingEnabled()) {
             return;
         }
@@ -321,13 +337,25 @@ export default class LocalSdpMunger {
                 const streamId = msid.split(' ')[0];
                 trackIndex = streamId.split('-')[2];
             }
+            const sourceName = getSourceNameForJitsiTrack(this.localEndpointId, mediaType, trackIndex);
             if (!nameExists) {
                 // Inject source names as a=ssrc:3124985624 name:endpointA-v0
                 mediaSection.ssrcs.push({
                     id: source,
                     attribute: 'name',
-                    value: getSourceNameForJitsiTrack(this.localEndpointId, mediaType, trackIndex)
+                    value: sourceName
                 });
+            }
+            if (mediaType === MediaType.VIDEO) {
+                const videoType = (_e = this.tpc.getLocalVideoTracks().find(track => track.getSourceName() === sourceName)) === null || _e === void 0 ? void 0 : _e.getVideoType();
+                if (videoType) {
+                    // Inject videoType as a=ssrc:1234 videoType:desktop.
+                    mediaSection.ssrcs.push({
+                        id: source,
+                        attribute: 'videoType',
+                        value: videoType
+                    });
+                }
             }
         }
     }

@@ -55,10 +55,10 @@ export class KeyHandler extends Listenable {
      */
     setEnabled(enabled) {
         return __awaiter(this, void 0, void 0, function* () {
+            this._enabling && (yield this._enabling);
             if (enabled === this.enabled) {
                 return;
             }
-            this._enabling && (yield this._enabling);
             this._enabling = new Deferred();
             this.enabled = enabled;
             if (!enabled) {
