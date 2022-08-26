@@ -1,6 +1,7 @@
 import { getLogger } from '@jitsi/logger';
 import EventEmitter from 'events';
 import clonedeep from 'lodash.clonedeep';
+import 'webrtc-adapter';
 
 import JitsiTrackError from '../../JitsiTrackError';
 import * as JitsiTrackErrors from '../../JitsiTrackErrors';
@@ -10,7 +11,6 @@ import Resolutions from '../../service/RTC/Resolutions';
 import { VideoType } from '../../service/RTC/VideoType';
 import { AVAILABLE_DEVICE } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';
-import SDPUtil from '../sdp/SDPUtil';
 import Statistics from '../statistics/statistics';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import Listenable from '../util/Listenable';
@@ -18,13 +18,6 @@ import Listenable from '../util/Listenable';
 import screenObtainer from './ScreenObtainer';
 
 const logger = getLogger(__filename);
-
-// Require adapter only for certain browsers. This is being done for
-// react-native, which has its own shims, and while browsers are being migrated
-// over to use adapter's shims.
-if (browser.usesAdapter()) {
-    require('webrtc-adapter');
-}
 
 const eventEmitter = new EventEmitter();
 
@@ -335,34 +328,13 @@ class RTCUtils extends Listenable {
         window.clearInterval(availableDevicesPollTimer);
         availableDevicesPollTimer = undefined;
 
-        if (browser.isReactNative()) {
-            this.RTCPeerConnectionType = RTCPeerConnection;
-
-            this.attachMediaStream = undefined; // Unused on React Native.
-
-            this.getStreamID = function({ id }) {
-                // The react-native-webrtc implementation that we use at the
-                // time of this writing returns a number for the id of
-                // MediaStream. Let's just say that a number contains no special
-                // characters.
-                return (
-                    typeof id === 'number'
-                        ? id
-                        : SDPUtil.filterSpecialChars(id));
-            };
-            this.getTrackID = ({ id }) => id;
-        } else {
-            this.RTCPeerConnectionType = RTCPeerConnection;
-
+        if (!browser.isReactNative()) {
             this.attachMediaStream
                 = wrapAttachMediaStream((element, stream) => {
                     if (element) {
                         element.srcObject = stream;
                     }
                 });
-
-            this.getStreamID = ({ id }) => id;
-            this.getTrackID = ({ id }) => id;
         }
 
         this.pcConstraints = {};
@@ -471,11 +443,12 @@ class RTCUtils extends Listenable {
      * logic compared to use screenObtainer versus normal device capture logic
      * in RTCUtils#_getUserMedia.
      *
+     * @param {Object} options - Optional parameters.
      * @returns {Promise} A promise which will be resolved with an object which
      * contains the acquired display stream. If desktop sharing is not supported
      * then a rejected promise will be returned.
      */
-    _getDesktopMedia() {
+    _getDesktopMedia(options) {
         if (!screenObtainer.isSupported()) {
             return Promise.reject(new Error('Desktop sharing is not supported!'));
         }
@@ -487,7 +460,8 @@ class RTCUtils extends Listenable {
                 },
                 error => {
                     reject(error);
-                });
+                },
+                options);
         });
     }
 
@@ -537,6 +511,8 @@ class RTCUtils extends Listenable {
      * @param {Object} options.desktopSharingFrameRate.max - Maximum fps
      * @param {String} options.desktopSharingSourceDevice - The device id or
      * label for a video input source that should be used for screensharing.
+     * @param {Array<string>} options.desktopSharingSources - The types of sources ("screen", "window", etc)
+     * from which the user can select what to share.
      * @returns {Promise} The promise, when successful, will return an array of
      * meta data for the requested device type, which includes the stream and
      * track. If an error occurs, it will be deferred to the caller for
@@ -570,7 +546,8 @@ class RTCUtils extends Listenable {
             }
 
             const {
-                desktopSharingSourceDevice
+                desktopSharingSourceDevice,
+                desktopSharingSources
             } = otherOptions;
 
             // Attempt to use a video input device as a screenshare source if
@@ -608,7 +585,7 @@ class RTCUtils extends Listenable {
                     });
             }
 
-            return this._getDesktopMedia();
+            return this._getDesktopMedia({ desktopSharingSources });
         }.bind(this);
 
         /**

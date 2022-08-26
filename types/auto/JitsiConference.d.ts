@@ -256,9 +256,10 @@ declare class JitsiConference {
     isP2PTestModeEnabled(): boolean;
     /**
      * Leaves the conference.
+     * @param reason {string|undefined} The reason for leaving the conference.
      * @returns {Promise}
      */
-    leave(): Promise<any>;
+    leave(reason: string | undefined): Promise<any>;
     /**
      * Returns the currently active media session if any.
      *
@@ -476,23 +477,20 @@ declare class JitsiConference {
     private _setNewVideoType;
     private _setTrackMuteStatus;
     /**
-     * Method called by the {@link JitsiLocalTrack} (a video one) in order to add
-     * back the underlying WebRTC MediaStream to the PeerConnection (which has
-     * removed on video mute).
-     * @param {JitsiLocalTrack} track the local track that will be added as part of
-     * the unmute operation.
-     * @return {Promise} resolved when the process is done or rejected with a string
-     * which describes the error.
+     * Method called by the {@link JitsiLocalTrack} in order to add the underlying MediaStream to the RTCPeerConnection.
+     *
+     * @param {JitsiLocalTrack} track the local track that will be added to the pc.
+     * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
      */
-    _addLocalTrackAsUnmute(track: any): Promise<any>;
+    _addLocalTrackToPc(track: any): Promise<any>;
     /**
-     * Method called by the {@link JitsiLocalTrack} (a video one) in order to remove
-     * the underlying WebRTC MediaStream from the PeerConnection. The purpose of
-     * that is to stop sending any data and turn off the HW camera device.
+     * Method called by the {@link JitsiLocalTrack} in order to remove the underlying MediaStream from the
+     * RTCPeerConnection.
+     *
      * @param {JitsiLocalTrack} track the local track that will be removed.
-     * @return {Promise}
+     * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
      */
-    _removeLocalTrackAsMute(track: any): Promise<any>;
+    _removeLocalTrackFromPc(track: any): Promise<any>;
     /**
      * Get role of the local user.
      * @returns {string} user role: 'moderator' or 'none'
@@ -634,7 +632,7 @@ declare class JitsiConference {
     private _onMucJoined;
     private _updateFeatures;
     private _onMemberBotTypeChanged;
-    onMemberLeft(jid: any): void;
+    onMemberLeft(jid: any, reason: any): void;
     /**
      * Designates an event indicating that we were kicked from the XMPP MUC.
      * @param {boolean} isSelfPresence - whether it is for local participant

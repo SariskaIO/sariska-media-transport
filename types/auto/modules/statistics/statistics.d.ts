@@ -247,8 +247,8 @@ declare namespace Statistics {
     export const analyticsEventEmitter: EventEmitter;
     export const instances: any;
     export const localStats: any[];
-    export function startLocalStats(stream: any, callback: any): void;
-    export function stopLocalStats(stream: any): void;
+    export function startLocalStats(track: any, callback: any): void;
+    export function stopLocalStats(track: any): void;
     /**
      * Obtains the list of *all* {@link CallStats} instances collected from every
      * valid {@link Statistics} instance.

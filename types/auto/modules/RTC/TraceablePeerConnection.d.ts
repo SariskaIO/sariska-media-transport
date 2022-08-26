@@ -230,6 +230,14 @@ export default class TraceablePeerConnection {
      */
     _usesTransceiverCodecPreferences: boolean;
     /**
+     * Indicates whether an audio track has ever been added to the peer connection.
+     */
+    _hasHadAudioTrack: boolean;
+    /**
+     * Indicates whether a video track has ever been added to the peer connection.
+     */
+    _hasHadVideoTrack: boolean;
+    /**
      * @type {number} The max number of stats to keep in this.stats. Limit to
      * 300 values, i.e. 5 minutes; set to 0 to disable
      */
@@ -323,9 +331,9 @@ export default class TraceablePeerConnection {
     /**
      * Retrieves the local video tracks.
      *
-     * @returns {JitsiLocalTrack|undefined} - local video tracks.
+     * @returns {Array<JitsiLocalTrack>} - local video tracks.
      */
-    getLocalVideoTracks(): any | undefined;
+    getLocalVideoTracks(): Array<any>;
     /**
      * Checks whether or not this {@link TraceablePeerConnection} instance contains any local tracks for given
      * <tt>mediaType</tt>.
@@ -496,14 +504,13 @@ export default class TraceablePeerConnection {
      */
     addTrack(track: any, isInitiator?: boolean): Promise<void>;
     /**
-     * Adds local track as part of the unmute operation.
-     * @param {JitsiLocalTrack} track the track to be added as part of the unmute operation.
+     * Adds local track to the RTCPeerConnection.
      *
-     * @return {Promise<boolean>} Promise that resolves to true if the underlying PeerConnection's
-     * state has changed and renegotiation is required, false if no renegotiation is needed or
-     * Promise is rejected when something goes wrong.
+     * @param {JitsiLocalTrack} track the track to be added to the pc.
+     * @return {Promise<boolean>} Promise that resolves to true if the underlying PeerConnection's state has changed and
+     * renegotiation is required, false if no renegotiation is needed or Promise is rejected when something goes wrong.
      */
-    addTrackUnmute(track: any): Promise<boolean>;
+    addTrackToPc(track: any): Promise<boolean>;
     private _addStream;
     /**
      * Removes WebRTC media stream from the underlying PeerConection
@@ -574,7 +581,7 @@ export default class TraceablePeerConnection {
      * Remove local track from this TPC.
      * @param {JitsiLocalTrack} localTrack the track to be removed from this TPC.
      *
-     * FIXME It should probably remove a boolean just like {@link removeTrackMute}
+     * FIXME It should probably remove a boolean just like {@link removeTrackFromPc}
      *       The same applies to addTrack.
      */
     removeTrack(localTrack: any): void;
@@ -615,14 +622,13 @@ export default class TraceablePeerConnection {
      */
     replaceTrack(oldTrack: any | null, newTrack: any | null): Promise<boolean>;
     /**
-     * Removes local track as part of the mute operation.
-     * @param {JitsiLocalTrack} localTrack the local track to be remove as part of
-     * the mute operation.
-     * @return {Promise<boolean>} Promise that resolves to true if the underlying PeerConnection's
-     * state has changed and renegotiation is required, false if no renegotiation is needed or
-     * Promise is rejected when something goes wrong.
+     * Removes local track from the RTCPeerConnection.
+     *
+     * @param {JitsiLocalTrack} localTrack the local track to be removed.
+     * @return {Promise<boolean>} Promise that resolves to true if the underlying PeerConnection's state has changed and
+     * renegotiation is required, false if no renegotiation is needed or Promise is rejected when something goes wrong.
      */
-    removeTrackMute(localTrack: any): Promise<boolean>;
+    removeTrackFromPc(localTrack: any): Promise<boolean>;
     createDataChannel(label: any, opts: any): RTCDataChannel;
     private _ensureSimulcastGroupIsLast;
     private _adjustLocalMediaDirection;
@@ -646,6 +652,14 @@ export default class TraceablePeerConnection {
      * Sets up the _dtlsTransport object and initializes callbacks for it.
      */
     _initializeDtlsTransport(): void;
+    /**
+     * Sets the max bitrates on the video m-lines when VP9 is the selected codec.
+     *
+     * @param {RTCSessionDescription} description - The local description that needs to be munged.
+     * @param {boolean} isLocalSdp - Whether the max bitrate (via b=AS line in SDP) is set on local SDP.
+     * @returns RTCSessionDescription
+     */
+    _setVp9MaxBitrates(description: RTCSessionDescription, isLocalSdp?: boolean): RTCSessionDescription;
     /**
      * Configures the stream encodings depending on the video type and the bitrates configured.
      *
