@@ -128,7 +128,9 @@ const ScreenObtainer = {
     obtainScreenOnElectron(onSuccess, onFailure) {
         if (window.JitsiMeetScreenObtainer && window.JitsiMeetScreenObtainer.openDesktopPicker) {
             const { desktopSharingFrameRate, desktopSharingSources } = this.options;
-
+            console.log("inside obtainScreenOnElectron")
+            logger.info('inside obtainScreenOnElectron');
+            
             window.JitsiMeetScreenObtainer.openDesktopPicker(
                 {
                     desktopSharingSources: desktopSharingSources || [ 'screen', 'window' ]
@@ -207,6 +209,9 @@ const ScreenObtainer = {
     obtainScreenFromGetDisplayMedia(callback, errorCallback) {
         let getDisplayMedia;
 
+        console.log("inside obtainScreenOnElectron")
+        logger.info('inside obtainScreenOnElectron');
+        
         if (navigator.getDisplayMedia) {
             getDisplayMedia = navigator.getDisplayMedia.bind(navigator);
         } else {
