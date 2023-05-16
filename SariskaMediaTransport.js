@@ -306,6 +306,8 @@ export default _mergeNamespaceAndModule({
         if (window.location.href.indexOf("iAmRecorder") >= 0) {
             return [];
          }
+        
+        console.log("Here inside createLocalTracks");
 
         let promiseFulfilled = false;
 
@@ -390,6 +392,10 @@ export default _mergeNamespaceAndModule({
                     // User cancelled action is not really an error, so only
                     // log it as an event to avoid having conference classified
                     // as partially failed
+                    
+                    console.log("SCREENSHARING_USER_CANCELED")
+                    
+                    
                     const logObject = {
                         id: 'screensharing_user_canceled',
                         message: error.message
