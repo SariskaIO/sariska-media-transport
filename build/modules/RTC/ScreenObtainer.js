@@ -252,6 +252,7 @@ const ScreenObtainer = {
    */
   obtainScreenFromGetDisplayMediaRN(callback, errorCallback) {
     logger.info('Using getDisplayMedia for screen sharing');
+      console.log("HEre in herere");
     navigator.mediaDevices.getDisplayMedia({
       video: true
     }).then(stream => {
