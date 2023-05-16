@@ -219,7 +219,7 @@ const ScreenObtainer = {
       audio,
       cursor: 'always'
     };
-    logger.info('Using getDisplayMedia for screen sharing', constraints);
+    logger.info('Using getDisplayMedia for screen sharing 1', constraints);
     getDisplayMedia(constraints).then(stream => {
       callback({
         stream,
@@ -251,7 +251,7 @@ const ScreenObtainer = {
    * @param errorCallback - The error callback.
    */
   obtainScreenFromGetDisplayMediaRN(callback, errorCallback) {
-    logger.info('Using getDisplayMedia for screen sharing');
+    logger.info('Using getDisplayMedia for screen sharing 2');
       console.log("HEre in herere");
     navigator.mediaDevices.getDisplayMedia({
       video: true

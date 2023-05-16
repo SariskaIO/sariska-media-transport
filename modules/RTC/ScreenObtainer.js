@@ -249,7 +249,7 @@ const ScreenObtainer = {
             cursor: 'always'
         };
 
-        logger.info('Using getDisplayMedia for screen sharing', constraints);
+        logger.info('Using getDisplayMedia for screen sharing 11', constraints);
 
         getDisplayMedia(constraints)
             .then(stream => {
@@ -286,10 +286,10 @@ const ScreenObtainer = {
      * @param errorCallback - The error callback.
      */
     obtainScreenFromGetDisplayMediaRN(callback, errorCallback) {
-        logger.info('Using getDisplayMedia for screen sharing');
+        logger.info('Using getDisplayMedia for screen sharing 12');
         console.log("Inside obtainScreenFromGetDisplayMediaRN");
-        logger.info('Using getDisplayMedia for screen sharing');
-        logger.info('Using getDisplayMedia for screen sharing');
+        logger.info('Using getDisplayMedia for screen sharing 13');
+        logger.info('Using getDisplayMedia for screen sharing 14');
         navigator.mediaDevices.getDisplayMedia({ video: true })
             .then(stream => {
                 callback({
