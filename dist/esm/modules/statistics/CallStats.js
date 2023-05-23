@@ -328,16 +328,6 @@ export default class CallStats {
             }
             // userID is generated or given by the origin server
             CallStats.backend.initialize(CallStats.callStatsID, CallStats.callStatsSecret, CallStats.userID, CallStats._initCallback, undefined, configParams);
-            const getWiFiStatsMethod = options.getWiFiStatsMethod;
-            if (getWiFiStatsMethod) {
-                CallStats.backend.attachWifiStatsHandler(getWiFiStatsMethod);
-                getWiFiStatsMethod().then(result => {
-                    if (result) {
-                        logger.info('Reported wifi addresses:', JSON.parse(result).addresses);
-                    }
-                })
-                    .catch(() => { }); // eslint-disable-line no-empty-function
-            }
             return true;
         }
         catch (e) {

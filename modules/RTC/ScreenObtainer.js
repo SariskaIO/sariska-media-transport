@@ -124,14 +124,16 @@ const ScreenObtainer = {
      *
      * @param onSuccess - Success callback.
      * @param onFailure - Failure callback.
+     * @param {Object} options - Optional parameters.
      */
-    obtainScreenOnElectron(onSuccess, onFailure) {
+    obtainScreenOnElectron(onSuccess, onFailure, options = {}) {
         if (window.JitsiMeetScreenObtainer && window.JitsiMeetScreenObtainer.openDesktopPicker) {
-            const { desktopSharingFrameRate, desktopSharingSources } = this.options;
+            const { desktopSharingFrameRate, desktopSharingResolution, desktopSharingSources } = this.options;
 
             window.JitsiMeetScreenObtainer.openDesktopPicker(
                 {
-                    desktopSharingSources: desktopSharingSources || [ 'screen', 'window' ]
+                    desktopSharingSources:
+                        options.desktopSharingSources || desktopSharingSources || [ 'screen', 'window' ]
                 },
                 (streamId, streamType, screenShareAudio = false) => {
                     if (streamId) {
@@ -168,8 +170,10 @@ const ScreenObtainer = {
                                     chromeMediaSourceId: streamId,
                                     minFrameRate: desktopSharingFrameRate?.min ?? SS_DEFAULT_FRAME_RATE,
                                     maxFrameRate: desktopSharingFrameRate?.max ?? SS_DEFAULT_FRAME_RATE,
-                                    maxWidth: window.screen.width,
-                                    maxHeight: window.screen.height
+                                    minWidth: desktopSharingResolution?.width?.min,
+                                    minHeight: desktopSharingResolution?.height?.min,
+                                    maxWidth: desktopSharingResolution?.width?.max ?? window.screen.width,
+                                    maxHeight: desktopSharingResolution?.height?.max ?? window.screen.height
                                 }
                             }
                         };
@@ -214,25 +218,30 @@ const ScreenObtainer = {
             getDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
         }
 
-        const { desktopSharingFrameRate } = this.options;
-        const setScreenSharingResolutionConstraints = browser.isChromiumBased()
-            && this.options?.testing?.setScreenSharingResolutionConstraints;
+        const audio = this._getAudioConstraints();
         let video = {};
+        const { desktopSharingFrameRate } = this.options;
 
         if (typeof desktopSharingFrameRate === 'object') {
             video.frameRate = desktopSharingFrameRate;
         }
-        if (setScreenSharingResolutionConstraints) {
-            // Set bogus resolution constraints to work around
-            // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311
-            video.height = 99999;
-            video.width = 99999;
-        }
 
-        const audio = this._getAudioConstraints();
-
-        // At the time of this writing 'min' constraint for fps is not supported by getDisplayMedia.
+        // At the time of this writing 'min' constraint for fps is not supported by getDisplayMedia on any of the
+        // browsers. getDisplayMedia will fail with an error "invalid constraints" in this case.
         video.frameRate && delete video.frameRate.min;
+
+        if (browser.isChromiumBased()) {
+            // Allow users to seamlessly switch which tab they are sharing without having to select the tab again.
+            browser.isVersionGreaterThan(106) && (video.surfaceSwitching = 'include');
+
+            // Set bogus resolution constraints to work around
+            // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311 for low fps screenshare. Capturing SS at
+            // very high resolutions restricts the framerate. Therefore, skip this hack when capture fps > 5 fps.
+            if (!(desktopSharingFrameRate?.max > SS_DEFAULT_FRAME_RATE)) {
+                video.height = 99999;
+                video.width = 99999;
+            }
+        }
 
         if (Object.keys(video).length === 0) {
             video = true;

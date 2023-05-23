@@ -3,7 +3,7 @@ declare function _exports(minimize: any, analyzeBundle: any): {
     resolve: {
         extensions: string[];
         alias: {
-            $: string;
+            jquery: string;
         };
     };
     mode: string;

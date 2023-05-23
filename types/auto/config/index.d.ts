@@ -3,6 +3,7 @@ export namespace initSDKConfig {
     namespace flags {
         const sendMultipleVideoStreams: boolean;
         const sourceNameSignaling: boolean;
+        const enableJoinAsVisitor: boolean;
     }
 }
 export namespace connectionConfig {

@@ -165,9 +165,6 @@ export class Context {
                 const decodedFrame = yield this._decryptFrame(encodedFrame, keyIndex);
                 return controller.enqueue(decodedFrame);
             }
-            // TODO: this just passes through to the decoder. Is that ok? If we don't know the key yet
-            // we might want to buffer a bit but it is still unclear how to do that (and for how long etc).
-            controller.enqueue(encodedFrame);
         });
     }
     /**
@@ -209,10 +206,11 @@ export class Context {
                 newUint8.set(new Uint8Array(encodedFrame.data, 0, frameHeader.byteLength));
                 newUint8.set(new Uint8Array(plainText), frameHeader.byteLength);
                 encodedFrame.data = newData;
+                return encodedFrame;
             }
             catch (error) {
                 if (this._sharedKey) {
-                    return encodedFrame;
+                    return;
                 }
                 if (ratchetCount < RATCHET_WINDOW_SIZE) {
                     const currentKey = this._cryptoKeyRing[this._currentKeyIndex];
@@ -230,7 +228,6 @@ export class Context {
                 this._setKeys(initialKey);
                 // TODO: notify the application about error status.
             }
-            return encodedFrame;
         });
     }
     /**

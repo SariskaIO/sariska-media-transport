@@ -23,9 +23,9 @@ export class AudioMixerEffect {
     startEffect(audioStream: MediaStream): MediaStream;
     _originalStream: MediaStream;
     _originalTrack: MediaStreamTrack;
-    _audioMixer: any;
-    _mixedMediaStream: any;
-    _mixedMediaTrack: any;
+    _audioMixer: import("../../webaudio/AudioMixer").default;
+    _mixedMediaStream: MediaStream;
+    _mixedMediaTrack: MediaStreamTrack;
     /**
      * Reset the AudioMixer stopping it in the process.
      *

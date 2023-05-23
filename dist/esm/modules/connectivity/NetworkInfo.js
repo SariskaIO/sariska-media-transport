@@ -21,7 +21,10 @@ export class NetworkInfo extends Listenable {
     }
     /**
      * Updates the network info state.
-     * @param {boolean} isOnline - {@code true} if internet is online or {@code false} otherwise.
+     *
+     * @param {object} state - The network info state.
+     * @param {boolean} state.isOnline - {@code true} if the internet connectivity is online or {@code false}
+     * otherwise.
      */
     updateNetworkInfo({ isOnline }) {
         logger.debug('updateNetworkInfo', { isOnline });

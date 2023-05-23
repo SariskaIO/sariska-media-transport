@@ -1,6 +1,6 @@
 import { getLogger } from '@jitsi/logger';
 import { MediaType } from '../../service/RTC/MediaType';
-import { parsePrimarySSRC, parseSecondarySSRC, SdpTransformWrap } from './SdpTransformUtil';
+import { SdpTransformWrap, parsePrimarySSRC, parseSecondarySSRC } from './SdpTransformUtil';
 const logger = getLogger(__filename);
 /**
  * Handles the work of keeping video ssrcs consistent across multiple

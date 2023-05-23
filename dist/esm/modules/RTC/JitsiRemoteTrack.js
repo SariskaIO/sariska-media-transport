@@ -1,7 +1,6 @@
 import * as JitsiTrackEvents from '../../JitsiTrackEvents';
 import { createTtfmEvent } from '../../service/statistics/AnalyticsEvents';
 import TrackStreamingStatusImpl, { TrackStreamingStatus } from '../connectivity/TrackStreamingStatus';
-import FeatureFlags from '../flags/FeatureFlags';
 import Statistics from '../statistics/statistics';
 import JitsiTrack from './JitsiTrack';
 const logger = require('@jitsi/logger').getLogger(__filename);
@@ -62,7 +61,7 @@ export default class JitsiRemoteTrack extends JitsiTrack {
         this._enteredForwardedSourcesTimestamp = null;
         this.addEventListener = this.on = this._addEventListener.bind(this);
         this.removeEventListener = this.off = this._removeEventListener.bind(this);
-        logger.debug(`New remote track added: ${this}`);
+        logger.debug(`New remote track created: ${this}`);
         // we want to mark whether the track has been ever muted
         // to detect ttfm events for startmuted conferences, as it can
         // significantly increase ttfm values
@@ -98,8 +97,7 @@ export default class JitsiRemoteTrack extends JitsiTrack {
      */
     _addEventListener(event, handler) {
         super.addListener(event, handler);
-        if (FeatureFlags.isSourceNameSignalingEnabled()
-            && event === JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED
+        if (event === JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED
             && this.listenerCount(JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED)
             && !this._trackStreamingStatusImpl) {
             this._initTrackStreamingStatus();
@@ -114,8 +112,7 @@ export default class JitsiRemoteTrack extends JitsiTrack {
      */
     _removeEventListener(event, handler) {
         super.removeListener(event, handler);
-        if (FeatureFlags.isSourceNameSignalingEnabled()
-            && event === JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED
+        if (event === JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED
             && !this.listenerCount(JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED)) {
             this._disposeTrackStreamingStatus();
             logger.debug(`Disposing track streaming status: ${this._sourceName}`);
@@ -149,9 +146,7 @@ export default class JitsiRemoteTrack extends JitsiTrack {
      * @returns {Promise}
      */
     dispose() {
-        if (FeatureFlags.isSourceNameSignalingEnabled()) {
-            this._disposeTrackStreamingStatus();
-        }
+        this._disposeTrackStreamingStatus();
         return super.dispose();
     }
     /**
@@ -211,6 +206,23 @@ export default class JitsiRemoteTrack extends JitsiTrack {
      */
     getSourceName() {
         return this._sourceName;
+    }
+    /**
+     * Update the properties when the track is remapped to another source.
+     *
+     * @param {string} owner The endpoint ID of the new owner.
+     */
+    setOwner(owner) {
+        this.ownerEndpointId = owner;
+        this.emit(JitsiTrackEvents.TRACK_OWNER_CHANGED, owner);
+    }
+    /**
+     * Sets the name of the source associated with the remtoe track.
+     *
+     * @param {string} name - The source name to be associated with the track.
+     */
+    setSourceName(name) {
+        this._sourceName = name;
     }
     /**
      * Changes the video type of the track.
@@ -328,6 +340,13 @@ export default class JitsiRemoteTrack extends JitsiTrack {
             outOfForwardedSourcesTimeout: config._peerConnStatusOutOfLastNTimeout
         });
         this._trackStreamingStatusImpl.init();
+        // In some edge cases, both browser 'unmute' and bridge's forwarded sources events are received before a
+        // LargeVideoUpdate is scheduled for auto-pinning a new screenshare track. If there are no layout changes and
+        // no further track events are received for the SS track, a black tile will be displayed for screenshare on
+        // stage. Fire a TRACK_STREAMING_STATUS_CHANGED event if the media is already being received for the remote
+        // track to prevent this from happening.
+        !this._trackStreamingStatusImpl.isVideoTrackFrozen()
+            && this.rtc.eventEmitter.emit(JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED, this, this._trackStreamingStatus);
     }
     /**
      * Disposes trackStreamingStatusImpl and clears trackStreamingStatus.
@@ -385,6 +404,6 @@ export default class JitsiRemoteTrack extends JitsiTrack {
      * @return {string}
      */
     toString() {
-        return `RemoteTrack[userID: ${this.getParticipantId()}, type: ${this.getType()}, ssrc: ${this.getSSRC()}, p2p: ${this.isP2P}, sourceName: ${this._sourceName}, status: ${this._getStatus()}]`;
+        return `RemoteTrack[userID: ${this.getParticipantId()}, type: ${this.getType()}, ssrc: ${this.getSSRC()}, p2p: ${this.isP2P}, sourceName: ${this._sourceName}, status: {${this._getStatus()}}]`;
     }
 }

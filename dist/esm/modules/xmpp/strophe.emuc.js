@@ -1,5 +1,5 @@
-/* global $ */
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { Strophe } from 'strophe.js';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import ChatRoom from './ChatRoom';
@@ -31,6 +31,7 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
         this.connection.addHandler(this.onMessage.bind(this), null, 'message', null, null);
         this.connection.addHandler(this.onMute.bind(this), 'http://jitsi.org/jitmeet/audio', 'iq', 'set', null, null);
         this.connection.addHandler(this.onMuteVideo.bind(this), 'http://jitsi.org/jitmeet/video', 'iq', 'set', null, null);
+        this.connection.addHandler(this.onVisitors.bind(this), 'jitsi:visitors', 'iq', 'set', null, null);
     }
     /**
      *
@@ -154,6 +155,17 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
             return true;
         }
         room.onMuteVideo(iq);
+        return true;
+    }
+    /**
+     * A visitor IQ is received, pass it to the room.
+     * @param iq The received iq.
+     * @returns {boolean}
+     */
+    onVisitors(iq) {
+        const from = iq.getAttribute('from');
+        const room = this.rooms[Strophe.getBareJidFromJid(from)];
+        room === null || room === void 0 ? void 0 : room.onVisitorIQ(iq);
         return true;
     }
 }

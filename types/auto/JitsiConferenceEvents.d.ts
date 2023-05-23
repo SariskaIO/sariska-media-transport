@@ -69,6 +69,11 @@ export declare enum JitsiConferenceEvents {
      */
     DATA_CHANNEL_OPENED = "conference.dataChannelOpened",
     /**
+     * A connection to the video bridge's data channel has been closed.
+     * This event is only emitted in
+     */
+    DATA_CHANNEL_CLOSED = "conference.dataChannelClosed",
+    /**
      * A user has changed it display name
      */
     DISPLAY_NAME_CHANGED = "conference.displayNameChanged",
@@ -188,21 +193,6 @@ export declare enum JitsiConferenceEvents {
      */
     PRIVATE_MESSAGE_RECEIVED = "conference.privateMessageReceived",
     /**
-     * Event fired when JVB sends notification about interrupted/restored user's
-     * ICE connection status or we detect local problem with the video track.
-     * First argument is the ID of the participant and
-     * the seconds is a string indicating if the connection is currently
-     * - active - the connection is active
-     * - inactive - the connection is inactive, was intentionally interrupted by
-     * the bridge
-     * - interrupted - a network problem occurred
-     * - restoring - the connection was inactive and is restoring now
-     *
-     * The current status value can be obtained by calling
-     * JitsiParticipant.getConnectionStatus().
-     */
-    PARTICIPANT_CONN_STATUS_CHANGED = "conference.participant_conn_status_changed",
-    /**
      * Indicates that the features of the participant has been changed.
      * TODO: there is a spelling mistake in this event name and associated constants
      */
@@ -212,6 +202,10 @@ export declare enum JitsiConferenceEvents {
      * has changed.
      */
     PARTICIPANT_PROPERTY_CHANGED = "conference.participant_property_changed",
+    /**
+     * Indicates the state of sources attached to a given remote participant has changed.
+     */
+    PARTICIPANT_SOURCE_UPDATED = "conference.participant_source_updated",
     /**
      * Indicates that the conference has switched between JVB and P2P connections.
      * The first argument of this event is a <tt>boolean</tt> which when set to
@@ -381,10 +375,6 @@ export declare enum JitsiConferenceEvents {
      */
     AV_MODERATION_PARTICIPANT_REJECTED = "conference.av_moderation.participant.rejected",
     /**
-     * A new face landmark object is added for a participant
-     */
-    FACE_LANDMARK_ADDED = "conference.face_landmark.added",
-    /**
      * Event fired when a participant is requested to join a given (breakout) room.
      */
     BREAKOUT_ROOMS_MOVE_TO_ROOM = "conference.breakout-rooms.move-to-room",
@@ -394,7 +384,14 @@ export declare enum JitsiConferenceEvents {
     BREAKOUT_ROOMS_UPDATED = "conference.breakout-rooms.updated",
     SUBTITLES_RECEIVED = "conference.subtitles.received",
     ANALYTICS_EVENT_RECEIVED = "analytics.event.received",
-    TRACK_UPDATED = "conference.track.updated"
+    TRACK_UPDATED = "conference.track.updated",
+    /**
+     * Event fired when the conference metadata is updated.
+     */
+    METADATA_UPDATED = "conference.metadata.updated",
+    E2EE_VERIFICATION_AVAILABLE = "conference.e2ee.verification.available",
+    E2EE_VERIFICATION_READY = "conference.e2ee.verification.ready",
+    E2EE_VERIFICATION_COMPLETED = "conference.e2ee.verification.completed"
 }
 export declare const AUDIO_INPUT_STATE_CHANGE = JitsiConferenceEvents.AUDIO_INPUT_STATE_CHANGE;
 export declare const AUDIO_UNMUTE_PERMISSIONS_CHANGED = JitsiConferenceEvents.AUDIO_UNMUTE_PERMISSIONS_CHANGED;
@@ -410,15 +407,20 @@ export declare const CONNECTION_ESTABLISHED = JitsiConferenceEvents.CONNECTION_E
 export declare const CONNECTION_INTERRUPTED = JitsiConferenceEvents.CONNECTION_INTERRUPTED;
 export declare const CONNECTION_RESTORED = JitsiConferenceEvents.CONNECTION_RESTORED;
 export declare const DATA_CHANNEL_OPENED = JitsiConferenceEvents.DATA_CHANNEL_OPENED;
+export declare const DATA_CHANNEL_CLOSED = JitsiConferenceEvents.DATA_CHANNEL_CLOSED;
 export declare const DISPLAY_NAME_CHANGED = JitsiConferenceEvents.DISPLAY_NAME_CHANGED;
 export declare const DOMINANT_SPEAKER_CHANGED = JitsiConferenceEvents.DOMINANT_SPEAKER_CHANGED;
 export declare const CONFERENCE_CREATED_TIMESTAMP = JitsiConferenceEvents.CONFERENCE_CREATED_TIMESTAMP;
 export declare const DTMF_SUPPORT_CHANGED = JitsiConferenceEvents.DTMF_SUPPORT_CHANGED;
 export declare const ENDPOINT_MESSAGE_RECEIVED = JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED;
 export declare const ENDPOINT_STATS_RECEIVED = JitsiConferenceEvents.ENDPOINT_STATS_RECEIVED;
+export declare const E2EE_VERIFICATION_AVAILABLE = JitsiConferenceEvents.E2EE_VERIFICATION_AVAILABLE;
+export declare const E2EE_VERIFICATION_READY = JitsiConferenceEvents.E2EE_VERIFICATION_READY;
+export declare const E2EE_VERIFICATION_COMPLETED = JitsiConferenceEvents.E2EE_VERIFICATION_COMPLETED;
 export declare const JVB121_STATUS = JitsiConferenceEvents.JVB121_STATUS;
 export declare const KICKED = JitsiConferenceEvents.KICKED;
 export declare const PARTICIPANT_KICKED = JitsiConferenceEvents.PARTICIPANT_KICKED;
+export declare const PARTICIPANT_SOURCE_UPDATED = JitsiConferenceEvents.PARTICIPANT_SOURCE_UPDATED;
 export declare const LAST_N_ENDPOINTS_CHANGED = JitsiConferenceEvents.LAST_N_ENDPOINTS_CHANGED;
 export declare const FORWARDED_SOURCES_CHANGED = JitsiConferenceEvents.FORWARDED_SOURCES_CHANGED;
 export declare const LOCK_STATE_CHANGED = JitsiConferenceEvents.LOCK_STATE_CHANGED;
@@ -431,7 +433,6 @@ export declare const NO_AUDIO_INPUT = JitsiConferenceEvents.NO_AUDIO_INPUT;
 export declare const NOISY_MIC = JitsiConferenceEvents.NOISY_MIC;
 export declare const NON_PARTICIPANT_MESSAGE_RECEIVED = JitsiConferenceEvents.NON_PARTICIPANT_MESSAGE_RECEIVED;
 export declare const PRIVATE_MESSAGE_RECEIVED = JitsiConferenceEvents.PRIVATE_MESSAGE_RECEIVED;
-export declare const PARTICIPANT_CONN_STATUS_CHANGED = JitsiConferenceEvents.PARTICIPANT_CONN_STATUS_CHANGED;
 export declare const PARTCIPANT_FEATURES_CHANGED = JitsiConferenceEvents.PARTCIPANT_FEATURES_CHANGED;
 export declare const PARTICIPANT_PROPERTY_CHANGED = JitsiConferenceEvents.PARTICIPANT_PROPERTY_CHANGED;
 export declare const P2P_STATUS = JitsiConferenceEvents.P2P_STATUS;
@@ -465,9 +466,9 @@ export declare const AV_MODERATION_REJECTED = JitsiConferenceEvents.AV_MODERATIO
 export declare const AV_MODERATION_CHANGED = JitsiConferenceEvents.AV_MODERATION_CHANGED;
 export declare const AV_MODERATION_PARTICIPANT_APPROVED = JitsiConferenceEvents.AV_MODERATION_PARTICIPANT_APPROVED;
 export declare const AV_MODERATION_PARTICIPANT_REJECTED = JitsiConferenceEvents.AV_MODERATION_PARTICIPANT_REJECTED;
-export declare const FACE_LANDMARK_ADDED = JitsiConferenceEvents.FACE_LANDMARK_ADDED;
 export declare const BREAKOUT_ROOMS_MOVE_TO_ROOM = JitsiConferenceEvents.BREAKOUT_ROOMS_MOVE_TO_ROOM;
 export declare const BREAKOUT_ROOMS_UPDATED = JitsiConferenceEvents.BREAKOUT_ROOMS_UPDATED;
 export declare const SUBTITLES_RECEIVED = JitsiConferenceEvents.SUBTITLES_RECEIVED;
 export declare const ANALYTICS_EVENT_RECEIVED = JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED;
 export declare const TRACK_UPDATED = JitsiConferenceEvents.TRACK_UPDATED;
+export declare const METADATA_UPDATED = JitsiConferenceEvents.METADATA_UPDATED;

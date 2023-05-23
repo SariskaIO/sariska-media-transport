@@ -2,9 +2,9 @@
   "compilerOptions": {
     "target": "es6",
     "module": "es6",
+    "sourceMap": false,
     "declaration": true,
     "declarationDir": "types/auto/",
-    "sourceMap": false,
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

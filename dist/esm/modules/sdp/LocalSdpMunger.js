@@ -3,6 +3,7 @@ import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import { VideoType } from '../../service/RTC/VideoType';
+import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
 import { SdpTransformWrap } from './SdpTransformUtil';
 const logger = getLogger(__filename);
@@ -136,23 +137,18 @@ export default class LocalSdpMunger {
      * @param {string} streamId - Id of the MediaStream associated with the source.
      * @returns {string|null}
      */
-    _generateMsidAttribute(mediaType, trackId, streamId = null) {
+    _generateMsidAttribute(mediaType, trackId, streamId) {
         if (!(mediaType && trackId)) {
             logger.error(`Unable to munge local MSID - track id=${trackId} or media type=${mediaType} is missing`);
             return null;
         }
         const pcId = this.tpc.id;
-        // Handle a case on Firefox when the browser doesn't produce a 'a:ssrc' line with the 'msid' attribute or has
-        // '-' for the stream id part of the msid line. Jicofo needs an unique identifier to be associated with a ssrc
-        // and uses the msid for that.
-        if (streamId === '-' || !streamId) {
-            return `${this.localEndpointId}-${mediaType}-${pcId} ${trackId}-${pcId}`;
-        }
         return `${streamId}-${pcId} ${trackId}-${pcId}`;
     }
     /**
-     * Modifies 'cname', 'msid', 'label' and 'mslabel' by appending the id of {@link LocalSdpMunger#tpc} at the end,
-     * preceding by a dash sign.
+     * Updates or adds a 'msid' attribute in the format '<endpoint_id>-<mediaType>-<trackIndex>-<tpcId>'
+     * example - d8ff91-video-0-1
+     * All other attributes like 'cname', 'label' and 'mslabel' are removed since these are not processed by Jicofo.
      *
      * @param {MLineWrap} mediaSection - The media part (audio or video) of the session description which will be
      * modified in place.
@@ -160,70 +156,79 @@ export default class LocalSdpMunger {
      * @private
      */
     _transformMediaIdentifiers(mediaSection) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         const mediaType = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.type;
-        const pcId = this.tpc.id;
-        for (const ssrcLine of mediaSection.ssrcs) {
-            switch (ssrcLine.attribute) {
-                case 'cname':
-                case 'label':
-                case 'mslabel':
-                    ssrcLine.value = ssrcLine.value && `${ssrcLine.value}-${pcId}`;
-                    break;
-                case 'msid': {
-                    if (ssrcLine.value) {
-                        const streamAndTrackIDs = ssrcLine.value.split(' ');
-                        let streamId = streamAndTrackIDs[0];
-                        const trackId = streamAndTrackIDs[1];
-                        if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                            // Always overwrite streamId since we want the msid to be in this format even if the browser
-                            // generates one (in p2p mode).
-                            streamId = `${this.localEndpointId}-${mediaType}`;
-                            // eslint-disable-next-line max-depth
-                            if (mediaType === MediaType.VIDEO) {
-                                // eslint-disable-next-line max-depth
-                                if (!this.videoSourcesToMsidMap.has(trackId)) {
-                                    streamId = `${streamId}-${this.videoSourcesToMsidMap.size}`;
-                                    this.videoSourcesToMsidMap.set(trackId, streamId);
-                                }
-                            }
-                            else if (!this.audioSourcesToMsidMap.has(trackId)) {
-                                streamId = `${streamId}-${this.audioSourcesToMsidMap.size}`;
-                                this.audioSourcesToMsidMap.set(trackId, streamId);
-                            }
-                            streamId = mediaType === MediaType.VIDEO
-                                ? this.videoSourcesToMsidMap.get(trackId)
-                                : this.audioSourcesToMsidMap.get(trackId);
-                        }
-                        ssrcLine.value = this._generateMsidAttribute(mediaType, trackId, streamId);
-                    }
-                    else {
-                        logger.warn(`Unable to munge local MSID - weird format detected: ${ssrcLine.value}`);
-                    }
-                    break;
-                }
-            }
-        }
-        // Additional transformations related to MSID are applicable to Unified-plan implementation only.
-        if (!this.tpc.usesUnifiedPlan()) {
-            return;
-        }
-        // Add the msid attribute if it is missing when the direction is sendrecv/sendonly. Firefox doesn't produce a
-        // a=ssrc line with msid attribute for p2p connection.
-        const msidLine = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.msid;
+        const mediaDirection = (_b = mediaSection.mLine) === null || _b === void 0 ? void 0 : _b.direction;
+        const msidLine = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.msid;
+        const sources = [...new Set((_e = (_d = mediaSection.mLine) === null || _d === void 0 ? void 0 : _d.ssrcs) === null || _e === void 0 ? void 0 : _e.map(s => s.id))];
+        const streamId = `${this.localEndpointId}-${mediaType}`;
         const trackId = msidLine && msidLine.split(' ')[1];
-        const sources = [...new Set((_d = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.ssrcs) === null || _d === void 0 ? void 0 : _d.map(s => s.id))];
+        // Always overwrite msid since we want the msid to be in this format even if the browser generates one.
         for (const source of sources) {
-            const msidExists = mediaSection.ssrcs
-                .find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
-            if (!msidExists && trackId) {
-                const generatedMsid = this._generateMsidAttribute(mediaType, trackId);
+            const msid = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'msid');
+            // Update the msid if the 'msid' attribute exists.
+            if (msid) {
+                const streamAndTrackIDs = msid.value.split(' ');
+                const trackID = streamAndTrackIDs[1];
+                this._updateSourcesToMsidMap(mediaType, streamId, trackID);
+                // Update the msid.
+                const storedStreamId = mediaType === MediaType.VIDEO
+                    ? this.videoSourcesToMsidMap.get(trackID)
+                    : this.audioSourcesToMsidMap.get(trackID);
+                msid.value = this._generateMsidAttribute(mediaType, trackID, storedStreamId);
+                // Generate the msid attribute using the 'trackId' from the msid line from the media description. Only
+                // descriptions that have the direction set to 'sendonly' or 'sendrecv' will have the 'a=msid' line.
+            }
+            else if (trackId) {
+                this._updateSourcesToMsidMap(mediaType, streamId, trackId);
+                const storedStreamId = mediaType === MediaType.VIDEO
+                    ? this.videoSourcesToMsidMap.get(trackId)
+                    : this.audioSourcesToMsidMap.get(trackId);
+                const generatedMsid = this._generateMsidAttribute(mediaType, trackId, storedStreamId);
                 mediaSection.ssrcs.push({
                     id: source,
                     attribute: 'msid',
                     value: generatedMsid
                 });
             }
+        }
+        // Ignore the 'cname', 'label' and 'mslabel' attributes and only have the 'msid' attribute.
+        mediaSection.ssrcs = mediaSection.ssrcs.filter(ssrc => ssrc.attribute === 'msid');
+        // On FF when the user has started muted create answer will generate a recv only SSRC. We don't want to signal
+        // this SSRC in order to reduce the load of the xmpp server for large calls. Therefore the SSRC needs to be
+        // removed from the SDP.
+        //
+        // For all other use cases (when the user has had media but then the user has stopped it) we want to keep the
+        // receive only SSRCs in the SDP. Otherwise source-remove will be triggered and the next time the user add a
+        // track we will reuse the SSRCs and send source-add with the same SSRCs. This is problematic because of issues
+        // on Chrome and FF (https://bugzilla.mozilla.org/show_bug.cgi?id=1768729) when removing and then adding the
+        // same SSRC in the remote sdp the remote track is not rendered.
+        if (browser.isFirefox()
+            && (mediaDirection === MediaDirection.RECVONLY || mediaDirection === MediaDirection.INACTIVE)
+            && ((mediaType === MediaType.VIDEO && !this.tpc._hasHadVideoTrack)
+                || (mediaType === MediaType.AUDIO && !this.tpc._hasHadAudioTrack))) {
+            mediaSection.ssrcs = undefined;
+            mediaSection.ssrcGroups = undefined;
+        }
+    }
+    /**
+     * Updates the MSID map.
+     *
+     * @param {string} mediaType The media type.
+     * @param {string} streamId The stream id.
+     * @param {string} trackId The track id.
+     * @returns {void}
+     */
+    _updateSourcesToMsidMap(mediaType, streamId, trackId) {
+        if (mediaType === MediaType.VIDEO) {
+            if (!this.videoSourcesToMsidMap.has(trackId)) {
+                const generatedStreamId = `${streamId}-${this.videoSourcesToMsidMap.size}`;
+                this.videoSourcesToMsidMap.set(trackId, generatedStreamId);
+            }
+        }
+        else if (!this.audioSourcesToMsidMap.has(trackId)) {
+            const generatedStreamId = `${streamId}-${this.audioSourcesToMsidMap.size}`;
+            this.audioSourcesToMsidMap.set(trackId, generatedStreamId);
         }
     }
     /**
@@ -275,7 +280,7 @@ export default class LocalSdpMunger {
             this._injectSourceNames(audioMLine);
         }
         const videoMlines = transformer.selectMedia(MediaType.VIDEO);
-        if (!FeatureFlags.isMultiStreamSupportEnabled()) {
+        if (!FeatureFlags.isMultiStreamSendSupportEnabled()) {
             videoMlines.splice(1);
         }
         for (const videoMLine of videoMlines) {
@@ -284,7 +289,7 @@ export default class LocalSdpMunger {
         }
         // Plan-b clients generate new SSRCs and trackIds whenever tracks are removed and added back to the
         // peerconnection, therefore local track based map for msids needs to be reset after every transformation.
-        if (FeatureFlags.isSourceNameSignalingEnabled() && !this.tpc._usesUnifiedPlan) {
+        if (!this.tpc._usesUnifiedPlan) {
             this.audioSourcesToMsidMap.clear();
             this.videoSourcesToMsidMap.clear();
         }
@@ -305,9 +310,6 @@ export default class LocalSdpMunger {
      */
     _injectSourceNames(mediaSection) {
         var _a, _b, _c, _d;
-        if (!FeatureFlags.isSourceNameSignalingEnabled()) {
-            return;
-        }
         const sources = [...new Set((_b = (_a = mediaSection.mLine) === null || _a === void 0 ? void 0 : _a.ssrcs) === null || _b === void 0 ? void 0 : _b.map(s => s.id))];
         const mediaType = (_c = mediaSection.mLine) === null || _c === void 0 ? void 0 : _c.type;
         if (!mediaType) {
@@ -315,19 +317,31 @@ export default class LocalSdpMunger {
         }
         for (const source of sources) {
             const nameExists = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'name');
-            const msid = (_d = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'msid')) === null || _d === void 0 ? void 0 : _d.value;
-            let trackIndex;
-            if (msid) {
-                const streamId = msid.split(' ')[0];
-                trackIndex = streamId.split('-')[2];
-            }
+            const msid = mediaSection.ssrcs.find(ssrc => ssrc.id === source && ssrc.attribute === 'msid').value;
+            const streamId = msid.split(' ')[0];
+            // Example stream id: d8ff91-video-8-1
+            // In the example above 8 is the track index
+            const trackIndexParts = streamId.split('-');
+            const trackIndex = trackIndexParts[trackIndexParts.length - 2];
+            const sourceName = getSourceNameForJitsiTrack(this.localEndpointId, mediaType, trackIndex);
             if (!nameExists) {
                 // Inject source names as a=ssrc:3124985624 name:endpointA-v0
                 mediaSection.ssrcs.push({
                     id: source,
                     attribute: 'name',
-                    value: getSourceNameForJitsiTrack(this.localEndpointId, mediaType, trackIndex)
+                    value: sourceName
                 });
+            }
+            if (mediaType === MediaType.VIDEO) {
+                const videoType = (_d = this.tpc.getLocalVideoTracks().find(track => track.getSourceName() === sourceName)) === null || _d === void 0 ? void 0 : _d.getVideoType();
+                if (videoType) {
+                    // Inject videoType as a=ssrc:1234 videoType:desktop.
+                    mediaSection.ssrcs.push({
+                        id: source,
+                        attribute: 'videoType',
+                        value: videoType
+                    });
+                }
             }
         }
     }

@@ -3,8 +3,8 @@ import RTCEvents from '../../service/RTC/RTCEvents';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import RTC from '../RTC/RTC';
 import JingleSessionPC from '../xmpp/JingleSessionPC';
-import SignalingLayerImpl from '../xmpp/SignalingLayerImpl';
 import { DEFAULT_STUN_SERVERS } from '../xmpp/xmpp';
+import CustomSignalingLayer from './CustomSignalingLayer';
 import { ACTIONS } from './constants';
 const logger = getLogger(__filename);
 /**
@@ -184,13 +184,11 @@ export default class ProxyConnectionPC {
          * @type {Object}
          */
         const roomStub = {
+            addEventListener: () => { },
             addPresenceListener: () => { },
             connectionTimes: [],
             eventEmitter: { emit: emitter },
-            getMediaPresenceInfo: () => {
-                // Errors occur if this function does not return an object
-                return {};
-            },
+            removeEventListener: () => { },
             removePresenceListener: () => { },
             supportsRestartByTerminate: () => false
         };
@@ -226,7 +224,7 @@ export default class ProxyConnectionPC {
         true, // isP2P
         this._options.isInitiator // isInitiator
         );
-        const signalingLayer = new SignalingLayerImpl();
+        const signalingLayer = new CustomSignalingLayer();
         signalingLayer.setChatRoom(roomStub);
         /**
          * An additional initialize call is necessary to properly set instance

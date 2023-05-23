@@ -1,7 +1,6 @@
 import { getLogger } from '@jitsi/logger';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import { createBridgeChannelClosedEvent } from '../../service/statistics/AnalyticsEvents';
-import FeatureFlags from '../flags/FeatureFlags';
 import Statistics from '../statistics/statistics';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 const logger = getLogger(__filename);
@@ -19,8 +18,9 @@ export default class BridgeChannel {
      * instance.
      * @param {string} [wsUrl] WebSocket URL.
      * @param {EventEmitter} emitter the EventEmitter instance to use for event emission.
+     * @param {JitsiConference} conference the conference instance.
      */
-    constructor(peerconnection, wsUrl, emitter) {
+    constructor(peerconnection, wsUrl, emitter, conference) {
         if (!peerconnection && !wsUrl) {
             throw new TypeError('At least peerconnection or wsUrl must be given');
         }
@@ -36,6 +36,11 @@ export default class BridgeChannel {
         // The underlying WebRTC RTCDataChannel or WebSocket instance.
         // @type {RTCDataChannel|WebSocket}
         this._channel = null;
+        // The conference that uses this bridge channel.
+        this._conference = conference;
+        // Whether the channel is connected or not. It will start as undefined
+        // for the first connection attempt. Then transition to either true or false.
+        this._connected = undefined;
         // @type {EventEmitter}
         this._eventEmitter = emitter;
         // Whether a RTCDataChannel or WebSocket is internally used.
@@ -82,6 +87,15 @@ export default class BridgeChannel {
     _startConnectionRetries() {
         let timeoutS = 1;
         const reload = () => {
+            const isConnecting = this._channel && (this._channel.readyState === 'connecting'
+                || this._channel.readyState === WebSocket.CONNECTING);
+            // Should not spawn new websockets while one is already trying to connect.
+            if (isConnecting) {
+                // Timeout is still required as there is flag `_areRetriesEnabled` that
+                // blocks new retrying cycles until any channel opens in current cycle.
+                this._retryTimeout = setTimeout(reload, timeoutS * 1000);
+                return;
+            }
             if (this.isOpen()) {
                 return;
             }
@@ -188,56 +202,16 @@ export default class BridgeChannel {
         });
     }
     /**
-     * Sends a "selected endpoints changed" message via the channel.
-     *
-     * @param {Array<string>} endpointIds - The ids of the selected endpoints.
-     * @throws NetworkError or InvalidStateError from RTCDataChannel#send (@see
-     * {@link https://developer.mozilla.org/docs/Web/API/RTCDataChannel/send})
-     * or from WebSocket#send or Error with "No opened channel" message.
-     */
-    sendSelectedEndpointsMessage(endpointIds) {
-        logger.log(`Sending selected endpoints: ${endpointIds}.`);
-        this._send({
-            colibriClass: 'SelectedEndpointsChangedEvent',
-            selectedEndpoints: endpointIds
-        });
-    }
-    /**
-     * Sends a "receiver video constraint" message via the channel.
-     * @param {Number} maxFrameHeightPixels the maximum frame height,
-     * in pixels, this receiver is willing to receive
-     */
-    sendReceiverVideoConstraintMessage(maxFrameHeightPixels) {
-        logger.log(`Sending ReceiverVideoConstraint with maxFrameHeight=${maxFrameHeightPixels}px`);
-        this._send({
-            colibriClass: 'ReceiverVideoConstraint',
-            maxFrameHeight: maxFrameHeightPixels
-        });
-    }
-    /**
      * Sends a 'ReceiverVideoConstraints' message via the bridge channel.
      *
      * @param {ReceiverVideoConstraints} constraints video constraints.
      */
-    sendNewReceiverVideoConstraintsMessage(constraints) {
+    sendReceiverVideoConstraintsMessage(constraints) {
         logger.log(`Sending ReceiverVideoConstraints with ${JSON.stringify(constraints)}`);
         this._send(Object.assign({ colibriClass: 'ReceiverVideoConstraints' }, constraints));
     }
     /**
-     * Sends a 'VideoTypeMessage' message via the bridge channel.
-     *
-     * @param {string} videoType 'camera', 'desktop' or 'none'.
-     * @deprecated to be replaced with sendSourceVideoTypeMessage
-     */
-    sendVideoTypeMessage(videoType) {
-        logger.debug(`Sending VideoTypeMessage with video type as ${videoType}`);
-        this._send({
-            colibriClass: 'VideoTypeMessage',
-            videoType
-        });
-    }
-    /**
-     * Sends a 'VideoTypeMessage' message via the bridge channel.
+     * Sends a 'SourceVideoTypeMessage' message via the bridge channel.
      *
      * @param {BridgeVideoType} videoType - the video type.
      * @param {SourceName} sourceName - the source name of the video track.
@@ -258,11 +232,7 @@ export default class BridgeChannel {
         const emitter = this._eventEmitter;
         channel.onopen = () => {
             logger.info(`${this._mode} channel opened`);
-            // Code sample for sending string and/or binary data.
-            // Sends string message to the bridge:
-            //     channel.send("Hello bridge!");
-            // Sends 12 bytes binary message to the bridge:
-            //     channel.send(new ArrayBuffer(12));
+            this._connected = true;
             emitter.emit(RTCEvents.DATA_CHANNEL_OPEN);
         };
         channel.onerror = event => {
@@ -286,9 +256,9 @@ export default class BridgeChannel {
             const colibriClass = obj.colibriClass;
             switch (colibriClass) {
                 case 'DominantSpeakerEndpointChangeEvent': {
-                    const { dominantSpeakerEndpoint, previousSpeakers = [] } = obj;
+                    const { dominantSpeakerEndpoint, previousSpeakers = [], silence } = obj;
                     logger.debug(`Dominant speaker: ${dominantSpeakerEndpoint}, previous speakers: ${previousSpeakers}`);
-                    emitter.emit(RTCEvents.DOMINANT_SPEAKER_CHANGED, dominantSpeakerEndpoint, previousSpeakers);
+                    emitter.emit(RTCEvents.DOMINANT_SPEAKER_CHANGED, dominantSpeakerEndpoint, previousSpeakers, silence);
                     break;
                 }
                 case 'EndpointConnectivityStatusChangeEvent': {
@@ -306,52 +276,34 @@ export default class BridgeChannel {
                     emitter.emit(RTCEvents.ENDPOINT_STATS_RECEIVED, obj.from, obj);
                     break;
                 }
-                case 'LastNEndpointsChangeEvent': {
-                    if (!FeatureFlags.isSourceNameSignalingEnabled()) {
-                        // The new/latest list of last-n endpoint IDs (i.e. endpoints for which the bridge is sending
-                        // video).
-                        const lastNEndpoints = obj.lastNEndpoints;
-                        logger.info(`New forwarded endpoints: ${lastNEndpoints}`);
-                        emitter.emit(RTCEvents.LASTN_ENDPOINT_CHANGED, lastNEndpoints);
-                    }
-                    break;
-                }
                 case 'ForwardedSources': {
-                    if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                        // The new/latest list of forwarded sources
-                        const forwardedSources = obj.forwardedSources;
-                        logger.info(`New forwarded sources: ${forwardedSources}`);
-                        emitter.emit(RTCEvents.FORWARDED_SOURCES_CHANGED, forwardedSources);
-                    }
-                    break;
-                }
-                case 'SenderVideoConstraints': {
-                    const videoConstraints = obj.videoConstraints;
-                    if (videoConstraints) {
-                        logger.info(`SenderVideoConstraints: ${JSON.stringify(videoConstraints)}`);
-                        emitter.emit(RTCEvents.SENDER_VIDEO_CONSTRAINTS_CHANGED, videoConstraints);
-                    }
+                    const forwardedSources = obj.forwardedSources;
+                    logger.info(`New forwarded sources: ${forwardedSources}`);
+                    emitter.emit(RTCEvents.FORWARDED_SOURCES_CHANGED, forwardedSources);
                     break;
                 }
                 case 'SenderSourceConstraints': {
-                    if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                        const { sourceName, maxHeight } = obj;
-                        if (typeof sourceName === 'string' && typeof maxHeight === 'number') {
-                            // eslint-disable-next-line object-property-newline
-                            logger.info(`SenderSourceConstraints: ${JSON.stringify({ sourceName, maxHeight })}`);
-                            emitter.emit(RTCEvents.SENDER_VIDEO_CONSTRAINTS_CHANGED, {
-                                sourceName,
-                                maxHeight
-                            });
-                        }
-                        else {
-                            logger.error(`Invalid SenderSourceConstraints: ${JSON.stringify(obj)}`);
-                        }
+                    if (typeof obj.sourceName === 'string' && typeof obj.maxHeight === 'number') {
+                        logger.info(`SenderSourceConstraints: ${obj.sourceName} - ${obj.maxHeight}`);
+                        emitter.emit(RTCEvents.SENDER_VIDEO_CONSTRAINTS_CHANGED, obj);
+                    }
+                    else {
+                        logger.error(`Invalid SenderSourceConstraints: ${obj.sourceName} - ${obj.maxHeight}`);
                     }
                     break;
                 }
                 case 'ServerHello': {
                     logger.info(`Received ServerHello, version=${obj.version}.`);
+                    break;
+                }
+                case 'VideoSourcesMap': {
+                    logger.info(`Received VideoSourcesMap: ${JSON.stringify(obj.mappedSources)}`);
+                    emitter.emit(RTCEvents.VIDEO_SSRCS_REMAPPED, obj);
+                    break;
+                }
+                case 'AudioSourcesMap': {
+                    logger.info(`Received AudioSourcesMap: ${JSON.stringify(obj.mappedSources)}`);
+                    emitter.emit(RTCEvents.AUDIO_SSRCS_REMAPPED, obj);
                     break;
                 }
                 default: {
@@ -365,13 +317,32 @@ export default class BridgeChannel {
             }
         };
         channel.onclose = event => {
-            logger.info(`Channel closed by ${this._closedFromClient ? 'client' : 'server'}`);
-            if (this._mode === 'websocket') {
-                if (!this._closedFromClient) {
-                    logger.error(`Channel closed: ${event.code} ${event.reason}`);
+            logger.debug(`Channel closed by ${this._closedFromClient ? 'client' : 'server'}`);
+            if (channel !== this._channel) {
+                logger.debug('Skip close handler, channel instance is not equal to stored one');
+                return;
+            }
+            // When the JVB closes the connection gracefully due to the participant being alone in the meeting it uses
+            // code 1001. However, the same code is also used by Cloudflare when it terminates the ws. Therefore, check
+            // for the number of remote participants in the call and abort retries only when the endpoint is the only
+            // endpoint in the call.
+            const isGracefulClose = this._closedFromClient
+                || (event.code === 1001 && this._conference.getParticipantCount() === 1);
+            if (!isGracefulClose) {
+                const { code, reason } = event;
+                logger.error(`Channel closed: ${code} ${reason}`);
+                if (this._mode === 'websocket') {
                     this._retryWebSocketConnection(event);
+                    // We only want to send this event the first time the failure happens.
+                    if (this._connected !== false) {
+                        emitter.emit(RTCEvents.DATA_CHANNEL_CLOSED, {
+                            code,
+                            reason
+                        });
+                    }
                 }
             }
+            this._connected = false;
             // Remove the channel.
             this._channel = null;
         };

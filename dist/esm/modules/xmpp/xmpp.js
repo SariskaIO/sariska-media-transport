@@ -1,5 +1,5 @@
-/* global $ */
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { $msg, Strophe } from 'strophe.js';
 import 'strophejs-plugin-disco';
 import * as JitsiConnectionErrors from '../../JitsiConnectionErrors';
@@ -119,6 +119,8 @@ export default class XMPP extends Listenable {
         if (!this.options.deploymentInfo) {
             this.options.deploymentInfo = {};
         }
+        // Cache of components used for certain features.
+        this._components = [];
         initStropheNativePlugins();
         const xmppPing = options.xmppPing || {};
         // let's ping the main domain (in case a guest one is used for the connection)
@@ -192,8 +194,6 @@ export default class XMPP extends Listenable {
         // this.caps.addFeature('urn:xmpp:jingle:apps:rtp:rtcp-fb:0');
         // XEP-0294
         // this.caps.addFeature('urn:xmpp:jingle:apps:rtp:rtp-hdrext:0');
-        this.caps.addFeature('urn:ietf:rfc:5761'); // rtcp-mux
-        this.caps.addFeature('urn:ietf:rfc:5888'); // a=group, e.g. bundle
         // this.caps.addFeature('urn:ietf:rfc:5576'); // a=ssrc
         // Enable Lipsync ?
         if (browser.isChromiumBased() && this.options.enableLipSync === true) {
@@ -207,13 +207,20 @@ export default class XMPP extends Listenable {
             this.caps.addFeature(FEATURE_E2EE, false, true);
         }
         // Advertise source-name signaling when the endpoint supports it.
-        if (FeatureFlags.isSourceNameSignalingEnabled()) {
-            logger.info('Source-name signaling is enabled');
-            this.caps.addFeature('http://jitsi.org/source-name');
-        }
+        logger.debug('Source-name signaling is enabled');
+        this.caps.addFeature('http://jitsi.org/source-name');
+        logger.debug('Receiving multiple video streams is enabled');
+        this.caps.addFeature('http://jitsi.org/receive-multiple-video-streams');
+        // Advertise support for ssrc-rewriting.
         if (FeatureFlags.isSsrcRewritingSupported()) {
-            logger.info('SSRC rewriting is supported');
-            this.caps.addFeature('http://jitsi.org/ssrc-rewriting');
+            this.caps.addFeature('http://jitsi.org/ssrc-rewriting-1');
+        }
+        // Use "-1" as a version that we can bump later. This should match
+        // the version added in moderator.js, this one here is mostly defined
+        // for keeping stats, since it is not made available to jocofo at
+        // the time of the initial conference-request.
+        if (FeatureFlags.isJoinAsVisitorSupported()) {
+            this.caps.addFeature('http://jitsi.org/visitors-1');
         }
     }
     /**
@@ -345,12 +352,19 @@ export default class XMPP extends Listenable {
         identities.forEach(identity => {
             if (identity.type === 'av_moderation') {
                 this.avModerationComponentAddress = identity.name;
+                this._components.push(this.avModerationComponentAddress);
+            }
+            if (identity.type === 'end_conference') {
+                this.endConferenceComponentAddress = identity.name;
+                this._components.push(this.endConferenceComponentAddress);
             }
             if (identity.type === 'speakerstats') {
                 this.speakerStatsComponentAddress = identity.name;
+                this._components.push(this.speakerStatsComponentAddress);
             }
             if (identity.type === 'conference_duration') {
                 this.conferenceDurationComponentAddress = identity.name;
+                this._components.push(this.conferenceDurationComponentAddress);
             }
             if (identity.type === 'lobbyrooms') {
                 this.lobbySupported = true;
@@ -381,13 +395,15 @@ export default class XMPP extends Listenable {
             }
             if (identity.type === 'breakout_rooms') {
                 this.breakoutRoomsComponentAddress = identity.name;
+                this._components.push(this.breakoutRoomsComponentAddress);
+            }
+            if (identity.type === 'room_metadata') {
+                this.roomMetadataComponentAddress = identity.name;
+                this._components.push(this.roomMetadataComponentAddress);
             }
         });
         this._maybeSendDeploymentInfoStat(true);
-        if (this.avModerationComponentAddress
-            || this.speakerStatsComponentAddress
-            || this.conferenceDurationComponentAddress
-            || this.breakoutRoomsComponentAddress) {
+        if (this._components.length > 0) {
             this.connection.addHandler(this._onPrivateMessage.bind(this), null, 'message', null, null);
         }
     }
@@ -630,8 +646,8 @@ export default class XMPP extends Listenable {
         this.disconnectInProgress = new Promise(resolve => {
             const disconnectListener = (credentials, status) => {
                 if (status === Strophe.Status.DISCONNECTED) {
-                    resolve();
                     this.eventEmitter.removeListener(XMPPEvents.CONNECTION_STATUS_CHANGED, disconnectListener);
+                    resolve();
                 }
             };
             this.eventEmitter.on(XMPPEvents.CONNECTION_STATUS_CHANGED, disconnectListener);
@@ -738,8 +754,9 @@ export default class XMPP extends Listenable {
      * Notifies speaker stats component if available that we are the new
      * dominant speaker in the conference.
      * @param {String} roomJid - The room jid where the speaker event occurred.
+     * @param {boolean} silence - Whether the dominant speaker is silent or not.
      */
-    sendDominantSpeakerEvent(roomJid) {
+    sendDominantSpeakerEvent(roomJid, silence) {
         // no speaker stats component advertised
         if (!this.speakerStatsComponentAddress || !roomJid) {
             return;
@@ -747,26 +764,28 @@ export default class XMPP extends Listenable {
         const msg = $msg({ to: this.speakerStatsComponentAddress });
         msg.c('speakerstats', {
             xmlns: 'http://jitsi.org/jitmeet',
-            room: roomJid
+            room: roomJid,
+            silence
         })
             .up();
         this.connection.send(msg);
     }
     /**
-     * Sends face expressions to speaker stats component.
+     * Sends face landmarks to speaker stats component.
      * @param {String} roomJid - The room jid where the speaker event occurred.
      * @param {Object} payload - The expression to be sent to the speaker stats.
      */
-    sendFaceExpressionEvent(roomJid, payload) {
+    sendFaceLandmarksEvent(roomJid, payload) {
         // no speaker stats component advertised
         if (!this.speakerStatsComponentAddress || !roomJid) {
             return;
         }
         const msg = $msg({ to: this.speakerStatsComponentAddress });
-        msg.c('faceExpression', {
+        msg.c('faceLandmarks', {
             xmlns: 'http://jitsi.org/jitmeet',
             room: roomJid,
-            expression: payload.faceExpression,
+            faceExpression: payload.faceExpression,
+            timestamp: payload.timestamp,
             duration: payload.duration
         }).up();
         this.connection.send(msg);
@@ -818,10 +837,7 @@ export default class XMPP extends Listenable {
      */
     _onPrivateMessage(msg) {
         const from = msg.getAttribute('from');
-        if (!(from === this.speakerStatsComponentAddress
-            || from === this.conferenceDurationComponentAddress
-            || from === this.avModerationComponentAddress
-            || from === this.breakoutRoomsComponentAddress)) {
+        if (!this._components.includes(from)) {
             return true;
         }
         const jsonMessage = $(msg).find('>json-message')
@@ -841,6 +857,9 @@ export default class XMPP extends Listenable {
         }
         else if (parsedJson[JITSI_MEET_MUC_TYPE] === 'breakout_rooms') {
             this.eventEmitter.emit(XMPPEvents.BREAKOUT_ROOMS_EVENT, parsedJson);
+        }
+        else if (parsedJson[JITSI_MEET_MUC_TYPE] === 'room_metadata') {
+            this.eventEmitter.emit(XMPPEvents.ROOM_METADATA_EVENT, parsedJson);
         }
         return true;
     }

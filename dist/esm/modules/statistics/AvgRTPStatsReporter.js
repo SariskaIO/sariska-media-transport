@@ -30,6 +30,9 @@ class AverageStatReport {
      * @param {number} nextValue
      */
     addNext(nextValue) {
+        if (typeof nextValue === 'undefined') {
+            return;
+        }
         if (typeof nextValue !== 'number') {
             logger.error(`${this.name} - invalid value for idx: ${this.count}`, nextValue);
         }

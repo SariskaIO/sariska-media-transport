@@ -23,16 +23,10 @@ class SpeakerStats {
         this.setDominantSpeaker(false);
         this.totalDominantSpeakerTime = 0;
         this._dominantSpeakerStart = 0;
+        this._isDominantSpeaker = false;
+        this._isSilent = false;
         this._hasLeft = false;
-        this._faceExpressions = {
-            happy: 0,
-            neutral: 0,
-            surprised: 0,
-            angry: 0,
-            fearful: 0,
-            disgusted: 0,
-            sad: 0
-        };
+        this._faceLandmarks = [];
     }
 
     /**
@@ -78,27 +72,43 @@ class SpeakerStats {
      * @returns {boolean}
      */
     isDominantSpeaker() {
-        return this._dominantSpeakerStart > 0;
+        return this._isDominantSpeaker;
     }
 
     /**
      * Returns true if the tracked user is currently a dominant speaker.
      *
-     * @param {boolean} - If true, the user will being accumulating time
+     * @param {boolean} isNowDominantSpeaker - If true, the user will be accumulating time
      * as dominant speaker. If false, the user will not accumulate time
      * and will record any time accumulated since starting as dominant speaker.
+     * @param {boolean} silence - Indecates whether the dominant speaker is silent or not.
      * @returns {void}
      */
-    setDominantSpeaker(isNowDominantSpeaker) {
-        if (!this.isDominantSpeaker() && isNowDominantSpeaker) {
+    setDominantSpeaker(isNowDominantSpeaker, silence) {
+        if (!this.isDominantSpeaker() && isNowDominantSpeaker && !silence) {
             this._dominantSpeakerStart = Date.now();
-        } else if (this.isDominantSpeaker() && !isNowDominantSpeaker) {
-            const now = Date.now();
-            const timeElapsed = now - this._dominantSpeakerStart;
+        } else if (this.isDominantSpeaker()) {
+            if (!isNowDominantSpeaker) {
+                if (!this._isSilent) {
+                    const now = Date.now();
+                    const timeElapsed = now - this._dominantSpeakerStart;
 
-            this.totalDominantSpeakerTime += timeElapsed;
-            this._dominantSpeakerStart = 0;
+                    this.totalDominantSpeakerTime += timeElapsed;
+                    this._dominantSpeakerStart = 0;
+                }
+            } else if (this._isSilent && !silence) {
+                this._dominantSpeakerStart = Date.now();
+            } else if (!this._isSilent && silence) {
+                const now = Date.now();
+                const timeElapsed = now - this._dominantSpeakerStart;
+
+                this.totalDominantSpeakerTime += timeElapsed;
+                this._dominantSpeakerStart = 0;
+            }
         }
+
+        this._isDominantSpeaker = isNowDominantSpeaker;
+        this._isSilent = silence;
     }
 
     /**
@@ -109,7 +119,7 @@ class SpeakerStats {
     getTotalDominantSpeakerTime() {
         let total = this.totalDominantSpeakerTime;
 
-        if (this.isDominantSpeaker()) {
+        if (this.isDominantSpeaker() && !this._isSilent) {
             total += Date.now() - this._dominantSpeakerStart;
         }
 
@@ -136,32 +146,32 @@ class SpeakerStats {
     }
 
     /**
-     * Gets the face expressions of the user.
+     * Gets the face landmarks of the user.
      *
      * @returns {Object}
      */
-    getFaceExpressions() {
-        return this._faceExpressions;
+    getFaceLandmarks() {
+        return this._faceLandmarks;
     }
 
     /**
-     * Sets the face expressions of the user.
+     * Sets the face landmarks of the user.
      *
-     * @param {Object} faceExpressions - object with face expressions.
+     * @param {Object} faceLandmarks - object with face expressions.
      * @returns {void}
      */
-    setFaceExpressions(faceExpressions) {
-        this._faceExpressions = faceExpressions;
+    setFaceLandmarks(faceLandmarks) {
+        this._faceLandmarks = faceLandmarks;
     }
 
     /**
-     * Adds a new face expression to speaker stats.
+     * Adds new face landmarks to speaker stats.
      *
      * @param  {string} faceExpression
      * @param {number} duration
      */
-    addFaceExpression(faceExpression, duration) {
-        this._faceExpressions[faceExpression] += duration;
+    addFaceLandmarks(faceLandmarks) {
+        this._faceLandmarks.push(faceLandmarks);
     }
 }
 

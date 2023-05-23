@@ -1,11 +1,9 @@
-/* global $ */
-
+import $ from 'jquery';
 import clonedeep from 'lodash.clonedeep';
 import transform from 'sdp-transform';
 
 import { MediaDirection } from '../../service/RTC/MediaDirection';
 import browser from '../browser';
-import FeatureFlags from '../flags/FeatureFlags';
 
 import SDPUtil from './SDPUtil';
 
@@ -55,7 +53,7 @@ SDP.prototype.removeUdpCandidates = false;
  * Adds a new m-line to the description so that a new local source can then be attached to the transceiver that gets
  * added after a reneogtiation cycle.
  *
- * @param {Mediatype} mediaType media type of the new source that is being added.
+ * @param {MediaType} mediaType media type of the new source that is being added.
  */
 SDP.prototype.addMlineForNewLocalSource = function(mediaType) {
     const mid = this.media.length;
@@ -200,6 +198,12 @@ SDP.prototype.toJingle = function(elem, thecreator) {
             elem.attrs({ name: mid });
         }
 
+        if (mline.media === 'video' && typeof this.initialLastN === 'number') {
+            elem.c('initial-last-n',
+                { xmlns: 'jitsi:colibri2',
+                    value: this.initialLastN }).up();
+        }
+
         if (mline.media === 'audio' || mline.media === 'video') {
             elem.c('description',
                 { xmlns: 'urn:xmpp:jingle:apps:rtp:1',
@@ -242,10 +246,12 @@ SDP.prototype.toJingle = function(elem, thecreator) {
 
                 for (const [ availableSsrc, ssrcParameters ] of ssrcMap) {
                     const sourceName = SDPUtil.parseSourceNameLine(ssrcParameters);
+                    const videoType = SDPUtil.parseVideoTypeLine(ssrcParameters);
 
                     elem.c('source', {
                         ssrc: availableSsrc,
-                        name: FeatureFlags.isSourceNameSignalingEnabled() ? sourceName : undefined,
+                        name: sourceName,
+                        videoType,
                         xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0'
                     });
 
@@ -319,7 +325,7 @@ SDP.prototype.toJingle = function(elem, thecreator) {
             this.rtcpFbToJingle(i, elem, '*');
 
             // XEP-0294
-            const extmapLines = SDPUtil.findLines(this.media[i], 'a=extmap:');
+            const extmapLines = SDPUtil.findLines(this.media[i], 'a=extmap:', this.session);
 
             for (let j = 0; j < extmapLines.length; j++) {
                 const extmap = SDPUtil.parseExtmap(extmapLines[j]);
@@ -353,6 +359,13 @@ SDP.prototype.toJingle = function(elem, thecreator) {
                 // TODO: handle params
                 elem.up();
             }
+
+            if (SDPUtil.findLine(this.media[i], 'a=extmap-allow-mixed', this.session)) {
+                elem.c('extmap-allow-mixed', {
+                    xmlns: 'urn:xmpp:jingle:apps:rtp:rtp-hdrext:0'
+                });
+                elem.up();
+            }
             elem.up(); // end of description
         }
 
@@ -361,13 +374,13 @@ SDP.prototype.toJingle = function(elem, thecreator) {
 
         const m = this.media[i];
 
-        if (SDPUtil.findLine(m, `a=${MediaDirection.SENDRECV}`, this.session)) {
+        if (SDPUtil.findLine(m, `a=${MediaDirection.SENDRECV}`)) {
             elem.attrs({ senders: 'both' });
-        } else if (SDPUtil.findLine(m, `a=${MediaDirection.SENDONLY}`, this.session)) {
+        } else if (SDPUtil.findLine(m, `a=${MediaDirection.SENDONLY}`)) {
             elem.attrs({ senders: 'initiator' });
-        } else if (SDPUtil.findLine(m, `a=${MediaDirection.RECVONLY}`, this.session)) {
+        } else if (SDPUtil.findLine(m, `a=${MediaDirection.RECVONLY}`)) {
             elem.attrs({ senders: 'responder' });
-        } else if (SDPUtil.findLine(m, `a=${MediaDirection.INACTIVE}`, this.session)) {
+        } else if (SDPUtil.findLine(m, `a=${MediaDirection.INACTIVE}`)) {
             elem.attrs({ senders: 'none' });
         }
 
@@ -726,6 +739,9 @@ SDP.prototype.jingle2media = function(content) {
                 += `a=extmap:${hdrExt.getAttribute('id')} ${
                     hdrExt.getAttribute('uri')}\r\n`;
         });
+    if (desc.find('>extmap-allow-mixed[xmlns="urn:xmpp:jingle:apps:rtp:rtp-hdrext:0"]').length > 0) {
+        sdp += 'a=extmap-allow-mixed\r\n';
+    }
 
     // XEP-0339 handle ssrc-group attributes
     desc

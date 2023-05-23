@@ -1,6 +1,4 @@
-import { getLogger } from '@jitsi/logger';
 import browser from '../browser';
-const logger = getLogger('FeatureFlags');
 /**
  * A global module for accessing information about different feature flags state.
  */
@@ -8,48 +6,34 @@ class FeatureFlags {
     /**
      * Configures the module.
      *
-     * @param {boolean} flags.runInLiteMode - Enables lite mode for testing to disable media decoding.
-     * @param {boolean} flags.sourceNameSignaling - Enables source names in the signaling.
+     * @param {object} flags - The feature flags.
+     * @param {boolean=} flags.runInLiteMode - Enables lite mode for testing to disable media decoding.
+     * @param {boolean=} flags.ssrcRewritingEnabled - Use SSRC rewriting. Requires sourceNameSignaling to be enabled.
+     * @param {boolean=} flags.enableJoinAsVisitor - Enable joining as a visitor.
      */
     init(flags) {
         var _a;
         this._runInLiteMode = Boolean(flags.runInLiteMode);
-        this._sourceNameSignaling = Boolean(flags.sourceNameSignaling);
-        this._sendMultipleVideoStreams = Boolean(flags.sendMultipleVideoStreams);
-        this._ssrcRewriting = Boolean(flags.ssrcRewritingOnBridgeSupported);
-        // For Chromium, check if Unified plan is enabled.
-        this._usesUnifiedPlan = browser.supportsUnifiedPlan()
-            && (!browser.isChromiumBased() || ((_a = flags.enableUnifiedOnChrome) !== null && _a !== void 0 ? _a : true));
-        logger.info(`Source name signaling: ${this._sourceNameSignaling},`
-            + ` Send multiple video streams: ${this._sendMultipleVideoStreams},`
-            + ` SSRC rewriting supported: ${this._ssrcRewriting},`
-            + ` uses Unified plan: ${this._usesUnifiedPlan}`);
+        this._ssrcRewriting = Boolean(flags.ssrcRewritingEnabled);
+        this._joinAsVisitor = Boolean((_a = flags.enableJoinAsVisitor) !== null && _a !== void 0 ? _a : true);
     }
     /**
      * Checks if multiple local video streams support is enabled.
      *
      * @returns {boolean}
      */
-    isMultiStreamSupportEnabled() {
-        return this._sourceNameSignaling && this._sendMultipleVideoStreams && this._usesUnifiedPlan;
+    isMultiStreamSendSupportEnabled() {
+        return browser.supportsUnifiedPlan();
     }
     /**
      * Checks if the run in lite mode is enabled.
-     * This will cause any media to be received and not decoded. (Directions are inactive and no ssrc and ssrc-groups
-     * are added to the remote description). This can be used for various test scenarios.
+     * This will cause any media to be received and not decoded. (Insertable streams are used to discard
+     * all media before it is decoded). This can be used for various test scenarios.
      *
      * @returns {boolean}
      */
     isRunInLiteModeEnabled() {
-        return this._runInLiteMode;
-    }
-    /**
-     * Checks if the source name signaling is enabled.
-     *
-     * @returns {boolean}
-     */
-    isSourceNameSignalingEnabled() {
-        return this._sourceNameSignaling;
+        return this._runInLiteMode && browser.supportsInsertableStreams();
     }
     /**
      * Checks if the clients supports re-writing of the SSRCs on the media streams by the bridge.
@@ -57,6 +41,13 @@ class FeatureFlags {
      */
     isSsrcRewritingSupported() {
         return this._ssrcRewriting;
+    }
+    /**
+     * Checks if the clients supports joining as a visitor.
+     * @returns {boolean}
+     */
+    isJoinAsVisitorSupported() {
+        return this._joinAsVisitor;
     }
 }
 export default new FeatureFlags();

@@ -108,14 +108,15 @@ const ScreenObtainer = {
      *
      * @param onSuccess - Success callback.
      * @param onFailure - Failure callback.
+     * @param {Object} options - Optional parameters.
      */
-    obtainScreenOnElectron(onSuccess, onFailure) {
+    obtainScreenOnElectron(onSuccess, onFailure, options = {}) {
         if (window.JitsiMeetScreenObtainer && window.JitsiMeetScreenObtainer.openDesktopPicker) {
-            const { desktopSharingFrameRate, desktopSharingSources } = this.options;
+            const { desktopSharingFrameRate, desktopSharingResolution, desktopSharingSources } = this.options;
             window.JitsiMeetScreenObtainer.openDesktopPicker({
-                desktopSharingSources: desktopSharingSources || ['screen', 'window']
+                desktopSharingSources: options.desktopSharingSources || desktopSharingSources || ['screen', 'window']
             }, (streamId, streamType, screenShareAudio = false) => {
-                var _a, _b;
+                var _a, _b, _c, _d, _e, _f, _g, _h;
                 if (streamId) {
                     let audioConstraints = false;
                     if (screenShareAudio) {
@@ -146,8 +147,10 @@ const ScreenObtainer = {
                                 chromeMediaSourceId: streamId,
                                 minFrameRate: (_a = desktopSharingFrameRate === null || desktopSharingFrameRate === void 0 ? void 0 : desktopSharingFrameRate.min) !== null && _a !== void 0 ? _a : SS_DEFAULT_FRAME_RATE,
                                 maxFrameRate: (_b = desktopSharingFrameRate === null || desktopSharingFrameRate === void 0 ? void 0 : desktopSharingFrameRate.max) !== null && _b !== void 0 ? _b : SS_DEFAULT_FRAME_RATE,
-                                maxWidth: window.screen.width,
-                                maxHeight: window.screen.height
+                                minWidth: (_c = desktopSharingResolution === null || desktopSharingResolution === void 0 ? void 0 : desktopSharingResolution.width) === null || _c === void 0 ? void 0 : _c.min,
+                                minHeight: (_d = desktopSharingResolution === null || desktopSharingResolution === void 0 ? void 0 : desktopSharingResolution.height) === null || _d === void 0 ? void 0 : _d.min,
+                                maxWidth: (_f = (_e = desktopSharingResolution === null || desktopSharingResolution === void 0 ? void 0 : desktopSharingResolution.width) === null || _e === void 0 ? void 0 : _e.max) !== null && _f !== void 0 ? _f : window.screen.width,
+                                maxHeight: (_h = (_g = desktopSharingResolution === null || desktopSharingResolution === void 0 ? void 0 : desktopSharingResolution.height) === null || _g === void 0 ? void 0 : _g.max) !== null && _h !== void 0 ? _h : window.screen.height
                             }
                         }
                     };
@@ -178,7 +181,6 @@ const ScreenObtainer = {
      * @param errorCallback - The error callback.
      */
     obtainScreenFromGetDisplayMedia(callback, errorCallback) {
-        var _a, _b;
         let getDisplayMedia;
         if (navigator.getDisplayMedia) {
             getDisplayMedia = navigator.getDisplayMedia.bind(navigator);
@@ -187,22 +189,26 @@ const ScreenObtainer = {
             // eslint-disable-next-line max-len
             getDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices);
         }
-        const { desktopSharingFrameRate } = this.options;
-        const setScreenSharingResolutionConstraints = browser.isChromiumBased()
-            && ((_b = (_a = this.options) === null || _a === void 0 ? void 0 : _a.testing) === null || _b === void 0 ? void 0 : _b.setScreenSharingResolutionConstraints);
+        const audio = this._getAudioConstraints();
         let video = {};
+        const { desktopSharingFrameRate } = this.options;
         if (typeof desktopSharingFrameRate === 'object') {
             video.frameRate = desktopSharingFrameRate;
         }
-        if (setScreenSharingResolutionConstraints) {
-            // Set bogus resolution constraints to work around
-            // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311
-            video.height = 99999;
-            video.width = 99999;
-        }
-        const audio = this._getAudioConstraints();
-        // At the time of this writing 'min' constraint for fps is not supported by getDisplayMedia.
+        // At the time of this writing 'min' constraint for fps is not supported by getDisplayMedia on any of the
+        // browsers. getDisplayMedia will fail with an error "invalid constraints" in this case.
         video.frameRate && delete video.frameRate.min;
+        if (browser.isChromiumBased()) {
+            // Allow users to seamlessly switch which tab they are sharing without having to select the tab again.
+            browser.isVersionGreaterThan(106) && (video.surfaceSwitching = 'include');
+            // Set bogus resolution constraints to work around
+            // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311 for low fps screenshare. Capturing SS at
+            // very high resolutions restricts the framerate. Therefore, skip this hack when capture fps > 5 fps.
+            if (!((desktopSharingFrameRate === null || desktopSharingFrameRate === void 0 ? void 0 : desktopSharingFrameRate.max) > SS_DEFAULT_FRAME_RATE)) {
+                video.height = 99999;
+                video.width = 99999;
+            }
+        }
         if (Object.keys(video).length === 0) {
             video = true;
         }

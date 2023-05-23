@@ -159,6 +159,10 @@ export var XMPPEvents;
      * Indicates that recording state changed.
      */
     XMPPEvents["RECORDER_STATE_CHANGED"] = "xmpp.recorderStateChanged";
+    /**
+     * The conference was redirected to a visitor node.
+     */
+    XMPPEvents["REDIRECTED"] = "xmpp.redirected";
     // Designates an event indicating that we received statistics from a
     // participant in the MUC.
     XMPPEvents["REMOTE_STATS"] = "xmpp.remote_stats";
@@ -259,6 +263,14 @@ export var XMPPEvents;
      * Event fired when the breakout rooms data was updated.
      */
     XMPPEvents["BREAKOUT_ROOMS_UPDATED"] = "xmpp.breakout-rooms.updated";
+    /**
+     * Event fired when we receive a message related to room metadata.
+     */
+    XMPPEvents["ROOM_METADATA_EVENT"] = "xmpp.room-metadata.event";
+    /**
+     * Event fired when we receive a message related to room metadata.
+     */
+    XMPPEvents["ROOM_METADATA_UPDATED"] = "xmpp.room-metadata.updated";
     // Designates an event indicating that we should join the conference with
     // audio and/or video muted.
     XMPPEvents["START_MUTED_FROM_FOCUS"] = "xmpp.start_muted_from_focus";
@@ -282,7 +294,7 @@ export var XMPPEvents;
     /**
      * Indicates that video SIP GW state changed.
      *
-     * @param {VideoSIPGWConstants} status - Any of the following statuses:
+     * @param {VideoSIPGWStatusConstants} status - Any of the following statuses:
      * STATUS_BUSY, STATUS_AVAILABLE or STATUS_UNDEFINED.
      */
     XMPPEvents["VIDEO_SIP_GW_AVAILABILITY_CHANGED"] = "xmpp.videoSIPGWAvailabilityChanged";
@@ -290,7 +302,7 @@ export var XMPPEvents;
      * Indicates that video SIP GW Session state changed.
      * The statuses are any of the following statuses:
      * STATE_ON, STATE_OFF, STATE_PENDING, STATE_RETRYING, STATE_FAILED.
-     * {@see VideoSIPGWConstants}
+     * {@see VideoSIPGWStateConstants}
      *
      * @param {options} event - {address, oldState, newState, displayName}.
      */

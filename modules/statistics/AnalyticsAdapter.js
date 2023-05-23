@@ -1,3 +1,6 @@
+/**
+ * @type Class
+ */
 import { getLogger } from '@jitsi/logger';
 
 import {

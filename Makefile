@@ -26,17 +26,9 @@ compile:
 	npm run build
 
 	
-deploy: deploy-app deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
+deploy: deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
 
 
-deploy-app:
-	cp \
-		modules/browser/capabilities.json \
-		$(DEPLOY_DIR)
-	cp \
-		modules/browser/capabilities.json \
-		$(BUILD_DIR)/modules/browser/capabilities.json
-		
 deploy-rnnoise-binary:
 	cp \
 		$(RNNOISE_WASM_DIR)/* \

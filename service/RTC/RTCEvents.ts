@@ -9,9 +9,9 @@ export enum RTCEvents {
      */
     CREATE_OFFER_FAILED = 'rtc.create_offer_failed',
     DATA_CHANNEL_OPEN = 'rtc.data_channel_open',
+    DATA_CHANNEL_CLOSED = 'rtc.data_channel_closed',
     ENDPOINT_CONN_STATUS_CHANGED = 'rtc.endpoint_conn_status_changed',
     DOMINANT_SPEAKER_CHANGED = 'rtc.dominant_speaker_changed',
-    LASTN_ENDPOINT_CHANGED = 'rtc.lastn_endpoint_changed',
     FORWARDED_SOURCES_CHANGED = 'rtc.forwarded_sources_changed',
 
     /**
@@ -110,15 +110,27 @@ export enum RTCEvents {
      * is the source of the event.
      * The second argument is the actual "ufrag" string.
      */
-    REMOTE_UFRAG_CHANGED = 'rtc.remote_ufrag_changed'
+    REMOTE_UFRAG_CHANGED = 'rtc.remote_ufrag_changed',
+
+    /**
+     * Designates an event indicating that some received video SSRCs will now map to
+     * new remote sources.
+     */
+    VIDEO_SSRCS_REMAPPED = 'rtc.video_ssrcs_remapped',
+
+    /**
+     * Designates an event indicating that some received audio SSRCs will now map to
+     * new remote sources.
+     */
+    AUDIO_SSRCS_REMAPPED = 'rtc.audio_ssrcs_remapped'
 };
 
 export const CREATE_ANSWER_FAILED = RTCEvents.CREATE_ANSWER_FAILED;
 export const CREATE_OFFER_FAILED = RTCEvents.CREATE_OFFER_FAILED;
 export const DATA_CHANNEL_OPEN = RTCEvents.DATA_CHANNEL_OPEN;
+export const DATA_CHANNEL_CLOSED = RTCEvents.DATA_CHANNEL_CLOSED;
 export const ENDPOINT_CONN_STATUS_CHANGED = RTCEvents.ENDPOINT_CONN_STATUS_CHANGED;
 export const DOMINANT_SPEAKER_CHANGED = RTCEvents.DOMINANT_SPEAKER_CHANGED;
-export const LASTN_ENDPOINT_CHANGED = RTCEvents.LASTN_ENDPOINT_CHANGED;
 export const FORWARDED_SOURCES_CHANGED = RTCEvents.FORWARDED_SOURCES_CHANGED;
 export const PERMISSIONS_CHANGED = RTCEvents.PERMISSIONS_CHANGED;
 export const SENDER_VIDEO_CONSTRAINTS_CHANGED = RTCEvents.SENDER_VIDEO_CONSTRAINTS_CHANGED;
@@ -140,6 +152,8 @@ export const ENDPOINT_MESSAGE_RECEIVED = RTCEvents.ENDPOINT_MESSAGE_RECEIVED;
 export const ENDPOINT_STATS_RECEIVED = RTCEvents.ENDPOINT_STATS_RECEIVED;
 export const LOCAL_UFRAG_CHANGED = RTCEvents.LOCAL_UFRAG_CHANGED;
 export const REMOTE_UFRAG_CHANGED = RTCEvents.REMOTE_UFRAG_CHANGED;
+export const VIDEO_SSRCS_REMAPPED = RTCEvents.VIDEO_SSRCS_REMAPPED;
+export const AUDIO_SSRCS_REMAPPED = RTCEvents.AUDIO_SSRCS_REMAPPED;
 
 // TODO: this was a pre-ES6 module using module.exports = RTCEvents which doesn't translate well
 // it is used in a number of places and should be updated to use the named export

@@ -170,8 +170,9 @@ declare class Statistics {
      * Notifies the statistics module that we are now the dominant speaker of the
      * conference.
      * @param {String} roomJid - The room jid where the speaker event occurred.
+     * @param {boolean} silence - Whether the dominant speaker is silent or not.
      */
-    sendDominantSpeakerEvent(roomJid: string): void;
+    sendDominantSpeakerEvent(roomJid: string, silence: boolean): void;
     /**
      * Lets the underlying statistics module know where is given SSRC rendered by
      * providing renderer tag ID.
@@ -247,8 +248,8 @@ declare namespace Statistics {
     export const analyticsEventEmitter: EventEmitter;
     export const instances: any;
     export const localStats: any[];
-    export function startLocalStats(stream: any, callback: any): void;
-    export function stopLocalStats(stream: any): void;
+    export function startLocalStats(track: any, callback: any): void;
+    export function stopLocalStats(track: any): void;
     /**
      * Obtains the list of *all* {@link CallStats} instances collected from every
      * valid {@link Statistics} instance.

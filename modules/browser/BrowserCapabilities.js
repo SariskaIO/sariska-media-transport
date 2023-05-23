@@ -23,8 +23,7 @@ export default class BrowserCapabilities extends BrowserDetection {
      */
     constructor() {
         super();
-        logger.info(
-            `This appears to be ${this.getName()}, ver: ${this.getVersion()}`);
+        logger.info(`This appears to be ${this.getName()}, ver: ${this.getVersion()}`);
     }
 
     /**
@@ -186,14 +185,6 @@ export default class BrowserCapabilities extends BrowserDetection {
     }
 
     /**
-     * Checks if the current browser supports RTT statistics for srflx local
-     * candidates through the legacy getStats() API.
-     */
-    supportsLocalCandidateRttStatistics() {
-        return this.isChromiumBased() || this.isReactNative() || this.isWebKitBased();
-    }
-
-    /**
      * Checks if the current browser supports the Long Tasks API that lets us observe
      * performance measurement events and be notified of tasks that take longer than
      * 50ms to execute on the main thread.
@@ -208,11 +199,7 @@ export default class BrowserCapabilities extends BrowserDetection {
      */
     supportsReceiverStats() {
         return typeof window.RTCRtpReceiver !== 'undefined'
-            && Object.keys(RTCRtpReceiver.prototype).indexOf('getSynchronizationSources') > -1
-
-            // Disable this on Safari because it is reporting 0.000001 as the audio levels for all
-            // remote audio tracks.
-            && !this.isWebKitBased();
+            && Object.keys(RTCRtpReceiver.prototype).indexOf('getSynchronizationSources') > -1;
     }
 
     /**
@@ -233,6 +220,15 @@ export default class BrowserCapabilities extends BrowserDetection {
     }
 
     /**
+     * Returns true if the browser supports track based statistics for the local video track. Otherwise,
+     * track resolution and framerate will be calculated based on the 'outbound-rtp' statistics.
+     * @returns {boolean}
+     */
+    supportsTrackBasedStats() {
+        return this.isChromiumBased() && this.isVersionLessThan(112);
+    }
+
+    /**
      * Returns true if VP9 is supported by the client on the browser. VP9 is currently disabled on Firefox and Safari
      * because of issues with rendering. Please check https://bugzilla.mozilla.org/show_bug.cgi?id=1492500,
      * https://bugs.webkit.org/show_bug.cgi?id=231071 and https://bugs.webkit.org/show_bug.cgi?id=231074 for details.
@@ -248,15 +244,6 @@ export default class BrowserCapabilities extends BrowserDetection {
      */
     usesSdpMungingForSimulcast() {
         return this.isChromiumBased() || this.isReactNative() || this.isWebKitBased();
-    }
-
-    /**
-     * Checks if the browser uses webrtc-adapter. All browsers except React Native do.
-     *
-     * @returns {boolean}
-     */
-    usesAdapter() {
-        return !this.isReactNative();
     }
 
     /**
@@ -334,7 +321,7 @@ export default class BrowserCapabilities extends BrowserDetection {
     supportsUnifiedPlan() {
         // We do not want to enable unified plan on Electron clients that have Chromium version < 96 because of
         // performance and screensharing issues.
-        return !(this.isReactNative() || (this.isElectron() && (this._getChromiumBasedVersion() < 96)));
+        return !(this.isElectron() && (this._getChromiumBasedVersion() < 96));
     }
 
     /**

@@ -1,5 +1,5 @@
-/* global $ */
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { $iq, Strophe } from 'strophe.js';
 import { MediaType } from '../../service/RTC/MediaType';
 import { ACTION_JINGLE_TR_RECEIVED, ACTION_JINGLE_TR_SUCCESS, createJingleEvent } from '../../service/statistics/AnalyticsEvents';
@@ -184,8 +184,7 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
                 break;
             }
             case 'content-modify': {
-                const height = $(iq).find('jingle>content[name="video"]>max-frame-height');
-                logger.debug(`Received ${action} from ${fromJid} with a max-frame-height=${height === null || height === void 0 ? void 0 : height.text()}`);
+                logger.debug(`Received ${action} from ${fromJid}`);
                 sess.modifyContents($(iq).find('>jingle'));
                 break;
             }

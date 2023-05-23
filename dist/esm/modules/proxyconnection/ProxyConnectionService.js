@@ -1,4 +1,3 @@
-/* globals $ */
 var __rest = (this && this.__rest) || function (s, e) {
     var t = {};
     for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
@@ -11,8 +10,10 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { $iq } from 'strophe.js';
 import { MediaType } from '../../service/RTC/MediaType';
+import { getSourceNameForJitsiTrack } from '../../service/RTC/SignalingLayer';
 import { VideoType } from '../../service/RTC/VideoType';
 import RTC from '../RTC/RTC';
 import ProxyConnectionPC from './ProxyConnectionPC';
@@ -120,6 +121,10 @@ export default class ProxyConnectionService {
         this._peerConnection = this._createPeerConnection(peerJid, {
             isInitiator: true,
             receiveVideo: false
+        });
+        localTracks.forEach((localTrack, localTrackIndex) => {
+            const localSourceNameTrack = getSourceNameForJitsiTrack('peer', localTrack.getType(), localTrackIndex);
+            localTrack.setSourceName(localSourceNameTrack);
         });
         this._peerConnection.start(localTracks);
     }

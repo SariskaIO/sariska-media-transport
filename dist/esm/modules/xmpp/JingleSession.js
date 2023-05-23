@@ -165,10 +165,4 @@ export default class JingleSession extends Listenable {
      * than analysed in the code, as the error is unrecoverable anyway)
      */
     acceptOffer(jingle, success, failure) { }
-    /**
-     * Returns the JID of the initiator of the jingle session.
-     */
-    _getInitiatorJid() {
-        return this.isInitiator ? this.localJid : this.remoteJid;
-    }
 }

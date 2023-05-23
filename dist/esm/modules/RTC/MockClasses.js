@@ -42,6 +42,13 @@ export class MockPeerConnection {
         return Promise.resolve(/* answer */ {});
     }
     /**
+     * {@link TraceablePeerConnection.processLocalSdpForTransceiverInfo}.
+     *
+     * @returns {void}
+     */
+    processLocalSdpForTransceiverInfo() {
+    }
+    /**
      * {@link TraceablePeerConnection.setLocalDescription}.
      *
      * @returns {Promise<void>}
@@ -73,6 +80,12 @@ export class MockPeerConnection {
      */
     usesUnifiedPlan() {
         return this._usesUnifiedPlan;
+    }
+    /**
+     * {@link TraceablePeerConnection.getLocalVideoTracks}.
+     */
+    getLocalVideoTracks() {
+        return [];
     }
 }
 /**

@@ -9,8 +9,11 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
-import "./dom/jquery";
+/**
+ * @type Class
+ */
 import Logger from '@jitsi/logger';
+import { getLogger } from '@jitsi/logger';
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import JitsiConnection from './JitsiConnection';
@@ -25,7 +28,6 @@ import * as JitsiTranscriptionStatus from './JitsiTranscriptionStatus';
 import RTC from './modules/RTC/RTC';
 import browser from './modules/browser';
 import NetworkInfo from './modules/connectivity/NetworkInfo';
-import { ParticipantConnectionStatus } from './modules/connectivity/ParticipantConnectionStatus';
 import { TrackStreamingStatus } from './modules/connectivity/TrackStreamingStatus';
 import getActiveAudioDevice from './modules/detection/ActiveDeviceDetector';
 import * as DetectionEvents from './modules/detection/DetectionEvents';
@@ -49,7 +51,7 @@ import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import { createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect } from "./modules/stream-effects";
 import { initSDKConfig } from './config';
 import * as createAnalyticsEvent from './modules/util/createAnalyticsEvent';
-const logger = Logger.getLogger(__filename);
+const logger = getLogger(__filename);
 /**
  * The amount of time to wait until firing
  * {@link JitsiMediaDevicesEvents.PERMISSION_PROMPT_IS_SHOWN} event.
@@ -63,45 +65,19 @@ const USER_MEDIA_SLOW_PROMISE_TIMEOUT = 1000;
  * @returns {*} the attributes to attach to analytics events.
  */
 function getAnalyticsAttributesFromOptions(options) {
-    const attributes = {
-        'audio_requested': options.devices.includes('audio'),
-        'video_requested': options.devices.includes('video'),
-        'screen_sharing_requested': options.devices.includes('desktop')
-    };
+    const attributes = {};
+    attributes['audio_requested'] = options.devices.includes('audio');
+    attributes['video_requested'] = options.devices.includes('video');
+    attributes['screen_sharing_requested'] = options.devices.includes('desktop');
     if (attributes.video_requested) {
         attributes.resolution = options.resolution;
     }
     return attributes;
 }
 /**
- * Tries to deal with the following problem: {@code JitsiMeetJS} is not only
- * this module, it's also a global (i.e. attached to {@code window}) namespace
- * for all globals of the projects in the Jitsi Meet family. If lib-jitsi-meet
- * is loaded through an HTML {@code script} tag, {@code JitsiMeetJS} will
- * automatically be attached to {@code window} by webpack. Unfortunately,
- * webpack's source code does not check whether the global variable has already
- * been assigned and overwrites it. Which is OK for the module
- * {@code JitsiMeetJS} but is not OK for the namespace {@code JitsiMeetJS}
- * because it may already contain the values of other projects in the Jitsi Meet
- * family. The solution offered here works around webpack by merging all
- * existing values of the namespace {@code JitsiMeetJS} into the module
- * {@code JitsiMeetJS}.
- *
- * @param {Object} module - The module {@code JitsiMeetJS} (which will be
- * exported and may be attached to {@code window} by webpack later on).
- * @private
- * @returns {Object} - A {@code JitsiMeetJS} module which contains all existing
- * value of the namespace {@code JitsiMeetJS} (if any).
+ * The public API of the Jitsi Meet library (a.k.a. {@code SariskaMediaTransport}).
  */
-function _mergeNamespaceAndModule(module) {
-    return (typeof window.SariskaMediaTransport === 'object'
-        ? Object.assign({}, window.SariskaMediaTransport, module)
-        : module);
-}
-/**
- * The public API of the Jitsi Meet library (a.k.a. {@code JitsiMeetJS}).
- */
-export default _mergeNamespaceAndModule({
+export default {
     version: '{#COMMIT_HASH#}',
     JitsiConnection,
     /**
@@ -119,7 +95,6 @@ export default _mergeNamespaceAndModule({
         createVirtualBackgroundEffect
     },
     constants: {
-        participantConnectionStatus: ParticipantConnectionStatus,
         recording: recordingConstants,
         sipVideoGW: VideoSIPGWConstants,
         transcriptionStatus: JitsiTranscriptionStatus,
@@ -149,23 +124,18 @@ export default _mergeNamespaceAndModule({
         this.init(options);
     },
     init(options = {}) {
-        options = Object.assign(Object.assign({}, initSDKConfig), options);
-        Settings.init(options.externalStorage);
-        Statistics.init(options);
-        // Multi-stream is supported only on endpoints running in Unified plan mode and the flag to disable unified
-        // plan also needs to be taken into consideration.
-        if (typeof options.enableUnifiedOnChrome !== 'undefined' && options.flags) {
-            options.flags.enableUnifiedOnChrome = options.enableUnifiedOnChrome;
-        }
+        let newOptions = Object.assign(Object.assign({}, initSDKConfig), options);
+        Settings.init(newOptions.externalStorage);
+        Statistics.init(newOptions);
+        const flags = newOptions.flags || {};
         // Configure the feature flags.
-        FeatureFlags.init(options.flags || {});
+        FeatureFlags.init(flags);
         // Initialize global window.connectionTimes
         // FIXME do not use 'window'
         if (!window.connectionTimes) {
             window.connectionTimes = {};
         }
         if (options.enableAnalyticsLogging !== true) {
-            logger.warn('Analytics disabled, disposing.');
             this.analytics.dispose();
         }
         if (options.enableWindowOnErrorHandler) {
@@ -288,6 +258,7 @@ export default _mergeNamespaceAndModule({
         const { firePermissionPromptIsShownEvent, fireSlowPromiseEvent } = options, restOptions = __rest(options, ["firePermissionPromptIsShownEvent", "fireSlowPromiseEvent"]);
         const firePermissionPrompt = firePermissionPromptIsShownEvent || oldfirePermissionPromptIsShownEvent;
         if (firePermissionPrompt && !RTC.arePermissionsGrantedForAvailableDevices()) {
+            // @ts-ignore
             JitsiMediaDevices.emitEvent(JitsiMediaDevicesEvents.PERMISSION_PROMPT_IS_SHOWN, browser.getName());
         }
         else if (fireSlowPromiseEvent) {
@@ -308,15 +279,11 @@ export default _mergeNamespaceAndModule({
             window.connectionTimes['obtainPermissions.end']
                 = window.performance.now();
             Statistics.sendAnalytics(createGetUserMediaEvent('success', getAnalyticsAttributesFromOptions(restOptions)));
-            if (!RTC.options.disableAudioLevels) {
+            if (this.isCollectingLocalStats()) {
                 for (let i = 0; i < tracks.length; i++) {
                     const track = tracks[i];
-                    const mStream = track.getOriginalStream();
                     if (track.getType() === MediaType.AUDIO) {
-                        Statistics.startLocalStats(mStream, track.setAudioLevel.bind(track));
-                        track.addEventListener(JitsiTrackEvents.LOCAL_TRACK_STOPPED, () => {
-                            Statistics.stopLocalStats(mStream);
-                        });
+                        Statistics.startLocalStats(track, track.setAudioLevel.bind(track));
                     }
                 }
             }
@@ -455,8 +422,7 @@ export default _mergeNamespaceAndModule({
      * @param {boolean} True if stats are being collected for local tracks.
      */
     isCollectingLocalStats() {
-        return Statistics.audioLevelsEnabled
-            && LocalStatsCollector.isLocalStatsSupported();
+        return Statistics.audioLevelsEnabled && LocalStatsCollector.isLocalStatsSupported();
     },
     /**
      * Executes callback with list of media devices connected.
@@ -483,12 +449,13 @@ export default _mergeNamespaceAndModule({
     /**
      * Informs lib-jitsi-meet about the current network status.
      *
-     * @param {boolean} isOnline - {@code true} if the internet connectivity is online or {@code false}
+     * @param {object} state - The network info state.
+     * @param {boolean} state.isOnline - {@code true} if the internet connectivity is online or {@code false}
      * otherwise.
      */
-    setNetworkInfo({ isOnline }) {
+    setNetworkInfo({ isOnline, networkType, details }) {
         Statistics.sendAnalytics(createAnalyticsEvent.createNetworkInfoEvent({
-            isOnline
+            isOnline, networkType, details
         }));
         NetworkInfo.updateNetworkInfo({ isOnline });
     },
@@ -521,4 +488,4 @@ export default _mergeNamespaceAndModule({
         ScriptUtil,
         browser
     }
-});
+};

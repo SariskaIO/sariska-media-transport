@@ -1,7 +1,8 @@
-/* global $ */
-import { b64_sha1, Strophe } from 'strophe.js'; // eslint-disable-line camelcase
+import $ from 'jquery';
+import { Strophe } from 'strophe.js'; // eslint-disable-line camelcase
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import Listenable from '../util/Listenable';
+import sha1 from './sha1';
 /**
  * The property
  */
@@ -30,7 +31,7 @@ function generateSha(identities, features) {
         + (idx === 0 ? '' : '/')
         + (identity[key] ? identity[key] : ''), '')}<`, '');
     const sortedFeatures = features.sort().reduce((tmp, feature) => `${tmp + feature}<`, '');
-    return b64_sha1(sortedIdentities + sortedFeatures);
+    return sha1.b64_sha1(sortedIdentities + sortedFeatures);
 }
 /**
  * Parses the disco-info node and returns the sets of features and identities.

@@ -206,10 +206,18 @@ export default class XmppConnection extends Listenable {
     /**
      * See {@link Strophe.Connection.addHandler}
      *
-     * @returns {void}
+     * @returns {Object} - handler for the connection.
      */
     addHandler(...args) {
-        this._stropheConn.addHandler(...args);
+        return this._stropheConn.addHandler(...args);
+    }
+    /**
+     * See {@link Strophe.Connection.deleteHandler}
+     *
+     * @returns {void}
+     */
+    deleteHandler(...args) {
+        this._stropheConn.deleteHandler(...args);
     }
     /* eslint-disable max-params */
     /**
@@ -417,7 +425,9 @@ export default class XmppConnection extends Listenable {
      * @returns {void}
      */
     send(stanza) {
+        var _a, _b, _c;
         if (!this.connected) {
+            logger.error(`Trying to send stanza while not connected. Status:${this._status} Proto:${this.isUsingWebSocket ? (_c = (_b = (_a = this._stropheConn) === null || _a === void 0 ? void 0 : _a._proto) === null || _b === void 0 ? void 0 : _b.socket) === null || _c === void 0 ? void 0 : _c.readyState : 'bosh'}`);
             throw new Error('Not connected');
         }
         this._stropheConn.send(stanza);

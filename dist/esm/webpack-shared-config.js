@@ -2,16 +2,16 @@
 const path = require('path');
 const process = require('process');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-const { ProvidePlugin } = require('webpack');
+const { ProvidePlugin, IgnorePlugin } = require('webpack');
 const webpack = require('webpack');
 module.exports = (minimize, analyzeBundle) => {
     return {
         // The inline-source-map is used to allow debugging the unit tests with Karma
         devtool: minimize ? 'source-map' : 'inline-source-map',
         resolve: {
-            extensions: ['.js', '.ts'],
+            extensions: ['', '.js', '.ts'],
             alias: {
-                $: "./dom/jquery.js"
+                'jquery': require.resolve('jquery/dist/jquery.slim.min.js')
             }
         },
         mode: minimize ? 'production' : 'development',
@@ -69,10 +69,11 @@ module.exports = (minimize, analyzeBundle) => {
         },
         performance: {
             hints: minimize ? 'error' : false,
-            maxAssetSize: 850 * 1024,
-            maxEntrypointSize: 850 * 1024
+            maxAssetSize: 900 * 1024,
+            maxEntrypointSize: 900 * 1024
         },
         plugins: [
+            new IgnorePlugin({ resourceRegExp: /^(@xmldom\/xmldom|ws)$/ }),
             analyzeBundle
                 && new BundleAnalyzerPlugin({
                     analyzerMode: 'disabled',

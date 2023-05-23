@@ -1,3 +1,6 @@
+/**
+ * @type Class
+ */
 import { getLogger } from '@jitsi/logger';
 import { TYPE_OPERATIONAL, TYPE_PAGE, TYPE_TRACK, TYPE_UI } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';

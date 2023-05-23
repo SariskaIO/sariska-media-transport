@@ -1,7 +1,11 @@
+/**
+ * @type Class
+ */
 import EventEmitter from 'events';
 
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
 import JitsiTrackError from '../../JitsiTrackError';
+import { JitsiTrackEvents } from '../../JitsiTrackEvents';
 import { FEEDBACK } from '../../service/statistics/AnalyticsEvents';
 import * as StatisticsEvents from '../../service/statistics/Events';
 import browser from '../browser';
@@ -70,7 +74,6 @@ function _initCallStatsBackend(options) {
         userName: options.userName,
         aliasName: options.aliasName,
         applicationName: options.applicationName,
-        getWiFiStatsMethod: options.getWiFiStatsMethod,
         confID: options.confID,
         siteID: options.siteID,
         configParams: options.configParams
@@ -163,7 +166,7 @@ export default function Statistics(xmpp, options) {
     this.options = options || {};
 
     this.callStatsIntegrationEnabled
-        = this.options.callStatsID && this.options.callStatsSecret && this.options.enableCallStats
+        = this.options.callStatsID && this.options.callStatsSecret
 
             // Even though AppID and AppSecret may be specified, the integration
             // of callstats.io may be disabled because of globally-disallowed
@@ -239,10 +242,47 @@ Statistics.prototype.startRemoteStats = function(peerconnection) {
 
 Statistics.localStats = [];
 
-Statistics.startLocalStats = function(stream, callback) {
+Statistics.startLocalStats = function(track, callback) {
+    if (browser.isIosBrowser()) {
+        // On iOS browsers audio is lost if the audio input device is in use by another app
+        // https://bugs.webkit.org/show_bug.cgi?id=233473
+        // The culprit was using the AudioContext, so now we close the AudioContext during
+        // the track being muted, and re-instantiate it afterwards.
+        track.addEventListener(
+        JitsiTrackEvents.NO_DATA_FROM_SOURCE,
+
+        /**
+         * Closes AudioContext on no audio data, and enables it on data received again.
+         *
+         * @param {boolean} value - Whether we receive audio data or not.
+         */
+        async value => {
+            if (value) {
+                for (const localStat of Statistics.localStats) {
+                    localStat.stop();
+                }
+
+                await LocalStats.disconnectAudioContext();
+            } else {
+                LocalStats.connectAudioContext();
+                for (const localStat of Statistics.localStats) {
+                    localStat.start();
+                }
+            }
+        });
+    }
+
     if (!Statistics.audioLevelsEnabled) {
         return;
     }
+
+    track.addEventListener(
+        JitsiTrackEvents.LOCAL_TRACK_STOPPED,
+        () => {
+            Statistics.stopLocalStats(track);
+        });
+
+    const stream = track.getOriginalStream();
     const localStats = new LocalStats(stream, Statistics.audioLevelsInterval,
         callback);
 
@@ -389,10 +429,12 @@ Statistics.prototype.dispose = function() {
     }
 };
 
-Statistics.stopLocalStats = function(stream) {
+Statistics.stopLocalStats = function(track) {
     if (!Statistics.audioLevelsEnabled) {
         return;
     }
+
+    const stream = track.getOriginalStream();
 
     for (let i = 0; i < Statistics.localStats.length; i++) {
         if (Statistics.localStats[i].stream === stream) {
@@ -575,14 +617,15 @@ Statistics.prototype.sendScreenSharingEvent
  * Notifies the statistics module that we are now the dominant speaker of the
  * conference.
  * @param {String} roomJid - The room jid where the speaker event occurred.
+ * @param {boolean} silence - Whether the dominant speaker is silent or not.
  */
-Statistics.prototype.sendDominantSpeakerEvent = function(roomJid) {
+Statistics.prototype.sendDominantSpeakerEvent = function(roomJid, silence) {
     for (const cs of this.callsStatsInstances.values()) {
         cs.sendDominantSpeakerEvent();
     }
 
     // xmpp send dominant speaker event
-    this.xmpp.sendDominantSpeakerEvent(roomJid);
+    this.xmpp.sendDominantSpeakerEvent(roomJid, silence);
 };
 
 /**

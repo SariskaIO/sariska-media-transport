@@ -4,7 +4,7 @@ import Listenable from '../util/Listenable';
 /**
  * Mock {@link ChatRoom}.
  */
-export class MockChatRoom {
+export class MockChatRoom extends Listenable {
     /**
      * {@link ChatRoom.addPresenceListener}.
      */

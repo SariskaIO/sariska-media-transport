@@ -5,10 +5,6 @@ export var MediaType;
      */
     MediaType["AUDIO"] = "audio";
     /**
-     * The presenter type.
-     */
-    MediaType["PRESENTER"] = "presenter";
-    /**
      * The video type.
      */
     MediaType["VIDEO"] = "video";

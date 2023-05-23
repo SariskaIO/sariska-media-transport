@@ -22,7 +22,9 @@ class RecordingManager {
         this._sessions = {};
         this._chatRoom = chatRoom;
         this.onPresence = this.onPresence.bind(this);
+        this.onMemberLeft = this.onMemberLeft.bind(this);
         this._chatRoom.eventEmitter.addListener(XMPPEvents.PRESENCE_RECEIVED, this.onPresence);
+        this._chatRoom.eventEmitter.addListener(XMPPEvents.MUC_MEMBER_LEFT, this.onMemberLeft);
     }
     /**
      * Finds an existing recording session by session ID.
@@ -32,6 +34,21 @@ class RecordingManager {
      */
     getSession(sessionID) {
         return this._sessions[sessionID];
+    }
+    /**
+     * Find a session with a specific jibri JID.
+     *
+     * @param {string} jibriJid the JID to search for.
+     * @returns
+     */
+    getSessionByJibriJid(jibriJid) {
+        let s;
+        Object.values(this._sessions).forEach(session => {
+            if (session.getJibriJid() === jibriJid) {
+                s = session;
+            }
+        });
+        return s;
     }
     /**
      * Callback to invoke to parse through a presence update to find recording
@@ -51,6 +68,22 @@ class RecordingManager {
         }
         else if (fromHiddenDomain) {
             this._handleJibriPresence(presence);
+        }
+    }
+    /**
+     * Handle a participant leaving the room.
+     * @param {string} jid the JID of the participant that left.
+     */
+    onMemberLeft(jid) {
+        const session = this.getSessionByJibriJid(jid);
+        if (session) {
+            const prevStatus = session.getStatus();
+            // Setting to ''
+            session.setStatus('');
+            session.setJibriJid(null);
+            if (session.getStatus() !== prevStatus) {
+                this._emitSessionUpdate(session);
+            }
         }
     }
     /**
@@ -183,7 +216,7 @@ class RecordingManager {
         if (!session) {
             session = this._createSession(sessionID, status, recordingMode);
         }
-        session.setStatus(status);
+        session.setStatusFromJicofo(status);
         if (error) {
             session.setError(error);
         }
@@ -204,8 +237,11 @@ class RecordingManager {
         }
         let session = this.getSession(sessionID);
         if (!session) {
-            session = this._createSession(sessionID, '', mode);
+            session = this._createSession(sessionID, 'on', mode);
         }
+        // When a jibri is present the status is always 'on';
+        session.setStatus('on');
+        session.setJibriJid(presence.getAttribute('from'));
         session.setLiveStreamViewURL(liveStreamViewURL);
         this._emitSessionUpdate(session);
     }

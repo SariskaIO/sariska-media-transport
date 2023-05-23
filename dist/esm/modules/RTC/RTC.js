@@ -1,10 +1,8 @@
 import { getLogger } from '@jitsi/logger';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
-import BridgeVideoType from '../../service/RTC/BridgeVideoType';
 import { MediaType } from '../../service/RTC/MediaType';
 import RTCEvents from '../../service/RTC/RTCEvents';
 import browser from '../browser';
-import FeatureFlags from '../flags/FeatureFlags';
 import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import Listenable from '../util/Listenable';
 import { safeCounterIncrement } from '../util/MathUtil';
@@ -94,13 +92,6 @@ export default class RTC extends Listenable {
          */
         this._lastN = undefined;
         /**
-         * Defines the last N endpoints list. It can be null or an array once
-         * initialised with a channel last N event.
-         * @type {Array<string>|null}
-         * @private
-         */
-        this._lastNEndpoints = null;
-        /**
          * Defines the forwarded sources list. It can be null or an array once initialised with a channel forwarded
          * sources event.
          *
@@ -108,35 +99,10 @@ export default class RTC extends Listenable {
          * @private
          */
         this._forwardedSources = null;
-        /**
-         * The number representing the maximum video height the local client
-         * should receive from the bridge.
-         *
-         * @type {number|undefined}
-         * @private
-         */
-        this._maxFrameHeight = undefined;
-        /**
-         * The endpoint IDs of currently selected participants.
-         *
-         * @type {Array}
-         * @private
-         */
-        this._selectedEndpoints = null;
-        // The last N change listener.
-        this._lastNChangeListener = this._onLastNChanged.bind(this);
         // The forwarded sources change listener.
         this._forwardedSourcesChangeListener = this._onForwardedSourcesChanged.bind(this);
         this._onDeviceListChanged = this._onDeviceListChanged.bind(this);
-        this._updateAudioOutputForAudioTracks
-            = this._updateAudioOutputForAudioTracks.bind(this);
-        /**
-         * The default video type assumed by the bridge.
-         * @deprecated this will go away with multiple streams support
-         * @type {BridgeVideoType}
-         * @private
-         */
-        this._videoType = BridgeVideoType.NONE;
+        this._updateAudioOutputForAudioTracks = this._updateAudioOutputForAudioTracks.bind(this);
         // Switch audio output device on all remote audio tracks. Local audio
         // tracks handle this event by themselves.
         if (RTCUtils.isDeviceChangeAvailable('output')) {
@@ -169,10 +135,10 @@ export default class RTC extends Listenable {
     /**
      * Creates the local MediaStreams.
      * @param {object} [options] Optional parameters.
-     * @param {array} options.devices The devices that will be requested.
-     * @param {string} options.resolution Resolution constraints.
-     * @param {string} options.cameraDeviceId
-     * @param {string} options.micDeviceId
+     * @param {Array=} options.devices The devices that will be requested.
+     * @param {string=} options.resolution Resolution constraints.
+     * @param {string=} options.cameraDeviceId
+     * @param {string=} options.micDeviceId
      * @returns {*} Promise object that will receive the new JitsiTracks
      */
     static obtainAudioAndVideoPermissions(options) {
@@ -188,7 +154,7 @@ export default class RTC extends Listenable {
      * @param {string} [wsUrl] WebSocket URL.
      */
     initializeBridgeChannel(peerconnection, wsUrl) {
-        this._channel = new BridgeChannel(peerconnection, wsUrl, this.eventEmitter);
+        this._channel = new BridgeChannel(peerconnection, wsUrl, this.eventEmitter, this.conference);
         this._channelOpenListener = () => {
             const logError = (error, msgType, value) => {
                 GlobalOnErrorHandler.callErrorHandler(error);
@@ -198,26 +164,10 @@ export default class RTC extends Listenable {
             // simulcast, we want the notification to trigger even if userJid is undefined, or null.
             if (this._receiverVideoConstraints) {
                 try {
-                    this._channel.sendNewReceiverVideoConstraintsMessage(this._receiverVideoConstraints);
+                    this._channel.sendReceiverVideoConstraintsMessage(this._receiverVideoConstraints);
                 }
                 catch (error) {
                     logError(error, 'ReceiverVideoConstraints', this._receiverVideoConstraints);
-                }
-            }
-            if (this._selectedEndpoints) {
-                try {
-                    this._channel.sendSelectedEndpointsMessage(this._selectedEndpoints);
-                }
-                catch (error) {
-                    logError(error, 'SelectedEndpointsChangedEvent', this._selectedEndpoints);
-                }
-            }
-            if (typeof this._maxFrameHeight !== 'undefined') {
-                try {
-                    this._channel.sendReceiverVideoConstraintMessage(this._maxFrameHeight);
-                }
-                catch (error) {
-                    logError(error, 'ReceiverVideoConstraint', this._maxFrameHeight);
                 }
             }
             if (typeof this._lastN !== 'undefined' && this._lastN !== -1) {
@@ -228,22 +178,10 @@ export default class RTC extends Listenable {
                     logError(error, 'LastNChangedEvent', this._lastN);
                 }
             }
-            if (!FeatureFlags.isSourceNameSignalingEnabled()) {
-                try {
-                    this._channel.sendVideoTypeMessage(this._videoType);
-                }
-                catch (error) {
-                    logError(error, 'VideoTypeMessage', this._videoType);
-                }
-            }
         };
         this.addListener(RTCEvents.DATA_CHANNEL_OPEN, this._channelOpenListener);
-        // Add Last N change listener.
-        this.addListener(RTCEvents.LASTN_ENDPOINT_CHANGED, this._lastNChangeListener);
-        if (FeatureFlags.isSourceNameSignalingEnabled()) {
-            // Add forwarded sources change listener.
-            this.addListener(RTCEvents.FORWARDED_SOURCES_CHANGED, this._forwardedSourcesChangeListener);
-        }
+        // Add forwarded sources change listener.
+        this.addListener(RTCEvents.FORWARDED_SOURCES_CHANGED, this._forwardedSourcesChangeListener);
     }
     /**
      * Callback invoked when the list of known audio and video devices has
@@ -257,20 +195,6 @@ export default class RTC extends Listenable {
         this._updateAudioOutputForAudioTracks(RTCUtils.getAudioOutputDevice());
     }
     /**
-     * Receives events when Last N had changed.
-     * @param {array} lastNEndpoints The new Last N endpoints.
-     * @private
-     */
-    _onLastNChanged(lastNEndpoints = []) {
-        const oldLastNEndpoints = this._lastNEndpoints || [];
-        let leavingLastNEndpoints = [];
-        let enteringLastNEndpoints = [];
-        this._lastNEndpoints = lastNEndpoints;
-        leavingLastNEndpoints = oldLastNEndpoints.filter(id => !this.isInLastN(id));
-        enteringLastNEndpoints = lastNEndpoints.filter(id => oldLastNEndpoints.indexOf(id) === -1);
-        this.conference.eventEmitter.emit(JitsiConferenceEvents.LAST_N_ENDPOINTS_CHANGED, leavingLastNEndpoints, enteringLastNEndpoints);
-    }
-    /**
      * Receives events when forwarded sources had changed.
      *
      * @param {array} forwardedSources The new forwarded sources.
@@ -280,10 +204,13 @@ export default class RTC extends Listenable {
         const oldForwardedSources = this._forwardedSources || [];
         let leavingForwardedSources = [];
         let enteringForwardedSources = [];
+        const timestamp = Date.now();
         this._forwardedSources = forwardedSources;
         leavingForwardedSources = oldForwardedSources.filter(sourceName => !this.isInForwardedSources(sourceName));
         enteringForwardedSources = forwardedSources.filter(sourceName => oldForwardedSources.indexOf(sourceName) === -1);
-        this.conference.eventEmitter.emit(JitsiConferenceEvents.FORWARDED_SOURCES_CHANGED, leavingForwardedSources, enteringForwardedSources, Date.now());
+        logger.debug(`Fowarded sources changed leaving=${leavingForwardedSources}, entering=`
+            + `${enteringForwardedSources} at ${timestamp}`);
+        this.conference.eventEmitter.emit(JitsiConferenceEvents.FORWARDED_SOURCES_CHANGED, leavingForwardedSources, enteringForwardedSources, timestamp);
     }
     /**
      * Should be called when current media session ends and after the
@@ -317,40 +244,10 @@ export default class RTC extends Listenable {
      * is established.
      * @param {*} constraints
      */
-    setNewReceiverVideoConstraints(constraints) {
+    setReceiverVideoConstraints(constraints) {
         this._receiverVideoConstraints = constraints;
         if (this._channel && this._channel.isOpen()) {
-            this._channel.sendNewReceiverVideoConstraintsMessage(constraints);
-        }
-    }
-    /**
-     * Sets the maximum video size the local participant should receive from
-     * remote participants. Will cache the value and send it through the channel
-     * once it is created.
-     *
-     * @param {number} maxFrameHeightPixels the maximum frame height, in pixels,
-     * this receiver is willing to receive.
-     * @returns {void}
-     */
-    setReceiverVideoConstraint(maxFrameHeight) {
-        this._maxFrameHeight = maxFrameHeight;
-        if (this._channel && this._channel.isOpen()) {
-            this._channel.sendReceiverVideoConstraintMessage(maxFrameHeight);
-        }
-    }
-    /**
-     * Sets the video type and availability for the local video source.
-     *
-     * @param {string} videoType 'camera' for camera, 'desktop' for screenshare and
-     * 'none' for when local video source is muted or removed from the peerconnection.
-     * @returns {void}
-     */
-    setVideoType(videoType) {
-        if (this._videoType !== videoType) {
-            this._videoType = videoType;
-            if (this._channel && this._channel.isOpen()) {
-                this._channel.sendVideoTypeMessage(videoType);
-            }
+            this._channel.sendReceiverVideoConstraintsMessage(constraints);
         }
     }
     /**
@@ -361,23 +258,6 @@ export default class RTC extends Listenable {
     sendSourceVideoType(sourceName, videoType) {
         if (this._channel && this._channel.isOpen()) {
             this._channel.sendSourceVideoTypeMessage(sourceName, videoType);
-        }
-    }
-    /**
-     * Elects the participants with the given ids to be the selected
-     * participants in order to always receive video for this participant (even
-     * when last n is enabled). If there is no channel we store it and send it
-     * through the channel once it is created.
-     *
-     * @param {Array<string>} ids - The user ids.
-     * @throws NetworkError or InvalidStateError or Error if the operation
-     * fails.
-     * @returns {void}
-     */
-    selectEndpoints(ids) {
-        this._selectedEndpoints = ids;
-        if (this._channel && this._channel.isOpen()) {
-            this._channel.sendSelectedEndpointsMessage(ids);
         }
     }
     /**
@@ -425,8 +305,8 @@ export default class RTC extends Listenable {
             logger.debug('E2EE - setting insertable streams constraints');
             pcConfig.encodedInsertableStreams = true;
         }
-        const supportsSdpSemantics = browser.isReactNative()
-            || (browser.isChromiumBased() && !options.usesUnifiedPlan);
+        // TODO: remove this.
+        const supportsSdpSemantics = browser.isChromiumBased() && !options.usesUnifiedPlan;
         if (supportsSdpSemantics) {
             logger.debug('WebRTC application is running in plan-b mode');
             pcConfig.sdpSemantics = 'plan-b';
@@ -559,7 +439,7 @@ export default class RTC extends Listenable {
     */
     setVideoMute(value) {
         const mutePromises = [];
-        this.getLocalTracks(MediaType.VIDEO).concat(this.getLocalTracks(MediaType.PRESENTER))
+        this.getLocalTracks(MediaType.VIDEO)
             .forEach(videoTrack => {
             // this is a Promise
             mutePromises.push(value ? videoTrack.mute() : videoTrack.unmute());
@@ -586,20 +466,6 @@ export default class RTC extends Listenable {
      */
     static attachMediaStream(elSelector, stream) {
         return RTCUtils.attachMediaStream(elSelector, stream);
-    }
-    /**
-     * Returns the id of the given stream.
-     * @param {MediaStream} stream
-     */
-    static getStreamID(stream) {
-        return RTCUtils.getStreamID(stream);
-    }
-    /**
-     * Returns the id of the given track.
-     * @param {MediaStreamTrack} track
-     */
-    static getTrackID(track) {
-        return RTCUtils.getTrackID(track);
     }
     /**
      * Returns true if retrieving the list of input devices is supported
@@ -682,7 +548,7 @@ export default class RTC extends Listenable {
      * @returns {boolean}
      */
     static isUserStream(stream) {
-        return RTC.isUserStreamById(RTCUtils.getStreamID(stream));
+        return RTC.isUserStreamById(stream.id);
     }
     /**
      * Returns <tt>true<tt/> if a WebRTC MediaStream identified by given stream
@@ -730,7 +596,6 @@ export default class RTC extends Listenable {
         if (this._channel) {
             this._channel.close();
             this._channel = null;
-            this.removeListener(RTCEvents.LASTN_ENDPOINT_CHANGED, this._lastNChangeListener);
         }
     }
     /* eslint-disable max-params */
@@ -795,16 +660,6 @@ export default class RTC extends Listenable {
             }
             this.eventEmitter.emit(RTCEvents.LASTN_VALUE_CHANGED, value);
         }
-    }
-    /**
-     * Indicates if the endpoint id is currently included in the last N.
-     * @param {string} id The endpoint id that we check for last N.
-     * @returns {boolean} true if the endpoint id is in the last N or if we
-     * don't have bridge channel support, otherwise we return false.
-     */
-    isInLastN(id) {
-        return !this._lastNEndpoints // lastNEndpoints not initialised yet.
-            || this._lastNEndpoints.indexOf(id) > -1;
     }
     /**
      * Indicates if the source name is currently included in the forwarded sources.

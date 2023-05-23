@@ -1,6 +1,5 @@
-/* global $ */
-
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { $iq, Strophe } from 'strophe.js';
 
 import { MediaType } from '../../service/RTC/MediaType';
@@ -233,9 +232,7 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
             break;
         }
         case 'content-modify': {
-            const height = $(iq).find('jingle>content[name="video"]>max-frame-height');
-
-            logger.debug(`Received ${action} from ${fromJid} with a max-frame-height=${height?.text()}`);
+            logger.debug(`Received ${action} from ${fromJid}`);
             sess.modifyContents($(iq).find('>jingle'));
             break;
         }

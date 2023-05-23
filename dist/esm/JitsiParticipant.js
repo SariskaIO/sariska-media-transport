@@ -1,6 +1,5 @@
 import { Strophe } from 'strophe.js';
 import * as JitsiConferenceEvents from './JitsiConferenceEvents';
-import { ParticipantConnectionStatus } from './modules/connectivity/ParticipantConnectionStatus';
 import { MediaType } from './service/RTC/MediaType';
 /**
  * Represents a participant in (i.e. a member of) a conference.
@@ -33,14 +32,66 @@ export default class JitsiParticipant {
         this._status = status;
         this._hidden = hidden;
         this._statsID = statsID;
-        this._connectionStatus = ParticipantConnectionStatus.ACTIVE;
         this._properties = {};
         this._identity = identity;
         this._isReplacing = isReplacing;
         this._isReplaced = isReplaced;
         this._features = new Set();
+        /**
+         * Remote sources associated with the participant in the following format.
+         * Map<mediaType, Map<sourceName, sourceInfo>>
+         *
+         * mediaType - 'audio' or 'video'.
+         * sourceName - name of the remote source.
+         * sourceInfo: {
+         *   muted: boolean;
+         *   videoType: string;
+         * }
+         */
+        this._sources = new Map();
     }
-    /* eslint-enable max-params */
+    /**
+     * Determines whether all JitsiTracks which are of a specific MediaType and which belong to this
+     * JitsiParticipant are muted.
+     *
+     * @param {MediaType} mediaType - The MediaType of the JitsiTracks to be checked.
+     * @private
+     * @returns {Boolean} True if all JitsiTracks which are of the specified mediaType and which belong to this
+     * JitsiParticipant are muted; otherwise, false.
+     */
+    _isMediaTypeMuted(mediaType) {
+        return this.getTracks().reduce((muted, track) => muted && (track.getType() !== mediaType || track.isMuted()), true);
+    }
+    /**
+     * Sets source info.
+     * @param {MediaType} mediaType The media type, 'audio' or 'video'.
+     * @param {boolean} muted The new muted state.
+     * @param {string} sourceName The name of the source.
+     * @param {string} videoType The video type of the source.
+     * @returns {void}
+     */
+    _setSources(mediaType, muted, sourceName, videoType) {
+        let sourceByMediaType = this._sources.get(mediaType);
+        const sourceInfo = {
+            muted,
+            videoType
+        };
+        if (sourceByMediaType === null || sourceByMediaType === void 0 ? void 0 : sourceByMediaType.size) {
+            sourceByMediaType.set(sourceName, sourceInfo);
+            return;
+        }
+        sourceByMediaType = new Map();
+        sourceByMediaType.set(sourceName, sourceInfo);
+        this._sources.set(mediaType, sourceByMediaType);
+    }
+    /**
+     * Returns the bot type for the participant.
+     *
+     * @returns {string|undefined} - The bot type of the participant.
+     */
+    getBotType() {
+        return this._botType;
+    }
     /**
      * @returns {JitsiConference} The conference that this participant belongs
      * to.
@@ -49,54 +100,68 @@ export default class JitsiParticipant {
         return this._conference;
     }
     /**
+     * Returns the connection jid for the participant.
+     *
+     * @returns {string|undefined} - The connection jid of the participant.
+     */
+    getConnectionJid() {
+        return this._connectionJid;
+    }
+    /**
+     * @returns {String} The human-readable display name of this participant.
+     */
+    getDisplayName() {
+        return this._displayName;
+    }
+    /**
+     * Returns a set with the features for the participant.
+     * @returns {Promise<Set<String>, Error>}
+     */
+    getFeatures() {
+        return Promise.resolve(this._features);
+    }
+    /**
+     * @returns {String} The ID of this participant.
+     */
+    getId() {
+        return this._id;
+    }
+    /**
+     * @returns {String} The JID of this participant.
+     */
+    getJid() {
+        return this._jid;
+    }
+    /**
      * Gets the value of a property of this participant.
      */
     getProperty(name) {
         return this._properties[name];
     }
     /**
-     * Checks whether this <tt>JitsiParticipant</tt> has any video tracks which
-     * are muted according to their underlying WebRTC <tt>MediaStreamTrack</tt>
-     * muted status.
-     * @return {boolean} <tt>true</tt> if this <tt>participant</tt> contains any
-     * video <tt>JitsiTrack</tt>s which are muted as defined in
-     * {@link JitsiTrack.isWebRTCTrackMuted}.
+     * @returns {String} The role of this participant.
      */
-    hasAnyVideoTrackWebRTCMuted() {
-        return (this.getTracks().some(jitsiTrack => jitsiTrack.getType() === MediaType.VIDEO
-            && jitsiTrack.isWebRTCTrackMuted()));
+    getRole() {
+        return this._role;
     }
     /**
-     * Updates participant's connection status.
-     * @param {string} state the current participant connection state.
-     * {@link ParticipantConnectionStatus}.
-     * @private
+     * Returns the sources associated with this participant.
+     * @returns Map<string, Map<string, Object>>
      */
-    _setConnectionStatus(status) {
-        this._connectionStatus = status;
+    getSources() {
+        return this._sources;
     }
     /**
-     * Return participant's connectivity status.
-     *
-     * @returns {string} the connection status
-     * <tt>ParticipantConnectionStatus</tt> of the user.
-     * {@link ParticipantConnectionStatus}.
+     * @returns {String} The stats ID of this participant.
      */
-    getConnectionStatus() {
-        return this._connectionStatus;
+    getStatsID() {
+        return this._statsID;
     }
     /**
-     * Sets the value of a property of this participant, and fires an event if
-     * the value has changed.
-     * @name the name of the property.
-     * @value the value to set.
+     * @returns {String} The status of the participant.
      */
-    setProperty(name, value) {
-        const oldValue = this._properties[name];
-        if (value !== oldValue) {
-            this._properties[name] = value;
-            this._conference.eventEmitter.emit(JitsiConferenceEvents.PARTICIPANT_PROPERTY_CHANGED, this, name, oldValue, value);
-        }
+    getStatus() {
+        return this._status;
     }
     /**
      * @returns {Array.<JitsiTrack>} The list of media tracks for this
@@ -114,40 +179,19 @@ export default class JitsiParticipant {
         return this.getTracks().filter(track => track.getType() === mediaType);
     }
     /**
-     * @returns {String} The ID of this participant.
+     * Checks current set features.
+     * @param {String} feature - the feature to check.
+     * @return {boolean} <tt>true</tt> if this <tt>participant</tt> contains the
+     * <tt>feature</tt>.
      */
-    getId() {
-        return this._id;
+    hasFeature(feature) {
+        return this._features.has(feature);
     }
     /**
-     * @returns {String} The JID of this participant.
+     * @returns {Boolean} Whether this participant has muted their audio.
      */
-    getJid() {
-        return this._jid;
-    }
-    /**
-     * @returns {String} The human-readable display name of this participant.
-     */
-    getDisplayName() {
-        return this._displayName;
-    }
-    /**
-     * @returns {String} The stats ID of this participant.
-     */
-    getStatsID() {
-        return this._statsID;
-    }
-    /**
-     * @returns {String} The status of the participant.
-     */
-    getStatus() {
-        return this._status;
-    }
-    /**
-     * @returns {Boolean} Whether this participant is a moderator or not.
-     */
-    isModerator() {
-        return this._role === 'moderator';
+    isAudioMuted() {
+        return this._isMediaTypeMuted(MediaType.AUDIO);
     }
     /**
      * @returns {Boolean} Whether this participant is a hidden participant. Some
@@ -164,14 +208,13 @@ export default class JitsiParticipant {
      */
     isHiddenFromRecorder() {
         var _a, _b;
-        return Boolean((_b = (_a = this._identity) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b['hidden-from-recorder']);
+        return ((_b = (_a = this._identity) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b['hidden-from-recorder']) === 'true';
     }
     /**
-     * @returns {Boolean} Whether this participant replaces another participant
-     * from the meeting.
+     * @returns {Boolean} Whether this participant is a moderator or not.
      */
-    isReplacing() {
-        return this._isReplacing;
+    isModerator() {
+        return this._role === 'moderator';
     }
     /**
      * @returns {Boolean} Wheter this participants will be replaced by another
@@ -181,94 +224,17 @@ export default class JitsiParticipant {
         return this._isReplaced;
     }
     /**
-     * @returns {Boolean} Whether this participant has muted their audio.
+     * @returns {Boolean} Whether this participant replaces another participant
+     * from the meeting.
      */
-    isAudioMuted() {
-        return this._isMediaTypeMuted(MediaType.AUDIO);
-    }
-    /**
-     * Determines whether all JitsiTracks which are of a specific MediaType and
-     * which belong to this JitsiParticipant are muted.
-     *
-     * @param {MediaType} mediaType - The MediaType of the JitsiTracks to be
-     * checked.
-     * @private
-     * @returns {Boolean} True if all JitsiTracks which are of the specified
-     * mediaType and which belong to this JitsiParticipant are muted; otherwise,
-     * false.
-     */
-    _isMediaTypeMuted(mediaType) {
-        return this.getTracks().reduce((muted, track) => muted && (track.getType() !== mediaType || track.isMuted()), true);
+    isReplacing() {
+        return this._isReplacing;
     }
     /**
      * @returns {Boolean} Whether this participant has muted their video.
      */
     isVideoMuted() {
         return this._isMediaTypeMuted(MediaType.VIDEO);
-    }
-    /**
-     * @returns {String} The role of this participant.
-     */
-    getRole() {
-        return this._role;
-    }
-    /**
-     * Sets a new participant role.
-     * @param {String} newRole - the new role.
-     */
-    setRole(newRole) {
-        this._role = newRole;
-    }
-    /**
-     * Sets whether participant is replacing another based on jwt.
-     * @param {String} newIsReplacing - whether is replacing.
-     */
-    setIsReplacing(newIsReplacing) {
-        this._isReplacing = newIsReplacing;
-    }
-    /**
-     * Sets whether participant is being replaced by another based on jwt.
-     * @param {boolean} newIsReplaced - whether is being replaced.
-     */
-    setIsReplaced(newIsReplaced) {
-        this._isReplaced = newIsReplaced;
-    }
-    /**
-     *
-     */
-    supportsDTMF() {
-        return this._supportsDTMF;
-    }
-    /**
-     * Returns a set with the features for the participant.
-     * @returns {Promise<Set<String>, Error>}
-     */
-    getFeatures() {
-        return Promise.resolve(this._features);
-    }
-    /**
-     * Checks current set features.
-     * @param {String} feature - the feature to check.
-     * @return {boolean} <tt>true</tt> if this <tt>participant</tt> contains the
-     * <tt>feature</tt>.
-     */
-    hasFeature(feature) {
-        return this._features.has(feature);
-    }
-    /**
-     * Set new features.
-     * @param {Set<String>|undefined} newFeatures - Sets new features.
-     */
-    setFeatures(newFeatures) {
-        this._features = newFeatures || new Set();
-    }
-    /**
-     * Returns the bot type for the participant.
-     *
-     * @returns {string|undefined} - The bot type of the participant.
-     */
-    getBotType() {
-        return this._botType;
     }
     /**
      * Sets the bot type for the participant.
@@ -278,18 +244,57 @@ export default class JitsiParticipant {
         this._botType = newBotType;
     }
     /**
-     * Returns the connection jid for the participant.
-     *
-     * @returns {string|undefined} - The connection jid of the participant.
-     */
-    getConnectionJid() {
-        return this._connectionJid;
-    }
-    /**
      * Sets the connection jid for the participant.
      * @param {String} newJid - The connection jid to set.
      */
     setConnectionJid(newJid) {
         this._connectionJid = newJid;
+    }
+    /**
+     * Set new features.
+     * @param {Set<String>|undefined} newFeatures - Sets new features.
+     */
+    setFeatures(newFeatures) {
+        this._features = newFeatures || new Set();
+    }
+    /**
+     * Sets whether participant is being replaced by another based on jwt.
+     * @param {boolean} newIsReplaced - whether is being replaced.
+     */
+    setIsReplaced(newIsReplaced) {
+        this._isReplaced = newIsReplaced;
+    }
+    /**
+     * Sets whether participant is replacing another based on jwt.
+     * @param {String} newIsReplacing - whether is replacing.
+     */
+    setIsReplacing(newIsReplacing) {
+        this._isReplacing = newIsReplacing;
+    }
+    /**
+     * Sets the value of a property of this participant, and fires an event if
+     * the value has changed.
+     * @name the name of the property.
+     * @value the value to set.
+     */
+    setProperty(name, value) {
+        const oldValue = this._properties[name];
+        if (value !== oldValue) {
+            this._properties[name] = value;
+            this._conference.eventEmitter.emit(JitsiConferenceEvents.PARTICIPANT_PROPERTY_CHANGED, this, name, oldValue, value);
+        }
+    }
+    /**
+     * Sets a new participant role.
+     * @param {String} newRole - the new role.
+     */
+    setRole(newRole) {
+        this._role = newRole;
+    }
+    /**
+     *
+     */
+    supportsDTMF() {
+        return this._supportsDTMF;
     }
 }

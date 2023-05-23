@@ -1,4 +1,3 @@
-import FeatureFlags from '../flags/FeatureFlags';
 import SDPUtil from './SDPUtil';
 // this could be useful in Array.prototype.
 /**
@@ -144,9 +143,11 @@ SDPDiffer.prototype.toJingle = function (modify) {
             const mediaSsrc = media.ssrcs[ssrcNum];
             const ssrcLines = mediaSsrc.lines;
             const sourceName = SDPUtil.parseSourceNameLine(ssrcLines);
+            const videoType = SDPUtil.parseVideoTypeLine(ssrcLines);
             modify.c('source', { xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0' });
             modify.attrs({
-                name: FeatureFlags.isSourceNameSignalingEnabled() ? sourceName : undefined,
+                name: sourceName,
+                videoType,
                 ssrc: mediaSsrc.ssrc
             });
             // Only MSID attribute is sent

@@ -30,7 +30,11 @@ export default class JitsiConference {
   isJoined: () => boolean;
   isP2PEnabled: () => boolean;
   isP2PTestModeEnabled: () => boolean;
-  leave: () => Promise<unknown>; // TODO:
+  leave: ( reason?: string ) => Promise<unknown>; // TODO:
+  isEndConferenceSupported: () => boolean;
+  end: () => void;
+  getActiveMediaSession: () => JingleSessionPC | undefined;
+  getMediaSessions: () => JingleSessionPC[];
   getName: () => string;
   getConnection: () => JitsiConnection;
   isAuthEnabled: () => boolean;
@@ -66,11 +70,8 @@ export default class JitsiConference {
   isModerator: () => boolean | null;
   lock: ( password: string ) => Promise<unknown | Error>;
   unlock: () => Promise<unknown | Error>;
-  selectParticipant: ( participantId: string ) => void;
-  selectParticipants: ( participantIds: string[] ) => void;
   getLastN: () => number;
   setLastN: ( lastN: number ) => void;
-  isInLastN: ( participantId: string ) => boolean;
   getParticipants: () => JitsiParticipant[];
   getParticipantCount: ( countHidden?: boolean ) => number;
   getParticipantById: ( id: string ) => JitsiParticipant;
@@ -79,7 +80,7 @@ export default class JitsiConference {
   kickParticipant: ( id: string, reason?: string ) => void;
   muteParticipant: ( id: string, mediaType?: MediaType ) => void;
   onMemberJoined: ( jid: string, nick: string, role: string, isHidden: boolean, statsID?: unknown, status?: string, identity?: unknown, botType?: unknown, fullJid?: string, features?: unknown, isReplaceParticipant?: boolean ) => void;
-  onMemberLeft: ( jid: string ) => void;
+  onMemberLeft: ( jid: string, reason?: string ) => void;
   onMemberKicked: ( isSelfPresence: boolean, actorId: string, kickedParticipantId?: string, reason?: string, isReplaceParticipant?: boolean ) => void;
   onLocalRoleChanged: ( role: string ) => void;
   onUserRoleChanged: ( jid: string, role: string ) => void;

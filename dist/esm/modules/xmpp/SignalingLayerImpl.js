@@ -66,79 +66,26 @@ export default class SignalingLayerImpl extends SignalingLayer {
         return false;
     }
     /**
-     * Check is given endpoint has advertised <SourceInfo/> in it's presence which means that the source name signaling
-     * is used by this endpoint.
-     *
-     * @param {EndpointId} endpointId
-     * @returns {boolean}
-     */
-    _doesEndpointSendNewSourceInfo(endpointId) {
-        var _a;
-        const presence = (_a = this.chatRoom) === null || _a === void 0 ? void 0 : _a.getLastPresence(endpointId);
-        return Boolean(presence && presence.find(node => node.tagName === SOURCE_INFO_PRESENCE_ELEMENT));
-    }
-    /**
-     * Sets the <tt>ChatRoom</tt> instance used and binds presence listeners.
-     * @param {ChatRoom} room
-     */
-    setChatRoom(room) {
-        const oldChatRoom = this.chatRoom;
-        this.chatRoom = room;
-        if (oldChatRoom) {
-            oldChatRoom.removePresenceListener('audiomuted', this._audioMuteHandler);
-            oldChatRoom.removePresenceListener('videomuted', this._videoMuteHandler);
-            oldChatRoom.removePresenceListener('videoType', this._videoTypeHandler);
-            if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                this._sourceInfoHandler
-                    && oldChatRoom.removePresenceListener(SOURCE_INFO_PRESENCE_ELEMENT, this._sourceInfoHandler);
-                this._memberLeftHandler
-                    && oldChatRoom.removeEventListener(XMPPEvents.MUC_MEMBER_LEFT, this._memberLeftHandler);
-            }
-        }
-        if (room) {
-            if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                this._bindChatRoomEventHandlers(room);
-                this._addLocalSourceInfoToPresence();
-            }
-            else {
-                // TODO the logic below has been duplicated in _bindChatRoomEventHandlers, clean this up once
-                //  the new impl has been tested well enough
-                // SignalingEvents
-                this._audioMuteHandler = (node, from) => {
-                    this.eventEmitter.emit(SignalingEvents.PEER_MUTED_CHANGED, from, MediaType.AUDIO, node.value === 'true');
-                };
-                room.addPresenceListener('audiomuted', this._audioMuteHandler);
-                this._videoMuteHandler = (node, from) => {
-                    this.eventEmitter.emit(SignalingEvents.PEER_MUTED_CHANGED, from, MediaType.VIDEO, node.value === 'true');
-                };
-                room.addPresenceListener('videomuted', this._videoMuteHandler);
-                this._videoTypeHandler = (node, from) => {
-                    this.eventEmitter.emit(SignalingEvents.PEER_VIDEO_TYPE_CHANGED, from, node.value);
-                };
-                room.addPresenceListener('videoType', this._videoTypeHandler);
-            }
-        }
-    }
-    /**
      * Binds event listeners to the chat room instance.
      * @param {ChatRoom} room
      * @private
      * @returns {void}
      */
     _bindChatRoomEventHandlers(room) {
+        // Add handlers for 'audiomuted', 'videomuted' and 'videoType' fields in presence in order to support interop
+        // with very old versions of mobile clients and jigasi that do not support source-name signaling.
         const emitAudioMutedEvent = (endpointId, muted) => {
             this.eventEmitter.emit(SignalingEvents.PEER_MUTED_CHANGED, endpointId, MediaType.AUDIO, muted);
         };
-        const emitVideoMutedEvent = (endpointId, muted) => {
-            this.eventEmitter.emit(SignalingEvents.PEER_MUTED_CHANGED, endpointId, MediaType.VIDEO, muted);
-        };
-        // SignalingEvents
         this._audioMuteHandler = (node, from) => {
             if (!this._doesEndpointSendNewSourceInfo(from)) {
                 emitAudioMutedEvent(from, node.value === 'true');
             }
         };
         room.addPresenceListener('audiomuted', this._audioMuteHandler);
+        const emitVideoMutedEvent = (endpointId, muted) => {
+            this.eventEmitter.emit(SignalingEvents.PEER_MUTED_CHANGED, endpointId, MediaType.VIDEO, muted);
+        };
         this._videoMuteHandler = (node, from) => {
             if (!this._doesEndpointSendNewSourceInfo(from)) {
                 emitVideoMutedEvent(from, node.value === 'true');
@@ -153,9 +100,8 @@ export default class SignalingLayerImpl extends SignalingLayer {
                 emitVideoTypeEvent(from, node.value);
             }
         };
-        if (!FeatureFlags.isMultiStreamSupportEnabled()) {
-            room.addPresenceListener('videoType', this._videoTypeHandler);
-        }
+        room.addPresenceListener('videoType', this._videoTypeHandler);
+        // Add handlers for presence in the new format.
         this._sourceInfoHandler = (node, mucNick) => {
             var _a;
             const endpointId = mucNick;
@@ -164,11 +110,13 @@ export default class SignalingLayerImpl extends SignalingLayer {
             const emitEventsFromHere = this._doesEndpointSendNewSourceInfo(endpointId);
             const endpointSourceState = this._remoteSourceState[endpointId] || (this._remoteSourceState[endpointId] = {});
             for (const sourceName of Object.keys(sourceInfoJSON)) {
+                let sourceChanged = false;
                 const mediaType = getMediaTypeFromSourceName(sourceName);
                 const newMutedState = Boolean(sourceInfoJSON[sourceName].muted);
                 const oldSourceState = endpointSourceState[sourceName]
                     || (endpointSourceState[sourceName] = { sourceName });
                 if (oldSourceState.muted !== newMutedState) {
+                    sourceChanged = true;
                     oldSourceState.muted = newMutedState;
                     if (emitEventsFromHere && !this._localSourceState[sourceName]) {
                         this.eventEmitter.emit(SignalingEvents.SOURCE_MUTED_CHANGED, sourceName, newMutedState);
@@ -180,11 +128,15 @@ export default class SignalingLayerImpl extends SignalingLayer {
                     : undefined;
                 if (oldSourceState.videoType !== newVideoType) {
                     oldSourceState.videoType = newVideoType;
+                    sourceChanged = true;
                     // Since having a mix of eps that do/don't support multi-stream in the same call is supported, emit
                     // SOURCE_VIDEO_TYPE_CHANGED event when the remote source changes videoType.
                     if (emitEventsFromHere && !this._localSourceState[sourceName]) {
                         this.eventEmitter.emit(SignalingEvents.SOURCE_VIDEO_TYPE_CHANGED, sourceName, newVideoType);
                     }
+                }
+                if (sourceChanged && FeatureFlags.isSsrcRewritingSupported()) {
+                    this.eventEmitter.emit(SignalingEvents.SOURCE_UPDATED, sourceName, mucNick, newMutedState, newVideoType);
                 }
             }
             // Cleanup removed source names
@@ -200,35 +152,40 @@ export default class SignalingLayerImpl extends SignalingLayer {
         this._memberLeftHandler = jid => {
             const endpointId = Strophe.getResourceFromJid(jid);
             delete this._remoteSourceState[endpointId];
-            if (FeatureFlags.isSourceNameSignalingEnabled()) {
-                for (const [key, value] of this.ssrcOwners.entries()) {
-                    if (value === endpointId) {
-                        delete this._sourceNames[key];
-                    }
+            for (const [key, value] of this.ssrcOwners.entries()) {
+                if (value === endpointId) {
+                    delete this._sourceNames[key];
                 }
             }
         };
         room.addEventListener(XMPPEvents.MUC_MEMBER_LEFT, this._memberLeftHandler);
     }
     /**
-     * Finds the first source of given media type for the given endpoint.
-     * @param endpointId
-     * @param mediaType
-     * @returns {SourceInfo|null}
-     * @private
+     * Check is given endpoint has advertised <SourceInfo/> in it's presence which means that the source name signaling
+     * is used by this endpoint.
+     *
+     * @param {EndpointId} endpointId
+     * @returns {boolean}
      */
-    _findEndpointSourceInfoForMediaType(endpointId, mediaType) {
-        const remoteSourceState = this._remoteSourceState[endpointId];
-        if (!remoteSourceState) {
-            return null;
+    _doesEndpointSendNewSourceInfo(endpointId) {
+        var _a;
+        const presence = (_a = this.chatRoom) === null || _a === void 0 ? void 0 : _a.getLastPresence(endpointId);
+        return Boolean(presence && presence.find(node => node.tagName === SOURCE_INFO_PRESENCE_ELEMENT));
+    }
+    /**
+     * Logs a debug or error message to console depending on whether SSRC rewriting is enabled or not.
+     * Owner changes are permitted only when SSRC rewriting is enabled.
+     *
+     * @param {string} message - The message to be logged.
+     * @returns {void}
+     */
+    _logOwnerChangedMessage(message) {
+        if (FeatureFlags.isSsrcRewritingSupported()) {
+            logger.debug(message);
         }
-        for (const sourceInfo of Object.values(remoteSourceState)) {
-            const _mediaType = getMediaTypeFromSourceName(sourceInfo.sourceName);
-            if (_mediaType === mediaType) {
-                return sourceInfo;
-            }
+        else {
+            logger.error(message);
         }
-        return null;
     }
     /**
      * @inheritDoc
@@ -241,52 +198,38 @@ export default class SignalingLayerImpl extends SignalingLayer {
             }
             logger.warn('Requested peer media info, before room was set');
         };
-        if (FeatureFlags.isSourceNameSignalingEnabled()) {
-            const lastPresence = (_a = this.chatRoom) === null || _a === void 0 ? void 0 : _a.getLastPresence(owner);
-            if (!lastPresence) {
-                logger.warn(`getPeerMediaInfo - no presence stored for: ${owner}`);
-                return;
-            }
-            if (!this._doesEndpointSendNewSourceInfo(owner)) {
-                return legacyGetPeerMediaInfo();
-            }
-            if (sourceName) {
-                return this.getPeerSourceInfo(owner, sourceName);
-            }
-            /**
-             * @type {PeerMediaInfo}
-             */
-            const mediaInfo = {};
-            const endpointMediaSource = this._findEndpointSourceInfoForMediaType(owner, mediaType);
-            // The defaults are provided only, because getPeerMediaInfo is a legacy method. This will be eventually
-            // changed into a getSourceInfo method which returns undefined if there's no source. Also there will be
-            // no mediaType argument there.
-            if (mediaType === MediaType.AUDIO) {
-                mediaInfo.muted = endpointMediaSource ? endpointMediaSource.muted : true;
-            }
-            else if (mediaType === MediaType.VIDEO) {
-                mediaInfo.muted = endpointMediaSource ? endpointMediaSource.muted : true;
-                mediaInfo.videoType = endpointMediaSource ? endpointMediaSource.videoType : undefined;
-                const codecTypeNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecType');
-                if (codecTypeNode.length > 0) {
-                    mediaInfo.codecType = codecTypeNode[0].value;
-                }
-            }
-            else {
-                throw new Error(`Unsupported media type: ${mediaType}`);
-            }
-            return mediaInfo;
+        const lastPresence = (_a = this.chatRoom) === null || _a === void 0 ? void 0 : _a.getLastPresence(owner);
+        if (!lastPresence) {
+            logger.warn(`getPeerMediaInfo - no presence stored for: ${owner}`);
+            return;
         }
-        return legacyGetPeerMediaInfo();
+        if (!this._doesEndpointSendNewSourceInfo(owner)) {
+            return legacyGetPeerMediaInfo();
+        }
+        if (sourceName) {
+            return this.getPeerSourceInfo(owner, sourceName);
+        }
+        const mediaInfo = {
+            muted: true
+        };
+        if (mediaType === MediaType.VIDEO) {
+            mediaInfo.videoType = undefined;
+            const codecTypeNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecType');
+            if (codecTypeNode.length > 0) {
+                mediaInfo.codecType = codecTypeNode[0].value;
+            }
+        }
+        return mediaInfo;
     }
     /**
      * @inheritDoc
      */
     getPeerSourceInfo(owner, sourceName) {
         var _a;
+        const mediaType = getMediaTypeFromSourceName(sourceName);
         const mediaInfo = {
             muted: true,
-            videoType: VideoType.CAMERA // 'camera' by default
+            videoType: mediaType === MediaType.VIDEO ? VideoType.CAMERA : undefined // 'camera' by default
         };
         return this._remoteSourceState[owner]
             ? (_a = this._remoteSourceState[owner][sourceName]) !== null && _a !== void 0 ? _a : mediaInfo
@@ -299,10 +242,45 @@ export default class SignalingLayerImpl extends SignalingLayer {
         return this.ssrcOwners.get(ssrc);
     }
     /**
-     * Set an SSRC owner.
-     * @param {number} ssrc an SSRC to be owned
-     * @param {string} endpointId owner's ID (MUC nickname)
-     * @throws TypeError if <tt>ssrc</tt> is not a number
+     * @inheritDoc
+     */
+    getTrackSourceName(ssrc) {
+        return this._sourceNames.get(ssrc);
+    }
+    /**
+     * @inheritDoc
+     */
+    removeSSRCOwners(ssrcList) {
+        if (!(ssrcList === null || ssrcList === void 0 ? void 0 : ssrcList.length)) {
+            return;
+        }
+        for (const ssrc of ssrcList) {
+            this.ssrcOwners.delete(ssrc);
+        }
+    }
+    /**
+     * Sets the <tt>ChatRoom</tt> instance used and binds presence listeners.
+     * @param {ChatRoom} room
+     */
+    setChatRoom(room) {
+        const oldChatRoom = this.chatRoom;
+        this.chatRoom = room;
+        if (oldChatRoom) {
+            oldChatRoom.removePresenceListener('audiomuted', this._audioMuteHandler);
+            oldChatRoom.removePresenceListener('videomuted', this._videoMuteHandler);
+            oldChatRoom.removePresenceListener('videoType', this._videoTypeHandler);
+            this._sourceInfoHandler
+                && oldChatRoom.removePresenceListener(SOURCE_INFO_PRESENCE_ELEMENT, this._sourceInfoHandler);
+            this._memberLeftHandler
+                && oldChatRoom.removeEventListener(XMPPEvents.MUC_MEMBER_LEFT, this._memberLeftHandler);
+        }
+        if (room) {
+            this._bindChatRoomEventHandlers(room);
+            this._addLocalSourceInfoToPresence();
+        }
+    }
+    /**
+     * @inheritDoc
      */
     setSSRCOwner(ssrc, endpointId) {
         if (typeof ssrc !== 'number') {
@@ -312,16 +290,12 @@ export default class SignalingLayerImpl extends SignalingLayer {
         // an SSRC conflict could potentially occur. Log a message to make debugging easier.
         const existingOwner = this.ssrcOwners.get(ssrc);
         if (existingOwner && existingOwner !== endpointId) {
-            logger.error(`SSRC owner re-assigned from ${existingOwner} to ${endpointId}`);
+            this._logOwnerChangedMessage(`SSRC owner re-assigned from ${existingOwner} to ${endpointId}`);
         }
         this.ssrcOwners.set(ssrc, endpointId);
     }
     /**
-     * Adjusts muted status of given track.
-     *
-     * @param {SourceName} sourceName - the name of the track's source.
-     * @param {boolean} muted - the new muted status.
-     * @returns {boolean}
+     * @inheritDoc
      */
     setTrackMuteStatus(sourceName, muted) {
         if (!this._localSourceState[sourceName]) {
@@ -329,44 +303,12 @@ export default class SignalingLayerImpl extends SignalingLayer {
         }
         this._localSourceState[sourceName].muted = muted;
         if (this.chatRoom) {
-            // FIXME This only adjusts the presence, but doesn't actually send it. Here we temporarily rely on
-            // the legacy signaling part to send the presence. Remember to add "send presence" here when the legacy
-            // signaling is removed.
-            return this._addLocalSourceInfoToPresence();
-        }
-        return false;
-    }
-    /**
-     * Sets track's video type.
-     * @param {SourceName} sourceName - the track's source name.
-     * @param {VideoType} videoType - the new video type.
-     * @returns {boolean}
-     */
-    setTrackVideoType(sourceName, videoType) {
-        if (!this._localSourceState[sourceName]) {
-            this._localSourceState[sourceName] = {};
-        }
-        if (this._localSourceState[sourceName].videoType !== videoType) {
-            // Include only if not a camera (default)
-            this._localSourceState[sourceName].videoType = videoType === VideoType.CAMERA ? undefined : videoType;
-            // NOTE this doesn't send the actual presence, because is called from the same place where the legacy video
-            // type is emitted which does the actual sending. A send presence statement needs to be added when
-            // the legacy part is removed.
             return this._addLocalSourceInfoToPresence();
         }
         return false;
     }
     /**
      * @inheritDoc
-     */
-    getTrackSourceName(ssrc) {
-        return this._sourceNames.get(ssrc);
-    }
-    /**
-     * Saves the source name for a track identified by it's ssrc.
-     * @param {number} ssrc the ssrc of the target track.
-     * @param {SourceName} sourceName the track's source name to save.
-     * @throws TypeError if <tt>ssrc</tt> is not a number
      */
     setTrackSourceName(ssrc, sourceName) {
         if (typeof ssrc !== 'number') {
@@ -376,8 +318,34 @@ export default class SignalingLayerImpl extends SignalingLayer {
         // an SSRC conflict could potentially occur. Log a message to make debugging easier.
         const existingName = this._sourceNames.get(ssrc);
         if (existingName && existingName !== sourceName) {
-            logger.error(`SSRC(${ssrc}) sourceName re-assigned from ${existingName} to ${sourceName}`);
+            this._logOwnerChangedMessage(`SSRC(${ssrc}) sourceName re-assigned from ${existingName} to ${sourceName}`);
         }
         this._sourceNames.set(ssrc, sourceName);
+    }
+    /**
+     * @inheritDoc
+     */
+    setTrackVideoType(sourceName, videoType) {
+        if (!this._localSourceState[sourceName]) {
+            this._localSourceState[sourceName] = {};
+        }
+        if (this._localSourceState[sourceName].videoType !== videoType) {
+            // Include only if not a camera (default)
+            this._localSourceState[sourceName].videoType = videoType === VideoType.CAMERA ? undefined : videoType;
+            return this._addLocalSourceInfoToPresence();
+        }
+        return false;
+    }
+    /**
+     * @inheritDoc
+     */
+    updateSsrcOwnersOnLeave(id) {
+        const ssrcs = Array.from(this.ssrcOwners)
+            .filter(entry => entry[1] === id)
+            .map(entry => entry[0]);
+        if (!(ssrcs === null || ssrcs === void 0 ? void 0 : ssrcs.length)) {
+            return;
+        }
+        this.removeSSRCOwners(ssrcs);
     }
 }

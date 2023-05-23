@@ -83,7 +83,11 @@ declare class JitsiConference {
     eventEmitter: EventEmitter;
     options: any;
     eventManager: JitsiConferenceEventManager;
-    participants: {};
+    /**
+     * List of all the participants in the conference.
+     * @type {Map<string, JitsiParticipant>};
+     */
+    participants: Map<string, JitsiParticipant>;
     /**
      * The signaling layer instance.
      * @type {SignalingLayerImpl}
@@ -174,6 +178,7 @@ declare class JitsiConference {
      */
     private _conferenceJoinAnalyticsEventSent;
     _e2eEncryption: E2EEncryption;
+    _liteModeContext: LiteModeContext;
     /**
      * Flag set to <tt>true</tt> when Jicofo sends a presence message indicating that the max audio sender limit has
      * been reached for the call. Once this is set, unmuting audio will be disabled from the client until it gets reset
@@ -190,6 +195,7 @@ declare class JitsiConference {
     localTracksDuration: LocalTracksDuration;
     sessions: {};
     user: any;
+    _firefoxP2pEnabled: any;
     constructor: typeof JitsiConference;
     /**
      * Initializes the conference object properties
@@ -213,7 +219,6 @@ declare class JitsiConference {
     rtc: RTC;
     receiveVideoController: ReceiveVideoController;
     sendVideoController: SendVideoController;
-    participantConnectionStatus: ParticipantConnectionStatusHandler;
     statistics: Statistics;
     _audioAnalyser: VADAudioAnalyser;
     _noAudioSignalDetection: NoAudioSignalDetection;
@@ -256,9 +261,20 @@ declare class JitsiConference {
     isP2PTestModeEnabled(): boolean;
     /**
      * Leaves the conference.
+     * @param reason {string|undefined} The reason for leaving the conference.
      * @returns {Promise}
      */
-    leave(): Promise<any>;
+    leave(reason: string | undefined): Promise<any>;
+    /**
+     * Returns <tt>true</tt> if end conference support is enabled in the backend.
+     *
+     * @returns {boolean} whether end conference is supported in the backend.
+     */
+    isEndConferenceSupported(): boolean;
+    /**
+     * Ends the conference.
+     */
+    end(): void;
     /**
      * Returns the currently active media session if any.
      *
@@ -476,23 +492,20 @@ declare class JitsiConference {
     private _setNewVideoType;
     private _setTrackMuteStatus;
     /**
-     * Method called by the {@link JitsiLocalTrack} (a video one) in order to add
-     * back the underlying WebRTC MediaStream to the PeerConnection (which has
-     * removed on video mute).
-     * @param {JitsiLocalTrack} track the local track that will be added as part of
-     * the unmute operation.
-     * @return {Promise} resolved when the process is done or rejected with a string
-     * which describes the error.
+     * Method called by the {@link JitsiLocalTrack} in order to add the underlying MediaStream to the RTCPeerConnection.
+     *
+     * @param {JitsiLocalTrack} track the local track that will be added to the pc.
+     * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
      */
-    _addLocalTrackAsUnmute(track: any): Promise<any>;
+    _addLocalTrackToPc(track: any): Promise<any>;
     /**
-     * Method called by the {@link JitsiLocalTrack} (a video one) in order to remove
-     * the underlying WebRTC MediaStream from the PeerConnection. The purpose of
-     * that is to stop sending any data and turn off the HW camera device.
+     * Method called by the {@link JitsiLocalTrack} in order to remove the underlying MediaStream from the
+     * RTCPeerConnection.
+     *
      * @param {JitsiLocalTrack} track the local track that will be removed.
-     * @return {Promise}
+     * @return {Promise} resolved when the process is done or rejected with a string which describes the error.
      */
-    _removeLocalTrackAsMute(track: any): Promise<any>;
+    _removeLocalTrackFromPc(track: any): Promise<any>;
     /**
      * Get role of the local user.
      * @returns {string} user role: 'moderator' or 'none'
@@ -524,16 +537,6 @@ declare class JitsiConference {
      */
     unlock(): Promise<any>;
     /**
-     * Elects the participant with the given id to be the selected participant in
-     * order to receive higher video quality (if simulcast is enabled).
-     * Or cache it if channel is not created and send it once channel is available.
-     * @param participantId the identifier of the participant
-     * @throws NetworkError or InvalidStateError or Error if the operation fails.
-     * @returns {void}
-     */
-    selectParticipant(participantId: any): void;
-    selectParticipants(participantIds: any): void;
-    /**
      * Obtains the current value for "lastN". See {@link setLastN} for more info.
      * @returns {number}
      */
@@ -553,26 +556,14 @@ declare class JitsiConference {
      */
     setLastN(lastN: any): void;
     /**
-     * Checks if the participant given by participantId is currently included in
-     * the last N.
-     * @param {string} participantId the identifier of the participant we would
-     * like to check.
-     * @return {boolean} true if the participant with id is in the last N set or
-     * if there's no last N set, false otherwise.
-     * @deprecated this method should never be used to figure out the UI, but
-     * {@link ParticipantConnectionStatus} should be used instead.
+     * @return Array<JitsiParticipant> an array of all participants in this conference.
      */
-    isInLastN(participantId: string): boolean;
+    getParticipants(): JitsiParticipant[];
     /**
      * @return Array<JitsiParticipant> an array of all participants in this
      * conference.
      */
-    getParticipants(): any[];
-    /**
-     * @return Array<JitsiParticipant> an array of all participants in this
-     * conference.
-     */
-    getParticipantsWithoutHidden(): any[];
+    getParticipantsWithoutHidden(): JitsiParticipant[];
     /**
      * Returns the number of participants in the conference, including the local
      * participant.
@@ -634,7 +625,7 @@ declare class JitsiConference {
     private _onMucJoined;
     private _updateFeatures;
     private _onMemberBotTypeChanged;
-    onMemberLeft(jid: any): void;
+    onMemberLeft(jid: any, reason: any): void;
     /**
      * Designates an event indicating that we were kicked from the XMPP MUC.
      * @param {boolean} isSelfPresence - whether it is for local participant
@@ -1002,21 +993,27 @@ declare class JitsiConference {
     /**
      * Sets the constraints for the video that is requested from the bridge.
      *
-     * @param {Object} videoConstraints The constraints which are specified in the
-     * following format. The message updates the fields that are present and leaves the
-     * rest unchanged on the bridge. Therefore, any field that is not applicable anymore
-     * should be cleared by passing an empty object or list (whatever is applicable).
+     * @param {Object} videoConstraints The constraints which are specified in the following format. The message updates
+     * the fields that are present and leaves the rest unchanged on the bridge. Therefore, any field that is not applicable
+     * anymore should be cleared by passing an empty object or list (whatever is applicable).
      * {
      *      'lastN': 20,
-     *      'selectedEndpoints': ['A', 'B', 'C'],
-     *      'onStageEndpoints': ['A'],
+     *      'selectedSources': ['A', 'B', 'C'],
+     *      'onStageSources': ['A'],
      *      'defaultConstraints': { 'maxHeight': 180 },
      *      'constraints': {
      *          'A': { 'maxHeight': 720 }
      *      }
      * }
+     * Where A, B and C are source-names of the remote tracks that are being requested from the bridge.
      */
     setReceiverConstraints(videoConstraints: any): void;
+    /**
+     * Sets the assumed bandwidth bps for the video that is requested from the bridge.
+     *
+     * @param {Number} assumedBandwidthBps - The bandwidth value expressed in bits per second.
+     */
+    setAssumedBandwidthBps(assumedBandwidthBps: number): void;
     /**
      * Sets the maximum video size the local participant should receive from remote
      * participants.
@@ -1083,6 +1080,22 @@ declare class JitsiConference {
      * @returns {void}
      */
     setMediaEncryptionKey(keyInfo: any): void;
+    /**
+     * Starts the participant verification process.
+     *
+     * @param {string} participantId The participant which will be marked as verified.
+     * @returns {void}
+     */
+    startVerification(participantId: string): void;
+    /**
+     * Marks the given participant as verified. After this is done, MAC verification will
+     * be performed and an event will be emitted with the result.
+     *
+     * @param {string} participantId The participant which will be marked as verified.
+     * @param {boolean} isVerified - whether the verification was succesfull.
+     * @returns {void}
+     */
+    markParticipantVerified(participantId: string, isVerified: boolean): void;
     /**
      * Returns <tt>true</tt> if lobby support is enabled in the backend.
      *
@@ -1212,6 +1225,12 @@ declare class JitsiConference {
     setMicDevice(micDeviceId: any): void;
     startSIPVideoCall(sipAddress: any, displayName: any): void;
     stopSIPVideoCall(sipAddress: any): void;
+    /**
+     * Returns the metadata handler object.
+     *
+     * @returns {Object} the room metadata handler.
+     */
+    getMetadataHandler(): any;
 }
 declare namespace JitsiConference {
     /**
@@ -1231,6 +1250,7 @@ declare namespace JitsiConference {
 export default JitsiConference;
 import EventEmitter from "events";
 import JitsiConferenceEventManager from "./JitsiConferenceEventManager";
+import JitsiParticipant from "./JitsiParticipant";
 import ComponentsVersions from "./modules/version/ComponentsVersions";
 import ConnectionQuality from "./modules/connectivity/ConnectionQuality";
 import AvgRTPStatsReporter from "./modules/statistics/AvgRTPStatsReporter";
@@ -1239,6 +1259,7 @@ import SpeakerStatsCollector from "./modules/statistics/SpeakerStatsCollector";
 import VideoSIPGW from "./modules/videosipgw/VideoSIPGW";
 import RecordingManager from "./modules/recording/RecordingManager";
 import { E2EEncryption } from "./modules/e2ee/E2EEncryption";
+import { LiteModeContext } from "./modules/litemode/LiteModeContext";
 import { RecordingController } from "./modules/local-recording/controller/RecordingController";
 import LocalTracksDuration from "./modules/statistics/LocalTracksDuration";
 import { CodecSelection } from "./modules/RTC/CodecSelection";
@@ -1246,7 +1267,6 @@ import E2ePing from "./modules/e2eping/e2eping";
 import RTC from "./modules/RTC/RTC";
 import ReceiveVideoController from "./modules/qualitycontrol/ReceiveVideoController";
 import SendVideoController from "./modules/qualitycontrol/SendVideoController";
-import ParticipantConnectionStatusHandler from "./modules/connectivity/ParticipantConnectionStatus";
 import Statistics from "./modules/statistics/statistics";
 import VADAudioAnalyser from "./modules/detection/VADAudioAnalyser";
 import NoAudioSignalDetection from "./modules/detection/NoAudioSignalDetection";
@@ -1254,5 +1274,4 @@ import Jvb121EventGenerator from "./modules/event/Jvb121EventGenerator";
 import P2PDominantSpeakerDetection from "./modules/detection/P2PDominantSpeakerDetection";
 import { MediaType } from "./service/RTC/MediaType";
 import Transcriber from "./modules/transcription/transcriber";
-import JitsiParticipant from "./JitsiParticipant";
 import IceFailedHandling from "./modules/connectivity/IceFailedHandling";

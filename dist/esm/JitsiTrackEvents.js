@@ -51,6 +51,15 @@ export var JitsiTrackEvents;
      * The current status value can be obtained by calling JitsiRemoteTrack.getTrackStreamingStatus().
      */
     JitsiTrackEvents["TRACK_STREAMING_STATUS_CHANGED"] = "track.streaming_status_changed";
+    /**
+     * An SSRC has been remapped. The track is now associated with a new participant.
+     */
+    JitsiTrackEvents["TRACK_OWNER_CHANGED"] = "track.owner_changed";
+    /**
+     * A track is being removed. Fired when a session terminates for tracks
+     * that persist in ssrc-rewriting mode.
+     */
+    JitsiTrackEvents["TRACK_REMOVED"] = "track.removed";
 })(JitsiTrackEvents || (JitsiTrackEvents = {}));
 ;
 // exported for backward compatibility
@@ -62,3 +71,5 @@ export const TRACK_VIDEOTYPE_CHANGED = JitsiTrackEvents.TRACK_VIDEOTYPE_CHANGED;
 export const NO_DATA_FROM_SOURCE = JitsiTrackEvents.NO_DATA_FROM_SOURCE;
 export const NO_AUDIO_INPUT = JitsiTrackEvents.NO_AUDIO_INPUT;
 export const TRACK_STREAMING_STATUS_CHANGED = JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED;
+export const TRACK_OWNER_CHANGED = JitsiTrackEvents.TRACK_OWNER_CHANGED;
+export const TRACK_REMOVED = JitsiTrackEvents.TRACK_REMOVED;

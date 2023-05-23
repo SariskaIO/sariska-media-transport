@@ -2,7 +2,7 @@ import { getLogger } from '@jitsi/logger';
 import { MediaDirection } from '../../service/RTC/MediaDirection';
 import { MediaType } from '../../service/RTC/MediaType';
 import SDPUtil from './SDPUtil';
-import { parseSecondarySSRC, SdpTransformWrap } from './SdpTransformUtil';
+import { SdpTransformWrap, parseSecondarySSRC } from './SdpTransformUtil';
 const logger = getLogger(__filename);
 /**
  * Begin helper functions

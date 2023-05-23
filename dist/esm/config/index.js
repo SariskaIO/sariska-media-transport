@@ -3,7 +3,8 @@ export const initSDKConfig = {
     disableAudioLevels: false,
     flags: {
         sendMultipleVideoStreams: true,
-        sourceNameSignaling: true
+        sourceNameSignaling: true,
+        enableJoinAsVisitor: true,
     }
     // useIPv6 - boolean property
     // disableSimulcast: true //boolean property. Enables/disables simulcast.

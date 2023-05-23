@@ -1,10 +1,8 @@
-/* global $ */
-
 import { getLogger } from '@jitsi/logger';
+import $ from 'jquery';
 import { $build } from 'strophe.js';
 
 import { MediaType } from '../../service/RTC/MediaType';
-import FeatureFlags from '../flags/FeatureFlags';
 
 const logger = getLogger(__filename);
 
@@ -18,7 +16,7 @@ function _createSourceExtension(owner, sourceCompactJson) {
     const node = $build('source', {
         xmlns: 'urn:xmpp:jingle:apps:rtp:ssma:0',
         ssrc: sourceCompactJson.s,
-        name: FeatureFlags.isSourceNameSignalingEnabled() ? sourceCompactJson.n : undefined
+        name: sourceCompactJson.n
     });
 
     if (sourceCompactJson.m) {

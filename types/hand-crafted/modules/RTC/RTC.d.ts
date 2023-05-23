@@ -12,8 +12,6 @@ export default class RTC extends Listenable {
   initializeBridgeChannel: ( perrconnection: RTCPeerConnection, wsUrl: string ) => void;
   onCallEnded: () => void;
   setDesktopSharingFrameRate: (maxFps: number) => void;
-  setReceiverVideoConstraint: ( maxFrameHeight: number ) => void;
-  selectEndpoints: ( ids: string[] ) => void;
   static addListener: ( eventType: string, listener: unknown ) => void; // TODO: this should be typed to an enum of eventTypes with appropriate definition for the listeners
   static removeListener: ( eventType: string, listener: unknown ) => void; // TODO: this should be typed to an enum of eventTypes with appropriate definition for the listeners
   static init: ( options: unknown ) => unknown; // TODO:
@@ -27,8 +25,6 @@ export default class RTC extends Listenable {
   setAudioMute: ( value: unknown ) => Promise<unknown>; // TODO:
   removeLocalTrack: ( track: unknown ) => void; // TODO:
   static attachMediaStream: ( elSelector: unknown, stream: unknown ) => unknown; // TODO:
-  static getStreamID: ( stream: MediaStream ) => unknown; // TODO:
-  static getTrackID: ( track: MediaStreamTrack ) => unknown; // TODO:
   static isDeviceListAvailable: () => unknown; // TODO:
   static isDeviceChangeAvailable: ( deviceType: string ) => boolean; // TODO: check if deviceType should be an enum
   static isWebRtcSupported: () => boolean;
@@ -45,10 +41,8 @@ export default class RTC extends Listenable {
   setAudioLevel: ( tpc: TraceablePeerConnection, ssrc: number, audioLevel: number, isLocal: boolean ) => void;
   sendChannelMessage: ( to: string, payload: unknown ) => void; // TODO:
   setLastN: ( value: number ) => void;
-  isInLastN: ( id: string ) => boolean;
   isInForwardedSources: ( sourceName: string ) => boolean;
-  setNewReceiverVideoConstraints: ( constraints: unknown ) => void; // TODO:
-  setVideoType: ( videoType: string ) => void;
+  setReceiverVideoConstraints: ( constraints: unknown ) => void; // TODO:
   setVideoMute: ( value: unknown ) => Promise<unknown>; // TODO:
   arePermissionsGrantedForAvailableDevices: () => boolean;
   sendEndpointStatsMessage: ( payload: unknown ) => void; // TODO:

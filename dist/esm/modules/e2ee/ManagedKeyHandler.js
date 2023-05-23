@@ -33,12 +33,23 @@ export class ManagedKeyHandler extends KeyHandler {
         this._ratchetKey = debounce(this._ratchetKeyImpl, DEBOUNCE_PERIOD);
         // Olm signalling events.
         this._olmAdapter.on(OlmAdapter.events.PARTICIPANT_KEY_UPDATED, this._onParticipantKeyUpdated.bind(this));
+        this._olmAdapter.on(OlmAdapter.events.PARTICIPANT_SAS_READY, this._onParticipantSasReady.bind(this));
+        this._olmAdapter.on(OlmAdapter.events.PARTICIPANT_SAS_AVAILABLE, this._onParticipantSasAvailable.bind(this));
+        this._olmAdapter.on(OlmAdapter.events.PARTICIPANT_VERIFICATION_COMPLETED, this._onParticipantVerificationCompleted.bind(this));
         this.conference.on(JitsiConferenceEvents.PARTICIPANT_PROPERTY_CHANGED, this._onParticipantPropertyChanged.bind(this));
         this.conference.on(JitsiConferenceEvents.USER_JOINED, this._onParticipantJoined.bind(this));
         this.conference.on(JitsiConferenceEvents.USER_LEFT, this._onParticipantLeft.bind(this));
         this.conference.on(JitsiConferenceEvents.CONFERENCE_JOINED, () => {
             this._conferenceJoined = true;
         });
+    }
+    /**
+     * Returns the sasVerficiation object.
+     *
+     * @returns {Object}
+     */
+    get sasVerification() {
+        return this._olmAdapter;
     }
     /**
      * When E2EE is enabled it initializes sessions and sets the key.
@@ -130,7 +141,7 @@ export class ManagedKeyHandler extends KeyHandler {
             const material = yield importKey(this._key);
             const newKey = yield ratchet(material);
             this._key = new Uint8Array(newKey);
-            const index = this._olmAdapter.updateCurrentKey(this._key);
+            const index = this._olmAdapter.updateCurrentMediaKey(this._key);
             this.e2eeCtx.setKey(this.conference.myUserId(), this._key, index);
         });
     }
@@ -145,6 +156,35 @@ export class ManagedKeyHandler extends KeyHandler {
     _onParticipantKeyUpdated(id, key, index) {
         logger.debug(`Participant ${id} updated their key`);
         this.e2eeCtx.setKey(id, key, index);
+    }
+    /**
+     * Handles the SAS ready event.
+     *
+     * @param {string} pId - The participant ID.
+     * @param {Uint8Array} sas - The bytes from sas.generate_bytes..
+     * @private
+     */
+    _onParticipantSasReady(pId, sas) {
+        this.conference.eventEmitter.emit(JitsiConferenceEvents.E2EE_VERIFICATION_READY, pId, sas);
+    }
+    /**
+     * Handles the sas available event.
+     *
+     * @param {string} pId - The participant ID.
+     * @private
+     */
+    _onParticipantSasAvailable(pId) {
+        this.conference.eventEmitter.emit(JitsiConferenceEvents.E2EE_VERIFICATION_AVAILABLE, pId);
+    }
+    /**
+     * Handles the SAS completed event.
+     *
+     * @param {string} pId - The participant ID.
+     * @param {boolean} success - Wheter the verification was succesfull.
+     * @private
+     */
+    _onParticipantVerificationCompleted(pId, success, message) {
+        this.conference.eventEmitter.emit(JitsiConferenceEvents.E2EE_VERIFICATION_COMPLETED, pId, success, message);
     }
     /**
      * Generates a new 256 bit random key.
