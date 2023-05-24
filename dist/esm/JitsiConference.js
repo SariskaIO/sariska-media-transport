@@ -1692,7 +1692,7 @@ JitsiConference.prototype.onMemberKicked = function (isSelfPresence, actorId, ki
     const actorParticipant = this.participants.get(actorId);
     if (isSelfPresence) {
         this.eventEmitter.emit(JitsiConferenceEvents.KICKED, actorParticipant, reason, isReplaceParticipant);
-        this.leave();
+        this.leave().finally(() => this.xmpp.disconnect());
         return;
     }
     const kickedParticipant = this.participants.get(kickedParticipantId);

@@ -152,8 +152,14 @@ export default function TraceablePeerConnection(rtc, id, signalingLayer, pcConfi
     /**
      * The set of remote SSRCs seen so far.
      * Distinguishes new SSRCs from those that have been remapped.
+     * @type {Set<number>}
      */
     this.remoteSSRCs = new Set();
+    /**
+     * Mapping of source-names and their associated SSRCs that have been signaled by the JVB.
+     * @type {Map<string, number>}
+     */
+    this.remoteSources = new Map();
     /**
      * The local ICE username fragment for this session.
      */
@@ -965,6 +971,9 @@ TraceablePeerConnection.prototype._removeRemoteTrack = function (toBeRemoved) {
         + `trackId=${toBeRemoved.getTrackId()}]`);
     toBeRemoved.dispose();
     const participantId = toBeRemoved.getParticipantId();
+    if (!participantId && FeatureFlags.isSsrcRewritingSupported()) {
+        return;
+    }
     const userTracksByMediaType = this.remoteTracks.get(participantId);
     if (!userTracksByMediaType) {
         logger.error(`${this} removeRemoteTrack: no remote tracks map for endpoint=${participantId}`);
