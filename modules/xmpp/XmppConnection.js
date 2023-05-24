@@ -399,7 +399,7 @@ export default class XmppConnection extends Listenable {
             logger.warn('Stream resume enabled, but WebSockets are not enabled');
         } else if (!streamManagement) {
             logger.warn('Stream resume enabled, but Strophe streamManagement plugin is not installed');
-        } else if (!streamManagement.isSupported()) {
+        } else if (!(streamManagement.isSupported && streamManagement.isSupported())) {
             logger.warn('Stream resume enabled, but XEP-0198 is not supported by the server');
         } else if (!streamManagement.getResumeToken()) {
             logger.info('Enabling XEP-0198 stream management');
