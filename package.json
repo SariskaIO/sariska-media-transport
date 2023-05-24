@@ -18,7 +18,7 @@
   "dependencies": {
     "@babel/preset-env": "^7.21.5",
     "@hapi/bourne": "^2.0.0",
-    "@jitsi/js-utils": "https://github.com/SariskaIO/js-utils.git",
+    "@jitsi/js-utils": "2.0.0",
     "@jitsi/logger": "2.0.0",
     "@jitsi/sdp-interop": "git+https://github.com/jitsi/sdp-interop#3d49eb4aa26863a3f8d32d7581cdb4321244266b",
     "@jitsi/sdp-simulcast": "0.4.0",
@@ -38,7 +38,7 @@
     "sdp-transform": "2.3.0",
     "strophe.js": "1.5.0",
     "strophejs-plugin-disco": "0.0.2",
-    "strophejs-plugin-stream-management": "^1.0.3",
+    "strophejs-plugin-stream-management": "git+https://github.com/jitsi/strophejs-plugin-stream-management#679be5902097ed612fb5062b5549f3f32b6f5f47",
     "uuid": "8.1.0",
     "wasm-check": "^2.0.3",
     "webrtc-adapter": "8.1.1"
@@ -86,11 +86,11 @@
     "deploy": "aws s3 cp dist/ s3://sdk.sariska.io --recursive --acl public-read && aws cloudfront create-invalidation --distribution-id E3RL1IE6WPHQ72 --paths /main.bundle.js",
     "watch": "webpack --config webpack.config.js --watch --mode development"
   },
+  "browser": "dist/umd/sariska-media-transport.min.js",
   "module": "dist/esm/SariskaMediaTransport.js",
   "files": [
     "dist",
     "types"
   ],
-  "main": "./dist/esm/index.js",
   "license": "Apache-2.0"
 }
