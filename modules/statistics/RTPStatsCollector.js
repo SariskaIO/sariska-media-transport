@@ -193,6 +193,68 @@ StatsCollector.prototype.errorCallback = function(error) {
 /**
  * Starts stats updates.
  */
+
+
+
+
+let lastTotalAudioUploadBytes = 0; 
+let lastTotalAudioDownloadytes = 0;
+let lastTotalVideoUploadBytes = 0;
+let lastTotalVideoDownloadBytes = 0;
+
+let  calculateBytesPerSecond  = async function(stats) {
+    // Variables to store cumulative stats for audio and video SSRCs
+    let totalAudioOutboundBytes = 0;
+    let totalAudioInboundBytes = 0;
+    let totalVideoOutboundBytes = 0;
+    let totalVideoInboundBytes = 0;
+  
+    if (stats && typeof stats.forEach === 'function') { 
+        stats.forEach(stat => {
+            if (stat.type === 'outbound-rtp') {
+              if (stat.mediaType === 'audio') {
+                totalAudioOutboundBytes += stat.bytesSent;
+              } else if (stat.mediaType === 'video') {
+                totalVideoOutboundBytes += stat.bytesSent;
+              }
+            } else if (stat.type === 'inbound-rtp') {
+              if (stat.mediaType === 'audio') {
+                totalAudioInboundBytes += stat.bytesReceived;
+              } else if (stat.mediaType === 'video') {
+                totalVideoInboundBytes += stat.bytesReceived;
+              }
+            }
+          });
+    }
+
+    let bitrate = {};
+
+    let audioUpload = totalAudioOutboundBytes - lastTotalAudioUploadBytes;
+    let audioDownload = totalAudioInboundBytes - lastTotalAudioDownloadytes;
+    let videoUpload = totalVideoOutboundBytes -  lastTotalVideoUploadBytes;
+    let videoDownload = totalVideoInboundBytes - lastTotalVideoDownloadBytes;
+
+    bitrate.bitrate = {
+        'upload': Math.round((audioUpload + videoUpload) / 1000),
+        'download': Math.round((audioDownload + videoDownload) / 1000)
+    };
+    bitrate.audio = {
+        'upload': Math.round(audioUpload / 1000),
+        'download': Math.round(audioDownload / 1000)
+    };
+    bitrate.video = {
+        'upload': Math.round(videoUpload / 1000),
+        'download': Math.round(videoDownload / 1000)
+    };
+
+    lastTotalAudioUploadBytes = totalAudioOutboundBytes;
+    lastTotalAudioDownloadytes = totalAudioInboundBytes;
+    lastTotalVideoUploadBytes = totalVideoOutboundBytes;
+    lastTotalVideoDownloadBytes = totalVideoInboundBytes;
+    return bitrate;
+}
+
+
 StatsCollector.prototype.start = function(startAudioLevelStats) {
     if (startAudioLevelStats && browser.supportsReceiverStats()) {
         this.audioLevelsIntervalId = setInterval(
@@ -243,7 +305,7 @@ StatsCollector.prototype.start = function(startAudioLevelStats) {
 /**
  *
  */
-StatsCollector.prototype._processAndEmitReport = function() {
+StatsCollector.prototype._processAndEmitReport = async function() {
     // process stats
     const totalPackets = {
         download: 0,
@@ -411,7 +473,7 @@ StatsCollector.prototype._processAndEmitReport = function() {
         this.peerconnection,
         {
             'bandwidth': this.conferenceStats.bandwidth,
-            'bitrate': this.conferenceStats.bitrate,
+            'bitrate': await calculateBytesPerSecond( await this.peerconnection.getStats() ),
             'packetLoss': this.conferenceStats.packetLoss,
             'resolution': resolutions,
             'framerate': framerates,
@@ -493,7 +555,7 @@ StatsCollector.prototype._calculateFps = function(now, before, fieldName) {
 /**
  * Stats processing for spec-compliant RTCPeerConnection#getStats.
  */
-StatsCollector.prototype.processStatsReport = function() {
+StatsCollector.prototype.processStatsReport = async function() {
     const byteSentStats = {};
 
     this.currentStatsReport.forEach(now => {

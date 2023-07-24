@@ -30,6 +30,16 @@ export default class JitsiConnection {
         };
         serviceUrl: string;
         clientNode: string;
+    } | {
+        hosts: {
+            domain: string;
+            muc: string;
+        };
+        serviceUrl: string;
+        clientNode: string;
+        bridgeChannel: {
+            preferSctp: boolean;
+        };
     };
     xmpp: XMPP;
     token: any;

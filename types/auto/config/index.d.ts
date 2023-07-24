@@ -4,6 +4,7 @@ export namespace initSDKConfig {
         const sendMultipleVideoStreams: boolean;
         const sourceNameSignaling: boolean;
         const enableJoinAsVisitor: boolean;
+        const receiveMultipleVideoStreams: boolean;
     }
 }
 export namespace connectionConfig {
@@ -13,6 +14,9 @@ export namespace connectionConfig {
     }
     const serviceUrl: string;
     const clientNode: string;
+    namespace bridgeChannel {
+        const preferSctp: boolean;
+    }
 }
 export namespace devConnectionConfig {
     export namespace hosts_1 {
@@ -35,7 +39,6 @@ export namespace conferenceConfig {
     const enableNoAudioDetection: boolean;
     const enableNoisyMicDetection: boolean;
     const createVADProcessor: boolean;
-    const openBridgeChannel: string;
     const hiddenDomain: string;
     const enableLayerSuspension: boolean;
     namespace e2eping {

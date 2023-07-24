@@ -1,3 +1,12 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import { getLogger } from '@jitsi/logger';
 import { MediaType } from '../../service/RTC/MediaType';
 import * as StatisticsEvents from '../../service/statistics/Events';
@@ -166,6 +175,61 @@ StatsCollector.prototype.errorCallback = function (error) {
 /**
  * Starts stats updates.
  */
+let lastTotalAudioUploadBytes = 0;
+let lastTotalAudioDownloadytes = 0;
+let lastTotalVideoUploadBytes = 0;
+let lastTotalVideoDownloadBytes = 0;
+let calculateBytesPerSecond = function (stats) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Variables to store cumulative stats for audio and video SSRCs
+        let totalAudioOutboundBytes = 0;
+        let totalAudioInboundBytes = 0;
+        let totalVideoOutboundBytes = 0;
+        let totalVideoInboundBytes = 0;
+        if (stats && typeof stats.forEach === 'function') {
+            stats.forEach(stat => {
+                if (stat.type === 'outbound-rtp') {
+                    if (stat.mediaType === 'audio') {
+                        totalAudioOutboundBytes += stat.bytesSent;
+                    }
+                    else if (stat.mediaType === 'video') {
+                        totalVideoOutboundBytes += stat.bytesSent;
+                    }
+                }
+                else if (stat.type === 'inbound-rtp') {
+                    if (stat.mediaType === 'audio') {
+                        totalAudioInboundBytes += stat.bytesReceived;
+                    }
+                    else if (stat.mediaType === 'video') {
+                        totalVideoInboundBytes += stat.bytesReceived;
+                    }
+                }
+            });
+        }
+        let bitrate = {};
+        let audioUpload = totalAudioOutboundBytes - lastTotalAudioUploadBytes;
+        let audioDownload = totalAudioInboundBytes - lastTotalAudioDownloadytes;
+        let videoUpload = totalVideoOutboundBytes - lastTotalVideoUploadBytes;
+        let videoDownload = totalVideoInboundBytes - lastTotalVideoDownloadBytes;
+        bitrate.bitrate = {
+            'upload': Math.round((audioUpload + videoUpload) / 1000),
+            'download': Math.round((audioDownload + videoDownload) / 1000)
+        };
+        bitrate.audio = {
+            'upload': Math.round(audioUpload / 1000),
+            'download': Math.round(audioDownload / 1000)
+        };
+        bitrate.video = {
+            'upload': Math.round(videoUpload / 1000),
+            'download': Math.round(videoDownload / 1000)
+        };
+        lastTotalAudioUploadBytes = totalAudioOutboundBytes;
+        lastTotalAudioDownloadytes = totalAudioInboundBytes;
+        lastTotalVideoUploadBytes = totalVideoOutboundBytes;
+        lastTotalVideoDownloadBytes = totalVideoInboundBytes;
+        return bitrate;
+    });
+};
 StatsCollector.prototype.start = function (startAudioLevelStats) {
     if (startAudioLevelStats && browser.supportsReceiverStats()) {
         this.audioLevelsIntervalId = setInterval(() => {
@@ -205,147 +269,149 @@ StatsCollector.prototype.start = function (startAudioLevelStats) {
  */
 StatsCollector.prototype._processAndEmitReport = function () {
     var _a, _b;
-    // process stats
-    const totalPackets = {
-        download: 0,
-        upload: 0
-    };
-    const lostPackets = {
-        download: 0,
-        upload: 0
-    };
-    let bitrateDownload = 0;
-    let bitrateUpload = 0;
-    const resolutions = {};
-    const framerates = {};
-    const codecs = {};
-    let audioBitrateDownload = 0;
-    let audioBitrateUpload = 0;
-    let videoBitrateDownload = 0;
-    let videoBitrateUpload = 0;
-    for (const [ssrc, ssrcStats] of this.ssrc2stats) {
-        // process packet loss stats
-        const loss = ssrcStats.loss;
-        const type = loss.isDownloadStream ? 'download' : 'upload';
-        totalPackets[type] += loss.packetsTotal;
-        lostPackets[type] += loss.packetsLost;
-        // process bitrate stats
-        bitrateDownload += ssrcStats.bitrate.download;
-        bitrateUpload += ssrcStats.bitrate.upload;
-        ssrcStats.resetBitrate();
-        // collect resolutions and framerates
-        const track = this.peerconnection.getTrackBySSRC(ssrc);
-        if (!track) {
-            continue; // eslint-disable-line no-continue
-        }
-        let audioCodec;
-        let videoCodec;
-        if (track.isAudioTrack()) {
-            audioBitrateDownload += ssrcStats.bitrate.download;
-            audioBitrateUpload += ssrcStats.bitrate.upload;
-            audioCodec = ssrcStats.codec;
-        }
-        else {
-            videoBitrateDownload += ssrcStats.bitrate.download;
-            videoBitrateUpload += ssrcStats.bitrate.upload;
-            videoCodec = ssrcStats.codec;
-        }
-        const participantId = track.getParticipantId();
-        if (!participantId) {
-            // All tracks in ssrc-rewriting mode need not have a participant associated with it.
-            if (!FeatureFlags.isSsrcRewritingSupported()) {
-                logger.error(`No participant ID returned by ${track}`);
-            }
-            continue; // eslint-disable-line no-continue
-        }
-        const userCodecs = (_a = codecs[participantId]) !== null && _a !== void 0 ? _a : {};
-        userCodecs[ssrc] = {
-            audio: audioCodec,
-            video: videoCodec
+    return __awaiter(this, void 0, void 0, function* () {
+        // process stats
+        const totalPackets = {
+            download: 0,
+            upload: 0
         };
-        codecs[participantId] = userCodecs;
-        const { resolution } = ssrcStats;
-        if (!track.isVideoTrack()
-            || isNaN(resolution === null || resolution === void 0 ? void 0 : resolution.height)
-            || isNaN(resolution === null || resolution === void 0 ? void 0 : resolution.width)
-            || resolution.height === -1
-            || resolution.width === -1) {
-            continue; // eslint-disable-line no-continue
-        }
-        const userResolutions = resolutions[participantId] || {};
-        // If simulcast (VP8) is used, there will be 3 "outbound-rtp" streams with different resolutions and 3
-        // different SSRCs. Based on the requested resolution and the current cpu and available bandwidth
-        // values, some of the streams might get suspended. Therefore the actual send resolution needs to be
-        // calculated based on the outbound-rtp streams that are currently active for the simulcast case.
-        // However for the SVC case, there will be only 1 "outbound-rtp" stream which will have the correct
-        // send resolution width and height.
-        if (track.isLocal() && !browser.supportsTrackBasedStats() && this.peerconnection.doesTrueSimulcast()) {
-            const localSsrcs = this.peerconnection.getLocalVideoSSRCs(track);
-            for (const localSsrc of localSsrcs) {
-                const ssrcResolution = (_b = this.ssrc2stats.get(localSsrc)) === null || _b === void 0 ? void 0 : _b.resolution;
-                // The code processes resolution stats only for 'outbound-rtp' streams that are currently active.
-                if ((ssrcResolution === null || ssrcResolution === void 0 ? void 0 : ssrcResolution.height) && (ssrcResolution === null || ssrcResolution === void 0 ? void 0 : ssrcResolution.width)) {
-                    resolution.height = Math.max(resolution.height, ssrcResolution.height);
-                    resolution.width = Math.max(resolution.width, ssrcResolution.width);
+        const lostPackets = {
+            download: 0,
+            upload: 0
+        };
+        let bitrateDownload = 0;
+        let bitrateUpload = 0;
+        const resolutions = {};
+        const framerates = {};
+        const codecs = {};
+        let audioBitrateDownload = 0;
+        let audioBitrateUpload = 0;
+        let videoBitrateDownload = 0;
+        let videoBitrateUpload = 0;
+        for (const [ssrc, ssrcStats] of this.ssrc2stats) {
+            // process packet loss stats
+            const loss = ssrcStats.loss;
+            const type = loss.isDownloadStream ? 'download' : 'upload';
+            totalPackets[type] += loss.packetsTotal;
+            lostPackets[type] += loss.packetsLost;
+            // process bitrate stats
+            bitrateDownload += ssrcStats.bitrate.download;
+            bitrateUpload += ssrcStats.bitrate.upload;
+            ssrcStats.resetBitrate();
+            // collect resolutions and framerates
+            const track = this.peerconnection.getTrackBySSRC(ssrc);
+            if (!track) {
+                continue; // eslint-disable-line no-continue
+            }
+            let audioCodec;
+            let videoCodec;
+            if (track.isAudioTrack()) {
+                audioBitrateDownload += ssrcStats.bitrate.download;
+                audioBitrateUpload += ssrcStats.bitrate.upload;
+                audioCodec = ssrcStats.codec;
+            }
+            else {
+                videoBitrateDownload += ssrcStats.bitrate.download;
+                videoBitrateUpload += ssrcStats.bitrate.upload;
+                videoCodec = ssrcStats.codec;
+            }
+            const participantId = track.getParticipantId();
+            if (!participantId) {
+                // All tracks in ssrc-rewriting mode need not have a participant associated with it.
+                if (!FeatureFlags.isSsrcRewritingSupported()) {
+                    logger.error(`No participant ID returned by ${track}`);
+                }
+                continue; // eslint-disable-line no-continue
+            }
+            const userCodecs = (_a = codecs[participantId]) !== null && _a !== void 0 ? _a : {};
+            userCodecs[ssrc] = {
+                audio: audioCodec,
+                video: videoCodec
+            };
+            codecs[participantId] = userCodecs;
+            const { resolution } = ssrcStats;
+            if (!track.isVideoTrack()
+                || isNaN(resolution === null || resolution === void 0 ? void 0 : resolution.height)
+                || isNaN(resolution === null || resolution === void 0 ? void 0 : resolution.width)
+                || resolution.height === -1
+                || resolution.width === -1) {
+                continue; // eslint-disable-line no-continue
+            }
+            const userResolutions = resolutions[participantId] || {};
+            // If simulcast (VP8) is used, there will be 3 "outbound-rtp" streams with different resolutions and 3
+            // different SSRCs. Based on the requested resolution and the current cpu and available bandwidth
+            // values, some of the streams might get suspended. Therefore the actual send resolution needs to be
+            // calculated based on the outbound-rtp streams that are currently active for the simulcast case.
+            // However for the SVC case, there will be only 1 "outbound-rtp" stream which will have the correct
+            // send resolution width and height.
+            if (track.isLocal() && !browser.supportsTrackBasedStats() && this.peerconnection.doesTrueSimulcast()) {
+                const localSsrcs = this.peerconnection.getLocalVideoSSRCs(track);
+                for (const localSsrc of localSsrcs) {
+                    const ssrcResolution = (_b = this.ssrc2stats.get(localSsrc)) === null || _b === void 0 ? void 0 : _b.resolution;
+                    // The code processes resolution stats only for 'outbound-rtp' streams that are currently active.
+                    if ((ssrcResolution === null || ssrcResolution === void 0 ? void 0 : ssrcResolution.height) && (ssrcResolution === null || ssrcResolution === void 0 ? void 0 : ssrcResolution.width)) {
+                        resolution.height = Math.max(resolution.height, ssrcResolution.height);
+                        resolution.width = Math.max(resolution.width, ssrcResolution.width);
+                    }
                 }
             }
-        }
-        userResolutions[ssrc] = resolution;
-        resolutions[participantId] = userResolutions;
-        if (ssrcStats.framerate > 0) {
-            const userFramerates = framerates[participantId] || {};
-            userFramerates[ssrc] = ssrcStats.framerate;
-            framerates[participantId] = userFramerates;
-        }
-    }
-    this.conferenceStats.bitrate = {
-        'upload': bitrateUpload,
-        'download': bitrateDownload
-    };
-    this.conferenceStats.bitrate.audio = {
-        'upload': audioBitrateUpload,
-        'download': audioBitrateDownload
-    };
-    this.conferenceStats.bitrate.video = {
-        'upload': videoBitrateUpload,
-        'download': videoBitrateDownload
-    };
-    this.conferenceStats.packetLoss = {
-        total: calculatePacketLoss(lostPackets.download + lostPackets.upload, totalPackets.download + totalPackets.upload),
-        download: calculatePacketLoss(lostPackets.download, totalPackets.download),
-        upload: calculatePacketLoss(lostPackets.upload, totalPackets.upload)
-    };
-    const avgAudioLevels = {};
-    let localAvgAudioLevels;
-    Object.keys(this.audioLevelReportHistory).forEach(ssrc => {
-        const { data, isLocal } = this.audioLevelReportHistory[ssrc];
-        const avgAudioLevel = data.reduce((sum, currentValue) => sum + currentValue) / data.length;
-        if (isLocal) {
-            localAvgAudioLevels = avgAudioLevel;
-        }
-        else {
-            const track = this.peerconnection.getTrackBySSRC(Number(ssrc));
-            if (track) {
-                const participantId = track.getParticipantId();
-                if (participantId) {
-                    avgAudioLevels[participantId] = avgAudioLevel;
-                }
+            userResolutions[ssrc] = resolution;
+            resolutions[participantId] = userResolutions;
+            if (ssrcStats.framerate > 0) {
+                const userFramerates = framerates[participantId] || {};
+                userFramerates[ssrc] = ssrcStats.framerate;
+                framerates[participantId] = userFramerates;
             }
         }
+        this.conferenceStats.bitrate = {
+            'upload': bitrateUpload,
+            'download': bitrateDownload
+        };
+        this.conferenceStats.bitrate.audio = {
+            'upload': audioBitrateUpload,
+            'download': audioBitrateDownload
+        };
+        this.conferenceStats.bitrate.video = {
+            'upload': videoBitrateUpload,
+            'download': videoBitrateDownload
+        };
+        this.conferenceStats.packetLoss = {
+            total: calculatePacketLoss(lostPackets.download + lostPackets.upload, totalPackets.download + totalPackets.upload),
+            download: calculatePacketLoss(lostPackets.download, totalPackets.download),
+            upload: calculatePacketLoss(lostPackets.upload, totalPackets.upload)
+        };
+        const avgAudioLevels = {};
+        let localAvgAudioLevels;
+        Object.keys(this.audioLevelReportHistory).forEach(ssrc => {
+            const { data, isLocal } = this.audioLevelReportHistory[ssrc];
+            const avgAudioLevel = data.reduce((sum, currentValue) => sum + currentValue) / data.length;
+            if (isLocal) {
+                localAvgAudioLevels = avgAudioLevel;
+            }
+            else {
+                const track = this.peerconnection.getTrackBySSRC(Number(ssrc));
+                if (track) {
+                    const participantId = track.getParticipantId();
+                    if (participantId) {
+                        avgAudioLevels[participantId] = avgAudioLevel;
+                    }
+                }
+            }
+        });
+        this.audioLevelReportHistory = {};
+        this.eventEmitter.emit(StatisticsEvents.CONNECTION_STATS, this.peerconnection, {
+            'bandwidth': this.conferenceStats.bandwidth,
+            'bitrate': yield calculateBytesPerSecond(yield this.peerconnection.getStats()),
+            'packetLoss': this.conferenceStats.packetLoss,
+            'resolution': resolutions,
+            'framerate': framerates,
+            'codec': codecs,
+            'transport': this.conferenceStats.transport,
+            localAvgAudioLevels,
+            avgAudioLevels
+        });
+        this.conferenceStats.transport = [];
     });
-    this.audioLevelReportHistory = {};
-    this.eventEmitter.emit(StatisticsEvents.CONNECTION_STATS, this.peerconnection, {
-        'bandwidth': this.conferenceStats.bandwidth,
-        'bitrate': this.conferenceStats.bitrate,
-        'packetLoss': this.conferenceStats.packetLoss,
-        'resolution': resolutions,
-        'framerate': framerates,
-        'codec': codecs,
-        'transport': this.conferenceStats.transport,
-        localAvgAudioLevels,
-        avgAudioLevels
-    });
-    this.conferenceStats.transport = [];
 };
 /**
  * Converts the value to a non-negative number.
@@ -406,170 +472,172 @@ StatsCollector.prototype._calculateFps = function (now, before, fieldName) {
  * Stats processing for spec-compliant RTCPeerConnection#getStats.
  */
 StatsCollector.prototype.processStatsReport = function () {
-    const byteSentStats = {};
-    this.currentStatsReport.forEach(now => {
-        var _a;
-        const before = this.previousStatsReport ? this.previousStatsReport.get(now.id) : null;
-        // RTCIceCandidatePairStats - https://w3c.github.io/webrtc-stats/#candidatepair-dict*
-        if (now.type === 'candidate-pair' && now.nominated && now.state === 'succeeded') {
-            const availableIncomingBitrate = now.availableIncomingBitrate;
-            const availableOutgoingBitrate = now.availableOutgoingBitrate;
-            if (availableIncomingBitrate || availableOutgoingBitrate) {
-                this.conferenceStats.bandwidth = {
-                    'download': Math.round(availableIncomingBitrate / 1000),
-                    'upload': Math.round(availableOutgoingBitrate / 1000)
-                };
-            }
-            const remoteUsedCandidate = this.currentStatsReport.get(now.remoteCandidateId);
-            const localUsedCandidate = this.currentStatsReport.get(now.localCandidateId);
-            // RTCIceCandidateStats
-            // https://w3c.github.io/webrtc-stats/#icecandidate-dict*
-            if (remoteUsedCandidate && localUsedCandidate) {
-                const remoteIpAddress = browser.isChromiumBased()
-                    ? remoteUsedCandidate.ip
-                    : remoteUsedCandidate.address;
-                const remotePort = remoteUsedCandidate.port;
-                const ip = `${remoteIpAddress}:${remotePort}`;
-                const localIpAddress = browser.isChromiumBased()
-                    ? localUsedCandidate.ip
-                    : localUsedCandidate.address;
-                const localPort = localUsedCandidate.port;
-                const localip = `${localIpAddress}:${localPort}`;
-                const type = remoteUsedCandidate.protocol;
-                // Save the address unless it has been saved already.
-                const conferenceStatsTransport = this.conferenceStats.transport;
-                if (!conferenceStatsTransport.some(t => t.ip === ip
-                    && t.type === type
-                    && t.localip === localip)) {
-                    conferenceStatsTransport.push({
-                        ip,
-                        type,
-                        localip,
-                        p2p: this.peerconnection.isP2P,
-                        localCandidateType: localUsedCandidate.candidateType,
-                        remoteCandidateType: remoteUsedCandidate.candidateType,
-                        networkType: localUsedCandidate.networkType,
-                        rtt: now.currentRoundTripTime * 1000
-                    });
-                }
-            }
-            // RTCReceivedRtpStreamStats
-            // https://w3c.github.io/webrtc-stats/#receivedrtpstats-dict*
-            // RTCSentRtpStreamStats
-            // https://w3c.github.io/webrtc-stats/#sentrtpstats-dict*
-        }
-        else if (now.type === 'inbound-rtp' || now.type === 'outbound-rtp') {
-            const ssrc = this.getNonNegativeValue(now.ssrc);
-            if (!ssrc) {
-                return;
-            }
-            let ssrcStats = this.ssrc2stats.get(ssrc);
-            if (!ssrcStats) {
-                ssrcStats = new SsrcStats();
-                this.ssrc2stats.set(ssrc, ssrcStats);
-            }
-            let isDownloadStream = true;
-            let key = 'packetsReceived';
-            if (now.type === 'outbound-rtp') {
-                isDownloadStream = false;
-                key = 'packetsSent';
-            }
-            let packetsNow = now[key];
-            if (!packetsNow || packetsNow < 0) {
-                packetsNow = 0;
-            }
-            if (before) {
-                const packetsBefore = this.getNonNegativeValue(before[key]);
-                const packetsDiff = Math.max(0, packetsNow - packetsBefore);
-                const packetsLostNow = this.getNonNegativeValue(now.packetsLost);
-                const packetsLostBefore = this.getNonNegativeValue(before.packetsLost);
-                const packetsLostDiff = Math.max(0, packetsLostNow - packetsLostBefore);
-                ssrcStats.setLoss({
-                    packetsTotal: packetsDiff + packetsLostDiff,
-                    packetsLost: packetsLostDiff,
-                    isDownloadStream
-                });
-            }
-            let resolution;
-            // Process the stats for 'inbound-rtp' streams always and 'outbound-rtp' only if the browser is
-            // Chromium based and version 112 and later since 'track' based stats are no longer available there
-            // for calculating send resolution and frame rate.
-            if (typeof now.frameHeight !== 'undefined' && typeof now.frameWidth !== 'undefined') {
-                // Assume the stream is active if the field is missing in the stats(Firefox)
-                const isStreamActive = (_a = now.active) !== null && _a !== void 0 ? _a : true;
-                if (now.type === 'inbound-rtp' || (!browser.supportsTrackBasedStats() && isStreamActive)) {
-                    resolution = {
-                        height: now.frameHeight,
-                        width: now.frameWidth
+    return __awaiter(this, void 0, void 0, function* () {
+        const byteSentStats = {};
+        this.currentStatsReport.forEach(now => {
+            var _a;
+            const before = this.previousStatsReport ? this.previousStatsReport.get(now.id) : null;
+            // RTCIceCandidatePairStats - https://w3c.github.io/webrtc-stats/#candidatepair-dict*
+            if (now.type === 'candidate-pair' && now.nominated && now.state === 'succeeded') {
+                const availableIncomingBitrate = now.availableIncomingBitrate;
+                const availableOutgoingBitrate = now.availableOutgoingBitrate;
+                if (availableIncomingBitrate || availableOutgoingBitrate) {
+                    this.conferenceStats.bandwidth = {
+                        'download': Math.round(availableIncomingBitrate / 1000),
+                        'upload': Math.round(availableOutgoingBitrate / 1000)
                     };
                 }
+                const remoteUsedCandidate = this.currentStatsReport.get(now.remoteCandidateId);
+                const localUsedCandidate = this.currentStatsReport.get(now.localCandidateId);
+                // RTCIceCandidateStats
+                // https://w3c.github.io/webrtc-stats/#icecandidate-dict*
+                if (remoteUsedCandidate && localUsedCandidate) {
+                    const remoteIpAddress = browser.isChromiumBased()
+                        ? remoteUsedCandidate.ip
+                        : remoteUsedCandidate.address;
+                    const remotePort = remoteUsedCandidate.port;
+                    const ip = `${remoteIpAddress}:${remotePort}`;
+                    const localIpAddress = browser.isChromiumBased()
+                        ? localUsedCandidate.ip
+                        : localUsedCandidate.address;
+                    const localPort = localUsedCandidate.port;
+                    const localip = `${localIpAddress}:${localPort}`;
+                    const type = remoteUsedCandidate.protocol;
+                    // Save the address unless it has been saved already.
+                    const conferenceStatsTransport = this.conferenceStats.transport;
+                    if (!conferenceStatsTransport.some(t => t.ip === ip
+                        && t.type === type
+                        && t.localip === localip)) {
+                        conferenceStatsTransport.push({
+                            ip,
+                            type,
+                            localip,
+                            p2p: this.peerconnection.isP2P,
+                            localCandidateType: localUsedCandidate.candidateType,
+                            remoteCandidateType: remoteUsedCandidate.candidateType,
+                            networkType: localUsedCandidate.networkType,
+                            rtt: now.currentRoundTripTime * 1000
+                        });
+                    }
+                }
+                // RTCReceivedRtpStreamStats
+                // https://w3c.github.io/webrtc-stats/#receivedrtpstats-dict*
+                // RTCSentRtpStreamStats
+                // https://w3c.github.io/webrtc-stats/#sentrtpstats-dict*
             }
-            ssrcStats.setResolution(resolution);
-            let frameRate = now.framesPerSecond;
-            if (!frameRate && before) {
-                frameRate = this._calculateFps(now, before, 'framesSent');
-            }
-            ssrcStats.setFramerate(Math.round(frameRate || 0));
-            if (now.type === 'inbound-rtp' && before) {
-                ssrcStats.addBitrate({
-                    'download': this._calculateBitrate(now, before, 'bytesReceived'),
-                    'upload': 0
-                });
-            }
-            else if (before) {
-                byteSentStats[ssrc] = this.getNonNegativeValue(now.bytesSent);
-                ssrcStats.addBitrate({
-                    'download': 0,
-                    'upload': this._calculateBitrate(now, before, 'bytesSent')
-                });
-            }
-            const codec = this.currentStatsReport.get(now.codecId);
-            if (codec) {
-                /**
-                 * The mime type has the following form: video/VP8 or audio/ISAC,
-                 * so we what to keep just the type after the '/', audio and video
-                 * keys will be added on the processing side.
-                 */
-                const codecShortType = codec.mimeType.split('/')[1];
-                codecShortType && ssrcStats.setCodec(codecShortType);
-            }
-            // Continue to use the 'track' based stats for Firefox and Safari and older versions of Chromium.
-        }
-        else if (browser.supportsTrackBasedStats()
-            && now.type === 'track'
-            && now.kind === MediaType.VIDEO
-            && !now.remoteSource) {
-            const resolution = {
-                height: now.frameHeight,
-                width: now.frameWidth
-            };
-            const localVideoTracks = this.peerconnection.getLocalTracks(MediaType.VIDEO);
-            if (!(localVideoTracks === null || localVideoTracks === void 0 ? void 0 : localVideoTracks.length)) {
-                return;
-            }
-            const ssrc = this.peerconnection.getSsrcByTrackId(now.trackIdentifier);
-            if (!ssrc) {
-                return;
-            }
-            let ssrcStats = this.ssrc2stats.get(ssrc);
-            if (!ssrcStats) {
-                ssrcStats = new SsrcStats();
-                this.ssrc2stats.set(ssrc, ssrcStats);
-            }
-            if (resolution.height && resolution.width) {
+            else if (now.type === 'inbound-rtp' || now.type === 'outbound-rtp') {
+                const ssrc = this.getNonNegativeValue(now.ssrc);
+                if (!ssrc) {
+                    return;
+                }
+                let ssrcStats = this.ssrc2stats.get(ssrc);
+                if (!ssrcStats) {
+                    ssrcStats = new SsrcStats();
+                    this.ssrc2stats.set(ssrc, ssrcStats);
+                }
+                let isDownloadStream = true;
+                let key = 'packetsReceived';
+                if (now.type === 'outbound-rtp') {
+                    isDownloadStream = false;
+                    key = 'packetsSent';
+                }
+                let packetsNow = now[key];
+                if (!packetsNow || packetsNow < 0) {
+                    packetsNow = 0;
+                }
+                if (before) {
+                    const packetsBefore = this.getNonNegativeValue(before[key]);
+                    const packetsDiff = Math.max(0, packetsNow - packetsBefore);
+                    const packetsLostNow = this.getNonNegativeValue(now.packetsLost);
+                    const packetsLostBefore = this.getNonNegativeValue(before.packetsLost);
+                    const packetsLostDiff = Math.max(0, packetsLostNow - packetsLostBefore);
+                    ssrcStats.setLoss({
+                        packetsTotal: packetsDiff + packetsLostDiff,
+                        packetsLost: packetsLostDiff,
+                        isDownloadStream
+                    });
+                }
+                let resolution;
+                // Process the stats for 'inbound-rtp' streams always and 'outbound-rtp' only if the browser is
+                // Chromium based and version 112 and later since 'track' based stats are no longer available there
+                // for calculating send resolution and frame rate.
+                if (typeof now.frameHeight !== 'undefined' && typeof now.frameWidth !== 'undefined') {
+                    // Assume the stream is active if the field is missing in the stats(Firefox)
+                    const isStreamActive = (_a = now.active) !== null && _a !== void 0 ? _a : true;
+                    if (now.type === 'inbound-rtp' || (!browser.supportsTrackBasedStats() && isStreamActive)) {
+                        resolution = {
+                            height: now.frameHeight,
+                            width: now.frameWidth
+                        };
+                    }
+                }
                 ssrcStats.setResolution(resolution);
+                let frameRate = now.framesPerSecond;
+                if (!frameRate && before) {
+                    frameRate = this._calculateFps(now, before, 'framesSent');
+                }
+                ssrcStats.setFramerate(Math.round(frameRate || 0));
+                if (now.type === 'inbound-rtp' && before) {
+                    ssrcStats.addBitrate({
+                        'download': this._calculateBitrate(now, before, 'bytesReceived'),
+                        'upload': 0
+                    });
+                }
+                else if (before) {
+                    byteSentStats[ssrc] = this.getNonNegativeValue(now.bytesSent);
+                    ssrcStats.addBitrate({
+                        'download': 0,
+                        'upload': this._calculateBitrate(now, before, 'bytesSent')
+                    });
+                }
+                const codec = this.currentStatsReport.get(now.codecId);
+                if (codec) {
+                    /**
+                     * The mime type has the following form: video/VP8 or audio/ISAC,
+                     * so we what to keep just the type after the '/', audio and video
+                     * keys will be added on the processing side.
+                     */
+                    const codecShortType = codec.mimeType.split('/')[1];
+                    codecShortType && ssrcStats.setCodec(codecShortType);
+                }
+                // Continue to use the 'track' based stats for Firefox and Safari and older versions of Chromium.
             }
-            // Calculate the frame rate. 'framesSent' is the total aggregate value for all the simulcast streams.
-            // Therefore, it needs to be divided by the total number of active simulcast streams.
-            let frameRate = now.framesPerSecond;
-            if (!frameRate && before) {
-                frameRate = this._calculateFps(now, before, 'framesSent');
+            else if (browser.supportsTrackBasedStats()
+                && now.type === 'track'
+                && now.kind === MediaType.VIDEO
+                && !now.remoteSource) {
+                const resolution = {
+                    height: now.frameHeight,
+                    width: now.frameWidth
+                };
+                const localVideoTracks = this.peerconnection.getLocalTracks(MediaType.VIDEO);
+                if (!(localVideoTracks === null || localVideoTracks === void 0 ? void 0 : localVideoTracks.length)) {
+                    return;
+                }
+                const ssrc = this.peerconnection.getSsrcByTrackId(now.trackIdentifier);
+                if (!ssrc) {
+                    return;
+                }
+                let ssrcStats = this.ssrc2stats.get(ssrc);
+                if (!ssrcStats) {
+                    ssrcStats = new SsrcStats();
+                    this.ssrc2stats.set(ssrc, ssrcStats);
+                }
+                if (resolution.height && resolution.width) {
+                    ssrcStats.setResolution(resolution);
+                }
+                // Calculate the frame rate. 'framesSent' is the total aggregate value for all the simulcast streams.
+                // Therefore, it needs to be divided by the total number of active simulcast streams.
+                let frameRate = now.framesPerSecond;
+                if (!frameRate && before) {
+                    frameRate = this._calculateFps(now, before, 'framesSent');
+                }
+                ssrcStats.setFramerate(frameRate);
             }
-            ssrcStats.setFramerate(frameRate);
+        });
+        if (Object.keys(byteSentStats).length) {
+            this.eventEmitter.emit(StatisticsEvents.BYTE_SENT_STATS, this.peerconnection, byteSentStats);
         }
+        this._processAndEmitReport();
     });
-    if (Object.keys(byteSentStats).length) {
-        this.eventEmitter.emit(StatisticsEvents.BYTE_SENT_STATS, this.peerconnection, byteSentStats);
-    }
-    this._processAndEmitReport();
 };

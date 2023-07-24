@@ -5,6 +5,7 @@ export const initSDKConfig = {
         sendMultipleVideoStreams: true,
         sourceNameSignaling: true,
         enableJoinAsVisitor: true,
+        receiveMultipleVideoStreams: true
     }
     // useIPv6 - boolean property
     // disableSimulcast: true //boolean property. Enables/disables simulcast.
@@ -25,6 +26,18 @@ export const connectionConfig = {
     },
     serviceUrl: 'wss://api.sariska.io/api/v1/media/websocket',
     clientNode: 'https://www.sariska.io',
+    bridgeChannel: {
+        // If the backend advertises multiple colibri websockets, this options allows
+        // to filter some of them out based on the domain name. We use the first URL
+        // which does not match ignoreDomain, falling back to the first one that matches
+        // ignoreDomain. Has no effect if undefined.
+        // ignoreDomain: 'example.com',
+
+        // Prefer SCTP (WebRTC data channels over the media path) over a colibri websocket.
+        // If SCTP is available in the backend it will be used instead of a WS. Defaults to
+        // false (SCTP is used only if available and no WS are available).
+        preferSctp: false
+    },
     // enableLipSync - (optional) boolean property which enables the lipsync feature. Currently works only in Chrome and is disabled by default.
 };
 
@@ -48,7 +61,6 @@ export const conferenceConfig = {
     enableNoAudioDetection: true,
     enableNoisyMicDetection: true,
     createVADProcessor: true,
-    openBridgeChannel: 'websocket',
     //- Enables/disables bridge channel. Values can be "datachannel", "websocket", true (treat it as "datachannel"), undefined (treat it as "datachannel") and false (don't open any channel). NOTE: we recommend to set that option to true
     // recordingType - the type of recording to be used
     // callStatsID - callstats credentials
