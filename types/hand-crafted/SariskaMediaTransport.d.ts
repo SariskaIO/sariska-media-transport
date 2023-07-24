@@ -137,8 +137,6 @@ export type  SariskaMediaTransportType = {
 
   setNetworkInfo: ( { isOnline: boolean } ) => void;
 
-  setVideoTrackContentHints: ( track: MediaStreamTrack, hint: string ) => void;
-
   precallTest: PrecallTest;
 
   util: {

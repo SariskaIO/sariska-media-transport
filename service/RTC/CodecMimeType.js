@@ -1,8 +1,8 @@
 /**
  * Enumeration of the codec mime types
- * @type {{H264: string, OPUS: string, ULPFEC: string, VP8: string, VP9: string}}
+ * @type {{AV1: string, H264: string, OPUS: string, ULPFEC: string, VP8: string, VP9: string}}
  */
-const CodecMimeType = {
+export const CodecMimeType = {
     /**
      * AV1 codec mime type.
      */
@@ -32,7 +32,6 @@ const CodecMimeType = {
      * The vp9 codec mime type.
      */
     VP9: 'vp9'
-
 };
 
-module.exports = CodecMimeType;
+export default CodecMimeType;

@@ -10,6 +10,7 @@ import { FEEDBACK } from '../../service/statistics/AnalyticsEvents';
 import * as StatisticsEvents from '../../service/statistics/Events';
 import browser from '../browser';
 import ScriptUtil from '../util/ScriptUtil';
+import WatchRTC from '../watchRTC/WatchRTC';
 
 import analytics from './AnalyticsAdapter';
 import CallStats from './CallStats';
@@ -130,6 +131,11 @@ Statistics.init = function(options) {
     }
 
     Statistics.disableThirdPartyRequests = options.disableThirdPartyRequests;
+
+    // WatchRTC is not required to work for react native
+    if (!browser.isReactNative()) {
+        WatchRTC.init(options);
+    }
 };
 
 /**
@@ -195,6 +201,11 @@ export default function Statistics(xmpp, options) {
     this.callsStatsInstances = new Map();
 
     Statistics.instances.add(this);
+
+    // WatchRTC is not required to work for react native
+    if (!browser.isReactNative()) {
+        WatchRTC.start(this.options.roomName, this.options.userName);
+    }
 }
 Statistics.audioLevelsEnabled = false;
 Statistics.audioLevelsInterval = 200;

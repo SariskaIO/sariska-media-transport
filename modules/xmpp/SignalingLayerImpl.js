@@ -268,9 +268,12 @@ export default class SignalingLayerImpl extends SignalingLayer {
 
         if (mediaType === MediaType.VIDEO) {
             mediaInfo.videoType = undefined;
+            const codecListNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecList');
             const codecTypeNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecType');
 
-            if (codecTypeNode.length > 0) {
+            if (codecListNode.length) {
+                mediaInfo.codecList = codecListNode[0].value?.split(',') ?? [];
+            } else if (codecTypeNode.length > 0) {
                 mediaInfo.codecType = codecTypeNode[0].value;
             }
         }
@@ -373,6 +376,7 @@ export default class SignalingLayerImpl extends SignalingLayer {
         }
 
         this._localSourceState[sourceName].muted = muted;
+        logger.debug(`Mute state of ${sourceName} changed to muted=${muted}`);
 
         if (this.chatRoom) {
             return this._addLocalSourceInfoToPresence();

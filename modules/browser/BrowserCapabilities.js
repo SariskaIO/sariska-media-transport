@@ -1,7 +1,4 @@
 import { BrowserDetection } from '@jitsi/js-utils';
-import { getLogger } from '@jitsi/logger';
-
-const logger = getLogger(__filename);
 
 /* Minimum required Chrome / Chromium version. This applies also to derivatives. */
 const MIN_REQUIRED_CHROME_VERSION = 72;
@@ -19,14 +16,6 @@ const MIN_REQUIRED_IOS_VERSION = 14;
  */
 export default class BrowserCapabilities extends BrowserDetection {
     /**
-     * Creates new BrowserCapabilities instance.
-     */
-    constructor() {
-        super();
-        logger.info(`This appears to be ${this.getName()}, ver: ${this.getVersion()}`);
-    }
-
-    /**
      * Tells whether or not the <tt>MediaStream/tt> is removed from the <tt>PeerConnection</tt> and disposed on video
      * mute (in order to turn off the camera device). This is needed on Firefox because of the following bug
      * https://bugzilla.mozilla.org/show_bug.cgi?id=1735951
@@ -35,6 +24,17 @@ export default class BrowserCapabilities extends BrowserDetection {
      */
     doesVideoMuteByStreamRemove() {
         return this.isChromiumBased() || this.isWebKitBased() || this.isFirefox();
+    }
+
+    /**
+     * Checks if the client is running on an Android browser.
+     *
+     * @returns {boolean}
+     */
+    isAndroidBrowser() {
+        const { userAgent } = navigator;
+
+        return !this.isReactNative() && userAgent.match(/Android/i);
     }
 
     /**
@@ -67,6 +67,13 @@ export default class BrowserCapabilities extends BrowserDetection {
 
         return Boolean(userAgent.match(/iP(ad|hone|od)/i))
             || (maxTouchPoints && maxTouchPoints > 2 && /MacIntel/.test(platform));
+    }
+
+    /**
+     * Checks if the client is running on a mobile device.
+     */
+    isMobileDevice() {
+        return this.isAndroidBrowser() || this.isIosBrowser() || this.isReactNative();
     }
 
     /**

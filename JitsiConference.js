@@ -410,11 +410,20 @@ JitsiConference.prototype._init = function(options = {}) {
 
     // Get the codec preference settings from config.js.
     const codecSettings = {
-        jvbDisabledCodec: _getCodecMimeType(config.videoQuality?.disabledCodec),
-        p2pDisabledCodec: _getCodecMimeType(config.p2p?.disabledCodec),
-        enforcePreferredCodec: config.videoQuality?.enforcePreferredCodec,
-        jvbPreferredCodec: _getCodecMimeType(config.videoQuality?.preferredCodec),
-        p2pPreferredCodec: _getCodecMimeType(config.p2p?.preferredCodec)
+        jvb: {
+            preferenceOrder: browser.isMobileDevice() && config.videoQuality?.mobileCodecPreferenceOrder
+                ? config.videoQuality.mobileCodecPreferenceOrder
+                : config.videoQuality?.codecPreferenceOrder,
+            disabledCodec: _getCodecMimeType(config.videoQuality?.disabledCodec),
+            preferredCodec: _getCodecMimeType(config.videoQuality?.preferredCodec)
+        },
+        p2p: {
+            preferenceOrder: browser.isMobileDevice() && config.p2p?.mobileCodecPreferenceOrder
+                ? config.p2p.mobileCodecPreferenceOrder
+                : config.p2p?.codecPreferenceOrder,
+            disabledCodec: _getCodecMimeType(config.p2p?.disabledCodec),
+            preferredCodec: _getCodecMimeType(config.p2p?.preferredCodec)
+        }
     };
 
     this.codecSelection = new CodecSelection(this, codecSettings);
@@ -592,8 +601,8 @@ JitsiConference.prototype._init = function(options = {}) {
             'region', config.deploymentInfo.userRegion);
     }
 
-    // Publish the codec type to presence.
-    this.setLocalParticipantProperty('codecType', this.codecSelection.getPreferredCodec());
+    // Publish the codec preference to presence.
+    this.setLocalParticipantProperty('codecList', this.codecSelection.getCodecPreferenceList('jvb'));
 
     // Set transcription language presence extension.
     // In case the language config is undefined or has the default value that the transcriber uses
@@ -1045,7 +1054,6 @@ JitsiConference.prototype.sendCommand = function(name, values) {
     } else {
         logger.warn('Not sending a command, room not initialized.');
     }
-
 };
 
 /**
@@ -1525,6 +1533,7 @@ JitsiConference.prototype._setTrackMuteStatus = function(mediaType, localTrack, 
 
     if (localTrack) {
         presenceChanged = this._signalingLayer.setTrackMuteStatus(localTrack.getSourceName(), isMuted);
+        presenceChanged && logger.debug(`Mute state of ${localTrack} changed to muted=${isMuted}`);
     }
 
     return presenceChanged;
@@ -2309,8 +2318,7 @@ JitsiConference.prototype._acceptJvbIncomingCall = function(jingleSession, jingl
                 ...this.options.config,
                 codecSettings: {
                     mediaType: MediaType.VIDEO,
-                    preferred: this.codecSelection.jvbPreferredCodec,
-                    disabled: this.codecSelection.jvbDisabledCodec
+                    codecList: this.codecSelection.getCodecPreferenceList('jvb')
                 },
                 enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled()
             });
@@ -3096,8 +3104,7 @@ JitsiConference.prototype._acceptP2PIncomingCall = function(jingleSession, jingl
             ...this.options.config,
             codecSettings: {
                 mediaType: MediaType.VIDEO,
-                preferred: this.codecSelection.p2pPreferredCodec,
-                disabled: this.codecSelection.p2pDisabledCodec
+                codecList: this.codecSelection.getCodecPreferenceList('p2p')
             },
             enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled()
         });
@@ -3468,8 +3475,7 @@ JitsiConference.prototype._startP2PSession = function(remoteJid) {
             ...this.options.config,
             codecSettings: {
                 mediaType: MediaType.VIDEO,
-                preferred: this.codecSelection.p2pPreferredCodec,
-                disabled: this.codecSelection.p2pDisabledCodec
+                codecList: this.codecSelection.getCodecPreferenceList('p2p')
             },
             enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled()
         });
@@ -3714,9 +3720,13 @@ JitsiConference.prototype._updateRoomPresence = function(jingleSession, ctx) {
 
     // Set presence for all the available local tracks.
     for (const track of localTracks) {
-        muteStatusChanged = this._setTrackMuteStatus(track.getType(), track, track.isMuted());
+        const muted = track.isMuted();
+
+        muteStatusChanged = this._setTrackMuteStatus(track.getType(), track, muted);
+        muteStatusChanged && logger.debug(`Updating mute state of ${track} in presence to muted=${muted}`);
         if (track.getType() === MediaType.VIDEO) {
             videoTypeChanged = this._setNewVideoType(track);
+            videoTypeChanged && logger.debug(`Updating videoType in presence to ${track.getVideoType()}`);
         }
         presenceChanged = presenceChanged || muteStatusChanged || videoTypeChanged;
     }
