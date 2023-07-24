@@ -36,12 +36,12 @@ class ReceiverVideoConstraints {
      * Returns the receiver video constraints that need to be sent on the bridge channel or to the remote peer.
      */
     get constraints() {
-        var _a;
         this._receiverVideoConstraints.assumedBandwidthBps = this._assumedBandwidthBps;
         this._receiverVideoConstraints.lastN = this._lastN;
-        if ((_a = Object.keys(this._receiverVideoConstraints.constraints)) === null || _a === void 0 ? void 0 : _a.length) {
+        const individualConstraints = this._receiverVideoConstraints.constraints;
+        if (individualConstraints && Object.keys(individualConstraints).length) {
             /* eslint-disable no-unused-vars */
-            for (const [key, value] of Object.entries(this._receiverVideoConstraints.constraints)) {
+            for (const [key, value] of Object.entries(individualConstraints)) {
                 value.maxHeight = this._maxFrameHeight;
             }
         }
@@ -100,9 +100,13 @@ class ReceiverVideoConstraints {
      * @returns {boolean} Returns true if the the value has been updated, false otherwise.
      */
     updateReceiverVideoConstraints(videoConstraints) {
+        var _a;
         const changed = !isEqual(this._receiverVideoConstraints, videoConstraints);
         if (changed) {
             this._receiverVideoConstraints = videoConstraints;
+            if ((_a = videoConstraints.defaultConstraints) === null || _a === void 0 ? void 0 : _a.maxHeight) {
+                this.updateReceiveResolution(videoConstraints.defaultConstraints.maxHeight);
+            }
             logger.debug(`Updating ReceiverVideoConstraints ${JSON.stringify(videoConstraints)}`);
         }
         return changed;
@@ -252,7 +256,7 @@ export default class ReceiveVideoController {
             // Send the contraints on the bridge channel.
             this._rtc.setReceiverVideoConstraints(constraints);
             const p2pSession = this._conference.getMediaSessions().find(session => session.isP2P);
-            if (!p2pSession) {
+            if (!p2pSession || !constraints.constraints) {
                 return;
             }
             const mappedConstraints = Array.from(Object.entries(constraints.constraints))

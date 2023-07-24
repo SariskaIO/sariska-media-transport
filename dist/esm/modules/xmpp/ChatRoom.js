@@ -942,6 +942,8 @@ export default class ChatRoom extends Listenable {
      * @param from
      */
     onPresenceError(pres, from) {
+        var _a;
+        let errorDescriptionNode;
         if ($(pres)
             .find('>error[type="auth"]'
             + '>not-authorized['
@@ -982,15 +984,11 @@ export default class ChatRoom extends Listenable {
             if (lobbyRoomNode.length) {
                 lobbyRoomJid = lobbyRoomNode.text();
             }
-            else {
-                // let's fallback to old location of lobbyroom node, TODO: to be removed in the future once
-                // everything is updated
-                const lobbyRoomOldNode = $(pres).find('>lobbyroom');
-                if (lobbyRoomOldNode.length) {
-                    lobbyRoomJid = lobbyRoomOldNode.text();
-                }
-            }
             this.eventEmitter.emit(XMPPEvents.ROOM_CONNECT_MEMBERS_ONLY_ERROR, lobbyRoomJid);
+        }
+        else if ((errorDescriptionNode = $(pres).find('>error[type="modify"]>displayname-required[xmlns="http://jitsi.org/jitmeet"]')).length) {
+            logger.warn('display name required ', pres);
+            this.eventEmitter.emit(XMPPEvents.DISPLAY_NAME_REQUIRED, (_a = errorDescriptionNode[0].attributes.lobby) === null || _a === void 0 ? void 0 : _a.value);
         }
         else {
             logger.warn('onPresError ', pres);

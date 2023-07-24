@@ -55,6 +55,10 @@ export var XMPPEvents;
     // has changed.
     XMPPEvents["DISPLAY_NAME_CHANGED"] = "xmpp.display_name_changed";
     /**
+     * Event for incoming presence error which is for required display name.
+     */
+    XMPPEvents["DISPLAY_NAME_REQUIRED"] = "xmpp.display_name_required";
+    /**
      * Chat room instance have been added to Strophe.emuc plugin.
      */
     XMPPEvents["EMUC_ROOM_ADDED"] = "xmpp.emuc_room_added";

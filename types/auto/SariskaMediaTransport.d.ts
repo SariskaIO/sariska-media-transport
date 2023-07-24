@@ -290,14 +290,6 @@ declare const _default: {
         networkType: any;
         details: any;
     }): void;
-    /**
-     * Set the contentHint on the transmitted stream track to indicate
-     * charaterstics in the video stream, which informs PeerConnection
-     * on how to encode the track (to prefer motion or individual frame detail)
-     * @param {MediaStreamTrack} track - the track that is transmitted
-     * @param {String} hint - contentHint value that needs to be set on the track
-     */
-    setVideoTrackContentHints(track: any, hint: any): void;
     precallTest: {
         init: typeof import("./modules/statistics/PrecallTest").init;
         execute: typeof import("./modules/statistics/PrecallTest").execute;

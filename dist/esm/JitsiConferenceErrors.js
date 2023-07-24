@@ -48,6 +48,12 @@ export var JitsiConferenceErrors;
      */
     JitsiConferenceErrors["CONFERENCE_ACCESS_DENIED"] = "conference.connectionError.accessDenied";
     /**
+     * Indicates that the display name is required when joining the room.
+     * There are cases like lobby room where display name is required.
+     * @param {boolean|null} lobby whether the error is because lobby is enabled.
+     */
+    JitsiConferenceErrors["DISPLAY_NAME_REQUIRED"] = "conference.display_name_required";
+    /**
      * Indicates that focus error happened.
      */
     JitsiConferenceErrors["FOCUS_DISCONNECTED"] = "conference.focusDisconnected";
@@ -105,6 +111,7 @@ export const CONFERENCE_RESTARTED = JitsiConferenceErrors.CONFERENCE_RESTARTED;
 export const NOT_ALLOWED_ERROR = JitsiConferenceErrors.NOT_ALLOWED_ERROR;
 export const MEMBERS_ONLY_ERROR = JitsiConferenceErrors.MEMBERS_ONLY_ERROR;
 export const CONFERENCE_ACCESS_DENIED = JitsiConferenceErrors.CONFERENCE_ACCESS_DENIED;
+export const DISPLAY_NAME_REQUIRED = JitsiConferenceErrors.DISPLAY_NAME_REQUIRED;
 export const FOCUS_DISCONNECTED = JitsiConferenceErrors.FOCUS_DISCONNECTED;
 export const FOCUS_LEFT = JitsiConferenceErrors.FOCUS_LEFT;
 export const GRACEFUL_SHUTDOWN = JitsiConferenceErrors.GRACEFUL_SHUTDOWN;

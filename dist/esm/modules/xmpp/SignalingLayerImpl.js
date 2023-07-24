@@ -191,7 +191,7 @@ export default class SignalingLayerImpl extends SignalingLayer {
      * @inheritDoc
      */
     getPeerMediaInfo(owner, mediaType, sourceName) {
-        var _a;
+        var _a, _b, _c;
         const legacyGetPeerMediaInfo = () => {
             if (this.chatRoom) {
                 return this.chatRoom.getMediaPresenceInfo(owner, mediaType);
@@ -214,8 +214,12 @@ export default class SignalingLayerImpl extends SignalingLayer {
         };
         if (mediaType === MediaType.VIDEO) {
             mediaInfo.videoType = undefined;
+            const codecListNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecList');
             const codecTypeNode = filterNodeFromPresenceJSON(lastPresence, 'jitsi_participant_codecType');
-            if (codecTypeNode.length > 0) {
+            if (codecListNode.length) {
+                mediaInfo.codecList = (_c = (_b = codecListNode[0].value) === null || _b === void 0 ? void 0 : _b.split(',')) !== null && _c !== void 0 ? _c : [];
+            }
+            else if (codecTypeNode.length > 0) {
                 mediaInfo.codecType = codecTypeNode[0].value;
             }
         }
@@ -302,6 +306,7 @@ export default class SignalingLayerImpl extends SignalingLayer {
             this._localSourceState[sourceName] = {};
         }
         this._localSourceState[sourceName].muted = muted;
+        logger.debug(`Mute state of ${sourceName} changed to muted=${muted}`);
         if (this.chatRoom) {
             return this._addLocalSourceInfoToPresence();
         }

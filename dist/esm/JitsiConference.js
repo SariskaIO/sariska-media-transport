@@ -342,16 +342,25 @@ JitsiConference.resourceCreator = function (jid) {
  * @param options.connection {JitsiConnection} overrides this.connection
  */
 JitsiConference.prototype._init = function (options = {}) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     this.eventManager.setupXMPPListeners();
     const { config } = this.options;
     // Get the codec preference settings from config.js.
     const codecSettings = {
-        jvbDisabledCodec: _getCodecMimeType((_a = config.videoQuality) === null || _a === void 0 ? void 0 : _a.disabledCodec),
-        p2pDisabledCodec: _getCodecMimeType((_b = config.p2p) === null || _b === void 0 ? void 0 : _b.disabledCodec),
-        enforcePreferredCodec: (_c = config.videoQuality) === null || _c === void 0 ? void 0 : _c.enforcePreferredCodec,
-        jvbPreferredCodec: _getCodecMimeType((_d = config.videoQuality) === null || _d === void 0 ? void 0 : _d.preferredCodec),
-        p2pPreferredCodec: _getCodecMimeType((_e = config.p2p) === null || _e === void 0 ? void 0 : _e.preferredCodec)
+        jvb: {
+            preferenceOrder: browser.isMobileDevice() && ((_a = config.videoQuality) === null || _a === void 0 ? void 0 : _a.mobileCodecPreferenceOrder)
+                ? config.videoQuality.mobileCodecPreferenceOrder
+                : (_b = config.videoQuality) === null || _b === void 0 ? void 0 : _b.codecPreferenceOrder,
+            disabledCodec: _getCodecMimeType((_c = config.videoQuality) === null || _c === void 0 ? void 0 : _c.disabledCodec),
+            preferredCodec: _getCodecMimeType((_d = config.videoQuality) === null || _d === void 0 ? void 0 : _d.preferredCodec)
+        },
+        p2p: {
+            preferenceOrder: browser.isMobileDevice() && ((_e = config.p2p) === null || _e === void 0 ? void 0 : _e.mobileCodecPreferenceOrder)
+                ? config.p2p.mobileCodecPreferenceOrder
+                : (_f = config.p2p) === null || _f === void 0 ? void 0 : _f.codecPreferenceOrder,
+            disabledCodec: _getCodecMimeType((_g = config.p2p) === null || _g === void 0 ? void 0 : _g.disabledCodec),
+            preferredCodec: _getCodecMimeType((_h = config.p2p) === null || _h === void 0 ? void 0 : _h.preferredCodec)
+        }
     };
     this.codecSelection = new CodecSelection(this, codecSettings);
     this._statsCurrentId = config.statisticsId ? config.statisticsId : Settings.callStatsUserName;
@@ -384,7 +393,7 @@ JitsiConference.prototype._init = function (options = {}) {
     this.room.addListener(XMPPEvents.SOURCE_ADD, this._updateRoomPresence);
     this.room.addListener(XMPPEvents.SOURCE_ADD_ERROR, this._removeLocalSourceOnReject);
     this.room.addListener(XMPPEvents.SOURCE_REMOVE, this._updateRoomPresence);
-    if ((_f = config.e2eping) === null || _f === void 0 ? void 0 : _f.enabled) {
+    if ((_j = config.e2eping) === null || _j === void 0 ? void 0 : _j.enabled) {
         this.e2eping = new E2ePing(this, config, (message, to) => {
             try {
                 this.sendMessage(message, to, true /* sendThroughVideobridge */);
@@ -483,8 +492,8 @@ JitsiConference.prototype._init = function (options = {}) {
     if (config && config.deploymentInfo && config.deploymentInfo.userRegion) {
         this.setLocalParticipantProperty('region', config.deploymentInfo.userRegion);
     }
-    // Publish the codec type to presence.
-    this.setLocalParticipantProperty('codecType', this.codecSelection.getPreferredCodec());
+    // Publish the codec preference to presence.
+    this.setLocalParticipantProperty('codecList', this.codecSelection.getCodecPreferenceList('jvb'));
     // Set transcription language presence extension.
     // In case the language config is undefined or has the default value that the transcriber uses
     // (in our case Jigasi uses 'en-US'), don't set the participant property in order to avoid
@@ -1268,6 +1277,7 @@ JitsiConference.prototype._setTrackMuteStatus = function (mediaType, localTrack,
     let presenceChanged = false;
     if (localTrack) {
         presenceChanged = this._signalingLayer.setTrackMuteStatus(localTrack.getSourceName(), isMuted);
+        presenceChanged && logger.debug(`Mute state of ${localTrack} changed to muted=${isMuted}`);
     }
     return presenceChanged;
 };
@@ -1906,8 +1916,7 @@ JitsiConference.prototype._acceptJvbIncomingCall = function (jingleSession, jing
     try {
         jingleSession.initialize(this.room, this.rtc, this._signalingLayer, Object.assign(Object.assign({}, this.options.config), { codecSettings: {
                 mediaType: MediaType.VIDEO,
-                preferred: this.codecSelection.jvbPreferredCodec,
-                disabled: this.codecSelection.jvbDisabledCodec
+                codecList: this.codecSelection.getCodecPreferenceList('jvb')
             }, enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled() }));
     }
     catch (error) {
@@ -2574,8 +2583,7 @@ JitsiConference.prototype._acceptP2PIncomingCall = function (jingleSession, jing
     this._sendConferenceJoinAnalyticsEvent();
     this.p2pJingleSession.initialize(this.room, this.rtc, this._signalingLayer, Object.assign(Object.assign({}, this.options.config), { codecSettings: {
             mediaType: MediaType.VIDEO,
-            preferred: this.codecSelection.p2pPreferredCodec,
-            disabled: this.codecSelection.p2pDisabledCodec
+            codecList: this.codecSelection.getCodecPreferenceList('p2p')
         }, enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled() }));
     logger.info('Starting CallStats for P2P connection...');
     let remoteID = Strophe.getResourceFromJid(this.p2pJingleSession.remoteJid);
@@ -2861,8 +2869,7 @@ JitsiConference.prototype._startP2PSession = function (remoteJid) {
     this._sendConferenceJoinAnalyticsEvent();
     this.p2pJingleSession.initialize(this.room, this.rtc, this._signalingLayer, Object.assign(Object.assign({}, this.options.config), { codecSettings: {
             mediaType: MediaType.VIDEO,
-            preferred: this.codecSelection.p2pPreferredCodec,
-            disabled: this.codecSelection.p2pDisabledCodec
+            codecList: this.codecSelection.getCodecPreferenceList('p2p')
         }, enableInsertableStreams: this.isE2EEEnabled() || FeatureFlags.isRunInLiteModeEnabled() }));
     logger.info('Starting CallStats for P2P connection...');
     let remoteID = Strophe.getResourceFromJid(this.p2pJingleSession.remoteJid);
@@ -3054,9 +3061,12 @@ JitsiConference.prototype._updateRoomPresence = function (jingleSession, ctx) {
     const localTracks = jingleSession.peerconnection.getLocalTracks();
     // Set presence for all the available local tracks.
     for (const track of localTracks) {
-        muteStatusChanged = this._setTrackMuteStatus(track.getType(), track, track.isMuted());
+        const muted = track.isMuted();
+        muteStatusChanged = this._setTrackMuteStatus(track.getType(), track, muted);
+        muteStatusChanged && logger.debug(`Updating mute state of ${track} in presence to muted=${muted}`);
         if (track.getType() === MediaType.VIDEO) {
             videoTypeChanged = this._setNewVideoType(track);
+            videoTypeChanged && logger.debug(`Updating videoType in presence to ${track.getVideoType()}`);
         }
         presenceChanged = presenceChanged || muteStatusChanged || videoTypeChanged;
     }

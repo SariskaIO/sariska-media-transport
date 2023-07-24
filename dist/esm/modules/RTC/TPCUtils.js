@@ -317,7 +317,7 @@ export class TPCUtils {
      * send resolution might be downscaled based on cpu and bandwidth constraints.
      *
      * @param {JitsiLocalTrack} localVideoTrack - The local video track.
-     * @returns {number} The max encoded resolution for the given video track.
+     * @returns {number|null} The max encoded resolution for the given video track.
      */
     getConfiguredEncodeResolution(localVideoTrack) {
         var _a;
@@ -326,11 +326,21 @@ export class TPCUtils {
         const videoSender = this.pc.findSenderForTrack(localVideoTrack.getTrack());
         let maxHeight = 0;
         if (!videoSender) {
-            return maxHeight;
+            return null;
         }
         const parameters = videoSender.getParameters();
         if (!((_a = parameters === null || parameters === void 0 ? void 0 : parameters.encodings) === null || _a === void 0 ? void 0 : _a.length)) {
-            return maxHeight;
+            return null;
+        }
+        const hasIncorrectConfig = this.pc._capScreenshareBitrate
+            ? parameters.encodings.every(encoding => encoding.active)
+            : parameters.encodings.some(encoding => !encoding.active);
+        // Check if every encoding is active for screenshare track when low fps screenshare is configured or some
+        // of the encodings are disabled when high fps screenshare is configured. In both these cases, the track
+        // encodings need to be reconfigured. This is needed when p2p->jvb switch happens and new sender constraints
+        // are not received by the client.
+        if (localVideoTrack.getVideoType() === VideoType.DESKTOP && hasIncorrectConfig) {
+            return null;
         }
         for (const encoding in parameters.encodings) {
             if (parameters.encodings[encoding].active) {

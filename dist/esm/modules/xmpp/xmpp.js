@@ -895,7 +895,9 @@ export default class XMPP extends Listenable {
             // Let's push to analytics any updates that may have come from the backend
             Statistics.analytics.addPermanentProperties(Object.assign({}, logObject));
             logObject.id = 'deployment_info';
-            Statistics.sendLog(JSON.stringify(logObject));
+            const entry = JSON.stringify(logObject);
+            Statistics.sendLog(entry);
+            logger.info(entry);
         }
         this.sendDeploymentInfo = false;
     }
