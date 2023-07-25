@@ -235,10 +235,9 @@ function calculateBitrates(pc) {
             });
         }
 
-        bitrate.bitrate = {
-            upload: Math.round(audioUpload + videoUpload),
-            download: Math.round(audioDownload + videoDownload)
-        };
+        bitrate.upload = Math.round(audioUpload + videoUpload)
+	bitrare.download = Math.round(audioDownload + videoDownload)
+
         bitrate.audio = {
             upload: Math.round(audioUpload),
             download: Math.round(audioDownload)
