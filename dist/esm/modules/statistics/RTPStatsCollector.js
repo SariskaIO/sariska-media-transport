@@ -177,7 +177,7 @@ StatsCollector.prototype.errorCallback = function (error) {
 /**
  * Starts stats updates.
  */
-let lastUpdatedData = {};
+let lastUpdatedData = { upload: 0, download: 0, audio: { upload: 0, download: 0 }, video: { audio: 0, video: 0 } };
 function calculateBitrates(pc) {
     const probe = metrics.createProbe(pc.peerconnection, {
         pname: 'PeerConnection_1',
