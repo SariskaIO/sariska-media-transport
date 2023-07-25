@@ -12,6 +12,7 @@ import { MediaType } from '../../service/RTC/MediaType';
 import * as StatisticsEvents from '../../service/statistics/Events';
 import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
+const metrics = new WebRTCMetrics();
 const GlobalOnErrorHandler = require('../util/GlobalOnErrorHandler');
 const logger = getLogger(__filename);
 /**
@@ -175,86 +176,14 @@ StatsCollector.prototype.errorCallback = function (error) {
 /**
  * Starts stats updates.
  */
-let audioBitrateUpload = 0;
-let audioBitrateDownload = 0;
-let videoBitrateUpload = 0;
-let videoBitrateDownload = 0;
-let prevAudioBytesSent = 0;
-let prevAudioBytesReceived = 0;
-let prevVideoBytesSent = 0;
-let prevVideoBytesReceived = 0;
-let prevTimestamp = 0;
-function calculateBitrates(stats) {
-    stats && stats.forEach(report => {
-        // Check if the report corresponds to an audio or video track
-        if (report.type === 'outbound-rtp') {
-            if (report.kind === 'audio') {
-                const currentTimestamp = report.timestamp;
-                const currentAudioBytesSent = report.bytesSent;
-                if (prevAudioBytesSent > 0 && currentTimestamp > prevTimestamp) {
-                    const audioBytesSentDiff = currentAudioBytesSent - prevAudioBytesSent;
-                    const timeDiffInSeconds = (currentTimestamp - prevTimestamp) / 1000; // Convert to seconds
-                    audioBitrateUpload = audioBytesSentDiff / timeDiffInSeconds; // Convert bytes to bytes per second
-                }
-                prevAudioBytesSent = currentAudioBytesSent;
-            }
-            else if (report.kind === 'video') {
-                const currentTimestamp = report.timestamp;
-                const currentVideoBytesSent = report.bytesSent;
-                if (prevVideoBytesSent > 0 && currentTimestamp > prevTimestamp) {
-                    const videoBytesSentDiff = currentVideoBytesSent - prevVideoBytesSent;
-                    const timeDiffInSeconds = (currentTimestamp - prevTimestamp) / 1000; // Convert to seconds
-                    videoBitrateUpload = videoBytesSentDiff / timeDiffInSeconds; // Convert bytes to bytes per second
-                }
-                prevVideoBytesSent = currentVideoBytesSent;
-            }
-        }
-        else if (report.type === 'inbound-rtp') {
-            if (report.kind === 'audio') {
-                const currentTimestamp = report.timestamp;
-                const currentAudioBytesReceived = report.bytesReceived;
-                if (prevAudioBytesReceived > 0 && currentTimestamp > prevTimestamp) {
-                    const audioBytesReceivedDiff = currentAudioBytesReceived - prevAudioBytesReceived;
-                    const timeDiffInSeconds = (currentTimestamp - prevTimestamp) / 1000; // Convert to seconds
-                    audioBitrateDownload = audioBytesReceivedDiff / timeDiffInSeconds; // Convert bytes to bytes per second
-                }
-                prevAudioBytesReceived = currentAudioBytesReceived;
-            }
-            else if (report.kind === 'video') {
-                const currentTimestamp = report.timestamp;
-                const currentVideoBytesReceived = report.bytesReceived;
-                if (prevVideoBytesReceived > 0 && currentTimestamp > prevTimestamp) {
-                    const videoBytesReceivedDiff = currentVideoBytesReceived - prevVideoBytesReceived;
-                    const timeDiffInSeconds = (currentTimestamp - prevTimestamp) / 1000; // Convert to seconds
-                    videoBitrateDownload = videoBytesReceivedDiff / timeDiffInSeconds; // Convert bytes to bytes per second
-                }
-                prevVideoBytesReceived = currentVideoBytesReceived;
-            }
-        }
+function calculateBitrates(pc) {
+    const probe = metrics.createProbe(pc, {
+        pname: 'PeerConnection_1',
+        passthrough: { "inbound-rtp": ["ps:bytesReceived.kbits"], "outbound-rtp": ["ps:bytesSent.kbits"] }
     });
-    console.log('Audio Bitrate Upload: ' + audioBitrateUpload.toFixed(2) + ' bytes/sec');
-    console.log('Audio Bitrate Download: ' + audioBitrateDownload.toFixed(2) + ' bytes/sec');
-    console.log('Video Bitrate Upload: ' + videoBitrateUpload.toFixed(2) + ' bytes/sec');
-    console.log('Video Bitrate Download: ' + videoBitrateDownload.toFixed(2) + ' bytes/sec');
-    let bitrate = {};
-    bitrate.bitrate = {
-        'upload': (audioBitrateUpload + videoBitrateUpload).toFixed(2),
-        'download': (audioBitrateDownload + videoBitrateDownload).toFixed(2)
+    probe.onreport = (report) => {
+        console.log("reportreportreport", report);
     };
-    bitrate.audio = {
-        'upload': audioBitrateUpload.toFixed(2),
-        'download': audioBitrateDownload.toFixed(2)
-    };
-    bitrate.video = {
-        'upload': videoBitrateUpload.toFixed(2),
-        'download': videoBitrateDownload.toFixed(2)
-    };
-    stats && stats.forEach(report => {
-        if (report && report.timestamp) {
-            prevTimestamp = report.timestamp;
-        }
-    });
-    return bitrate;
 }
 StatsCollector.prototype.start = function (startAudioLevelStats) {
     if (startAudioLevelStats && browser.supportsReceiverStats()) {
@@ -427,7 +356,7 @@ StatsCollector.prototype._processAndEmitReport = function () {
         this.audioLevelReportHistory = {};
         this.eventEmitter.emit(StatisticsEvents.CONNECTION_STATS, this.peerconnection, {
             'bandwidth': this.conferenceStats.bandwidth,
-            'bitrate': calculateBitrates(yield this.peerconnection.getStats()),
+            'bitrate': calculateBitrates(this.peerconnection),
             'packetLoss': this.conferenceStats.packetLoss,
             'resolution': resolutions,
             'framerate': framerates,

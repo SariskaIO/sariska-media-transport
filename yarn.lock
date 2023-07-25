@@ -3005,6 +3005,11 @@ log4js@^6.4.1:
     rfdc "^1.3.0"
     streamroller "^3.0.2"
 
+loglevel@1.8.1:
+  version "1.8.1"
+  resolved "https://registry.npmjs.org/loglevel/-/loglevel-1.8.1.tgz"
+  integrity sha512-tCRIJM51SHjAayKwC+QAg8hT8vg6z7GSgLJKGvzuPb1Wc+hLzqtuVLxp6/HzSPOozuK+8ErAhy7U/sVzw8Dgfg==
+
 lru-cache@^5.1.1:
   version "5.1.1"
   resolved "https://registry.npmjs.org/lru-cache/-/lru-cache-5.1.1.tgz"
@@ -3660,6 +3665,11 @@ shebang-regex@^3.0.0:
   resolved "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz"
   integrity sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==
 
+short-unique-id@^4.4.4:
+  version "4.4.4"
+  resolved "https://registry.npmjs.org/short-unique-id/-/short-unique-id-4.4.4.tgz"
+  integrity sha512-oLF1NCmtbiTWl2SqdXZQbo5KM1b7axdp0RgQLq8qCBBLoq+o3A5wmLrNM6bZIh54/a8BJ3l69kTXuxwZ+XCYuw==
+
 side-channel@^1.0.4:
   version "1.0.4"
   resolved "https://registry.npmjs.org/side-channel/-/side-channel-1.0.4.tgz"
@@ -4146,6 +4156,14 @@ webrtc-adapter@8.1.1:
   integrity sha512-1yXevP7TeZGmklEXkvQVrZp3fOSJlLeXNGCA7NovQokxgP3/e2T3EVGL0eKU87S9vKppWjvRWqnJeSANEspOBg==
   dependencies:
     sdp "^3.0.2"
+
+webrtcmetrics@^5.4.0:
+  version "5.4.0"
+  resolved "https://registry.npmjs.org/webrtcmetrics/-/webrtcmetrics-5.4.0.tgz"
+  integrity sha512-Xj2jtMAX74NaFDAU+jYKCAzFj405wnx89RcnMwQ0ze7U/EH+WynV0PP4GbzCfGssD2Oy5M2EaxWbd1ziqFS3Vw==
+  dependencies:
+    loglevel "1.8.1"
+    short-unique-id "^4.4.4"
 
 which-boxed-primitive@^1.0.2:
   version "1.0.2"
