@@ -175,6 +175,10 @@ StatsCollector.prototype.errorCallback = function (error) {
 /**
  * Starts stats updates.
  */
+let audioBitrateUpload = 0;
+let audioBitrateDownload = 0;
+let videoBitrateUpload = 0;
+let videoBitrateDownload = 0;
 let prevAudioBytesSent = 0;
 let prevAudioBytesReceived = 0;
 let prevVideoBytesSent = 0;
