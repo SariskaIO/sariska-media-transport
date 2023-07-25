@@ -43,7 +43,7 @@
     "uuid": "8.1.0",
     "wasm-check": "^2.0.3",
     "webrtc-adapter": "8.1.1",
-    "webrtcmetrics": "^5.4.0"
+    "webrtcmetrics": "https://github.com/SariskaIO/webrtcmetrics.git"
   },
   "devDependencies": {
     "@babel/core": "7.16.0",

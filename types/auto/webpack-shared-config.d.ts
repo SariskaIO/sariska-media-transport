@@ -15,7 +15,6 @@ declare function _exports(minimize: any, analyzeBundle: any): {
                 replace: string;
                 search: string;
                 presets?: undefined;
-                plugins?: undefined;
             };
             test: string;
         } | {
@@ -30,7 +29,6 @@ declare function _exports(minimize: any, analyzeBundle: any): {
                         safari: number;
                     };
                 })[])[];
-                plugins: string[];
                 flags?: undefined;
                 replace?: undefined;
                 search?: undefined;
