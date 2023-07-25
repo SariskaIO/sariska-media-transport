@@ -12,6 +12,7 @@ import { MediaType } from '../../service/RTC/MediaType';
 import * as StatisticsEvents from '../../service/statistics/Events';
 import browser from '../browser';
 import FeatureFlags from '../flags/FeatureFlags';
+import WebRTCMetrics from "webrtcmetrics";
 const metrics = new WebRTCMetrics();
 const GlobalOnErrorHandler = require('../util/GlobalOnErrorHandler');
 const logger = getLogger(__filename);
