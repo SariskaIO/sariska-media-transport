@@ -185,6 +185,14 @@ let prevVideoBytesSent = 0;
 let prevVideoBytesReceived = 0;
 let prevTimestamp = 0;
 function calculateBitrates(stats) {
+    if (!Array.isArray(stats) || stats.length === 0) {
+        // If stats is not an array or is empty, return an empty bitrate object
+        return {
+            bitrate: { upload: 0, download: 0 },
+            audio: { upload: 0, download: 0 },
+            video: { upload: 0, download: 0 },
+        };
+    }
     stats.forEach(report => {
         // Check if the report corresponds to an audio or video track
         if (report.type === 'outbound-rtp') {
