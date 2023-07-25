@@ -199,15 +199,57 @@ StatsCollector.prototype.errorCallback = function(error) {
 
 
 
+let lastUpdatedData = {};
+
 function calculateBitrates(pc) {
-    const probe = metrics.createProbe(pc, {
-        pname: 'PeerConnection_1',  // Optional. Name of the peer connection
-        passthrough: {"inbound-rtp": ["ps:bytesReceived.kbits"], "outbound-rtp": ["ps:bytesSent.kbits"]}
-      });      
-      
+    const probe = metrics.createProbe(pc.peerconnection, {
+        pname: 'PeerConnection_1',
+        passthrough: { "outbound-rtp": ["ps:bytesSent.kbits"], "inbound-rtp": ["ps:bytesReceived.kbits"]}
+    });
     probe.onreport = (report) => {
-        console.log("reportreportreport", report);
+        let bitrate = {}
+        let audioUpload =  0;
+        let audioDownload  = 0 ;
+        let videoUpload = 0 ;
+        let videoDownload = 0 ;
+        if (Object.keys(report.passthrough).length) {
+            Object.keys(report.passthrough.bytesReceived).forEach((key) => {
+                const value = report.passthrough.bytesReceived[key];
+                if (key.indexOf("audio") >=0) {
+                    audioDownload = value + audioDownload;
+
+                }
+                if (key.indexOf("video") >=0) {
+                    videoDownload = value + videoDownload;
+                }
+            });
+
+            Object.keys(report.passthrough.bytesSent).forEach((key) => {
+                const value = report.passthrough.bytesSent[key];
+                if (key.indexOf("audio") >=0) {
+                    audioUpload = value + audioUpload;
+                }
+                if (key.indexOf("video") >=0) {
+                    videoUpload = value + videoUpload;
+                }
+            });
+        }
+
+        bitrate.bitrate = {
+            upload: Math.round(audioUpload + videoUpload),
+            download: Math.round(audioDownload + videoDownload)
+        };
+        bitrate.audio = {
+            upload: Math.round(audioUpload),
+            download: Math.round(audioDownload)
+        }
+        bitrate.video = {
+            upload: Math.round(videoUpload),
+            download: Math.round(videoDownload)
+        }
+        lastUpdatedData = bitrate;
     };
+    metrics.startAllProbes();
 }
 
 StatsCollector.prototype.start = function(startAudioLevelStats) {
@@ -252,9 +294,9 @@ StatsCollector.prototype.start = function(startAudioLevelStats) {
             })
             .catch(error => this.errorCallback(error));
     };
-
+    calculateBitrates(this.peerconnection);
     processStats();
-    this.statsIntervalId = setInterval(processStats, 1000);
+    this.statsIntervalId = setInterval(processStats, this.statsIntervalMilis);
 };
 
 /**
@@ -428,7 +470,7 @@ StatsCollector.prototype._processAndEmitReport = async function() {
         this.peerconnection,
         {
             'bandwidth': this.conferenceStats.bandwidth,
-            'bitrate': calculateBitrates(this.peerconnection),
+            'bitrate': lastUpdatedData,
             'packetLoss': this.conferenceStats.packetLoss,
             'resolution': resolutions,
             'framerate': framerates,
