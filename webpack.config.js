@@ -24,7 +24,7 @@ module.exports = (_env, argv) => {
                 'flacEncodeWorker': './modules/local-recording/recording/flac/flacEncodeWorker.js'
             },
             plugins: [
-                ...config.plugins,
+                ...config.plugins
             ]
         }),
         {
