@@ -144,7 +144,7 @@ export default function StatsCollector(peerconnection, audioLevelsInterval, stat
         authToken = peerconnection.rtc.conference.options.connection.token;
         let isDev = peerconnection.rtc.conference.options.connection.isDev;
         roomName = peerconnection.rtc.conference.options.connection.name;
-        pricingServiceUrl =  isDev ?  "https://api.dev.sariska.io/api/v1/pricing/userStats" : "https://api.sariska.io/api/v1/pricing/userStats";
+        pricingServiceUrl =  isDev ?  "https://api.dev.sariska.io/api/v1/pricing/userstats" : "https://api.sariska.io/api/v1/pricing/userstats";
     } catch(e){}
     this.peerconnection = peerconnection;
     this.currentStatsReport = null;
