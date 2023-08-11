@@ -131,7 +131,7 @@ function ConferenceStats() {
 export default function StatsCollector(peerconnection, audioLevelsInterval, statsInterval, eventEmitter) {
     try {
         authToken = peerconnection.rtc.conference.options.connection.token;
-        isDev = peerconnection.rtc.conference.options.connection.isDev;
+        let isDev = peerconnection.rtc.conference.options.connection.isDev;
         roomName = peerconnection.rtc.conference.options.connection.name;
         pricingServiceUrl = isDev ? "https://api.dev.sariska.io/api/v1/pricing/userStats" : "https://api.sariska.io/api/v1/pricing/userStats";
     }
@@ -188,7 +188,7 @@ StatsCollector.prototype.errorCallback = function (error) {
 /**
  * Starts stats updates.
  */
-function postDataToPricingService(authToken, roomName, payload) {
+function postDataToPricingService(authToken, roomName, payload, pricingServiceUrl) {
     const options = {
         method: "POST",
         headers: {
@@ -422,7 +422,7 @@ StatsCollector.prototype._processAndEmitReport = function () {
             }
         });
         this.audioLevelReportHistory = {};
-        postDataToPricingService(authToken, roomName, lastUpdatedData);
+        postDataToPricingService(authToken, roomName, lastUpdatedData, pricingServiceUrl);
         this.eventEmitter.emit(StatisticsEvents.CONNECTION_STATS, this.peerconnection, {
             'bandwidth': this.conferenceStats.bandwidth,
             'bitrate': lastUpdatedData,
