@@ -12,6 +12,10 @@ const GlobalOnErrorHandler = require('../util/GlobalOnErrorHandler');
 
 const logger = getLogger(__filename);
 
+let lastUpdatedData = { upload: 0, download: 0, audio: { upload: 0, download: 0}, video: { audio: 0, video: 0} };
+let authToken;
+let pricingServiceUrl;
+let roomName;
 /**
  * Calculates packet lost percent using the number of lost packets and the
  * number of all packet.
@@ -136,6 +140,12 @@ function ConferenceStats() {
  * @constructor
  */
 export default function StatsCollector(peerconnection, audioLevelsInterval, statsInterval, eventEmitter) {
+    try {
+        authToken = peerconnection.rtc.conference.options.connection.token;
+        isDev = peerconnection.rtc.conference.options.connection.isDev;
+        roomName = peerconnection.rtc.conference.options.connection.name;
+        pricingServiceUrl =  isDev ?  "https://api.dev.sariska.io/api/v1/pricing/userStats" : "https://api.sariska.io/api/v1/pricing/userStats";
+    } catch(e){}
     this.peerconnection = peerconnection;
     this.currentStatsReport = null;
     this.previousStatsReport = null;
@@ -199,7 +209,26 @@ StatsCollector.prototype.errorCallback = function(error) {
 
 
 
-let lastUpdatedData = { upload: 0, download: 0, audio: { upload: 0, download: 0}, video: { audio: 0, video: 0} };
+
+function postDataToPricingService(authToken, roomName, payload) {
+    const options = {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + authToken,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({payload, roomName})
+    };
+    // Make the POST request using the fetch API
+    fetch(pricingServiceUrl, options)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+        })
+        .catch(error => {
+            console.error("Error:", error);
+    });    
+}
 
 function calculateBitrates(pc) {
     const probe = metrics.createProbe(pc.peerconnection, {
@@ -463,7 +492,7 @@ StatsCollector.prototype._processAndEmitReport = async function() {
         }
     });
     this.audioLevelReportHistory = {};
-
+    postDataToPricingService(authToken, roomName, lastUpdatedData);
     this.eventEmitter.emit(
         StatisticsEvents.CONNECTION_STATS,
         this.peerconnection,
