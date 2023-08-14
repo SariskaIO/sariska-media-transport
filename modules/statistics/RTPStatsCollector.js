@@ -217,17 +217,23 @@ function postDataToPricingService(authToken, roomName, payload, pricingServiceUr
             "Authorization": "Bearer " + authToken,
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({payload, roomName})
+        body: JSON.stringify({ payload, roomName })
     };
+    
     // Make the POST request using the fetch API
     fetch(pricingServiceUrl, options)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Network response was not ok (status ${response.status}): ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
             console.log(data);
         })
         .catch(error => {
-            console.error("Error:", error);
-    });    
+            console.error("Fetch error:", error);
+        });
 }
 
 function calculateBitrates(pc) {
