@@ -16,6 +16,8 @@ let lastUpdatedData = { upload: 0, download: 0, audio: { upload: 0, download: 0}
 let authToken;
 let pricingServiceUrl;
 let roomName;
+let userControls = {};
+
 /**
  * Calculates packet lost percent using the number of lost packets and the
  * number of all packet.
@@ -210,14 +212,14 @@ StatsCollector.prototype.errorCallback = function(error) {
 
 
 
-function postDataToPricingService(authToken, roomName, payload, pricingServiceUrl) {
+function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
     const options = {
         method: "POST",
         headers: {
             "Authorization": "Bearer " + authToken,
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ payload, roomName })
+        body: JSON.stringify({ payload, roomName, userControls })
     };
     
     // Make the POST request using the fetch API
@@ -229,10 +231,8 @@ function postDataToPricingService(authToken, roomName, payload, pricingServiceUr
             return response.json();
         })
         .then(data => {
-            console.log(data);
         })
         .catch(error => {
-            console.error("Fetch error:", error);
         });
 }
 
@@ -247,6 +247,41 @@ function calculateBitrates(pc) {
         let audioDownload  = 0 ;
         let videoUpload = 0 ;
         let videoDownload = 0 ;
+        let isAudioMuted = false;
+        let isVideoMuted = false;
+        let isScreenSharing = false;
+
+        Object.keys(report.audio).forEach((source) => {
+            const value = report.audio[source];
+            if (value.direction === "outbound") {
+                if ( value.level_out === 0) {
+                    isAudioMuted = true;
+                } else {
+                    isAudioMuted = false;
+                }
+            }
+        });
+
+        let totalVideoSources = [];        
+        Object.keys(report.video).forEach((source) => {
+            const value = report.video[source];
+            if (value.direction === "outbound" ) {
+                totalVideoSources.push(value);
+            }
+        });
+        
+        if (totalVideoSources[0] && totalVideoSources[0].active_out === false) {
+            isVideoMuted = true;
+        } else if(totalVideoSources[0] && totalVideoSources[0].active_out === true) {
+            isVideoMuted = false;
+        }
+                
+        if (totalVideoSources[1] && totalVideoSources[1].active_out === false) {
+            isScreenSharing = false;
+        } else if(totalVideoSources[1] && totalVideoSources[1].active_out === true) {
+            isScreenSharing = true;
+        }
+
         if (Object.keys(report.passthrough).length) {
             Object.keys(report.passthrough.bytesReceived).forEach((key) => {
                 const value = report.passthrough.bytesReceived[key];
@@ -282,6 +317,7 @@ function calculateBitrates(pc) {
             download: Math.round(videoDownload)
         }
         lastUpdatedData = bitrate;
+        userControls = {isAudioMuted,isVideoMuted,isScreenSharing};
     };
     metrics.startAllProbes();
 }
@@ -498,7 +534,7 @@ StatsCollector.prototype._processAndEmitReport = async function() {
         }
     });
     this.audioLevelReportHistory = {};
-    postDataToPricingService(authToken, roomName, lastUpdatedData, pricingServiceUrl);
+    postDataToPricingService(authToken, roomName, lastUpdatedData, userControls, pricingServiceUrl);
     this.eventEmitter.emit(
         StatisticsEvents.CONNECTION_STATS,
         this.peerconnection,
