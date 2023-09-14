@@ -21,6 +21,7 @@ let authToken;
 let pricingServiceUrl;
 let roomName;
 let userControls = {};
+let isDev;
 /**
  * Calculates packet lost percent using the number of lost packets and the
  * number of all packet.
@@ -132,9 +133,9 @@ function ConferenceStats() {
 export default function StatsCollector(peerconnection, audioLevelsInterval, statsInterval, eventEmitter) {
     try {
         authToken = peerconnection.rtc.conference.options.connection.token;
-        let isDev = peerconnection.rtc.conference.options.connection.isDev;
+        isDev = peerconnection.rtc.conference.options.connection.isDev;
         roomName = peerconnection.rtc.conference.options.connection.name;
-        pricingServiceUrl = isDev ? "https://api.dev.sariska.io/api/v1/pricing/userstats" : "https://api.sariska.io/api/v1/pricing/userstats";
+        pricingServiceUrl = isDev ? `https://api.dev.sariska.io/api/v1/pricing/room/` : `https://api.sariska.io/api/v1/pricing/room/`;
     }
     catch (e) { }
     this.peerconnection = peerconnection;
@@ -190,25 +191,35 @@ StatsCollector.prototype.errorCallback = function (error) {
  * Starts stats updates.
  */
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
-    const options = {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + authToken,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ payload, roomName, userControls })
+    let meeting_id = isDev ? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`;
+    let url = pricingServiceUrl + meeting_id + "/usage";
+    console.log("pricing service url:", pricingServiceUrl + meeting_id + "/usage");
+    const api_payload = {
+        meetingId: meeting_id,
+        usage_type: 'MEDIA',
+        usage_payload: payload
+    };
+    const headers = {
+        "Authorization": "Bearer " + authToken,
+        "Content-Type": "application/json"
     };
     // Make the POST request using the fetch API
-    fetch(pricingServiceUrl, options)
-        .then(response => {
+    fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(api_payload)
+    }).
+        then((response) => {
         if (!response.ok) {
-            throw new Error(`Network response was not ok (status ${response.status}): ${response.statusText}`);
+            throw new Error('Network response was not ok');
         }
         return response.json();
     })
-        .then(data => {
+        .then((data) => {
+        setResponse(data);
     })
-        .catch(error => {
+        .catch((error) => {
+        console.error('Error:', error);
     });
 }
 function calculateBitrates(pc) {
@@ -460,6 +471,7 @@ StatsCollector.prototype._processAndEmitReport = function () {
             }
         });
         this.audioLevelReportHistory = {};
+        // Where the Usage stat is called
         postDataToPricingService(authToken, roomName, lastUpdatedData, userControls, pricingServiceUrl);
         this.eventEmitter.emit(StatisticsEvents.CONNECTION_STATS, this.peerconnection, {
             'bandwidth': this.conferenceStats.bandwidth,
