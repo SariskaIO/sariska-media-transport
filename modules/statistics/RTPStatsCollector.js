@@ -147,7 +147,7 @@ export default function StatsCollector(peerconnection, audioLevelsInterval, stat
         authToken = peerconnection.rtc.conference.options.connection.token;
         isDev = peerconnection.rtc.conference.options.connection.isDev;
         roomName = peerconnection.rtc.conference.options.connection.name;
-        pricingServiceUrl =  isDev ?  `https://api.dev.sariska.io/api/v1/pricing/room/${meeting_id}/usage` : `https://api.sariska.io/api/v1/pricing/room/${meeting_id}/usage`;
+        pricingServiceUrl =  isDev ?  `https://api.dev.sariska.io/api/v1/pricing/room/` : `https://api.sariska.io/api/v1/pricing/room/`;
     } catch(e){}
     this.peerconnection = peerconnection;
     this.currentStatsReport = null;
@@ -214,8 +214,9 @@ StatsCollector.prototype.errorCallback = function(error) {
 
 
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
-    console.log("pricing service url:", pricingServiceUrl);
     let meeting_id = isDev? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`
+    let url = pricingServiceUrl+meeting_id+"/usage";
+    console.log("pricing service url:", pricingServiceUrl+meeting_id+"/usage");
     const api_payload = {
         meetingId: meeting_id,
         usage_type: 'MEDIA',
@@ -228,7 +229,7 @@ function postDataToPricingService(authToken, roomName, payload, userControls, pr
     }
 
     // Make the POST request using the fetch API
-    fetch(pricingServiceUrl, {
+    fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(api_payload)
