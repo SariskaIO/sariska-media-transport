@@ -214,7 +214,7 @@ StatsCollector.prototype.errorCallback = function(error) {
 
 
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
-    
+    console.log("pricing service url:", pricingServiceUrl);
     let meeting_id = isDev? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`
     const api_payload = {
         meetingId: meeting_id,
