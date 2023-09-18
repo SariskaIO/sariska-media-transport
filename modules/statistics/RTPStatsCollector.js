@@ -222,11 +222,13 @@ function parseJwt (token) {
 
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
     let meeting_id = isDev? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`
+    
     let url = pricingServiceUrl+meeting_id+"/usage";
 
-    decodedToken = parseJwt(authToken);
+    let decodedToken = parseJwt(authToken);
 
     let owner_id = parseInt(decodedToken.context.group);
+
     let app_id = decodedToken.sub;
 
     const api_payload = {
