@@ -229,9 +229,12 @@ function postDataToPricingService(authToken, roomName, payload, userControls, pr
 
     let owner_id = parseInt(decodedToken.context.group);
 
+    let user_id = decodedToken.context.user.id;
+
     let app_id = decodedToken.sub;
 
     const api_payload = {
+        user_id: user_id,
         meetingId: meeting_id,
         usage_type: 'MEDIA',
         usage_payload: payload,
