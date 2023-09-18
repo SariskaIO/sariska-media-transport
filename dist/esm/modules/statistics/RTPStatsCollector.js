@@ -201,7 +201,6 @@ function parseJwt(token) {
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
     let meeting_id = isDev ? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`;
     let url = pricingServiceUrl + meeting_id + "/usage";
-    console.log("pricing service url:", pricingServiceUrl + meeting_id + "/usage");
     decodedToken = parseJwt(authToken);
     let owner_id = parseInt(decodedToken.context.group);
     let app_id = decodedToken.sub;
@@ -210,7 +209,7 @@ function postDataToPricingService(authToken, roomName, payload, userControls, pr
         usage_type: 'MEDIA',
         usage_payload: payload,
         owner_id: owner_id,
-        app_id: app_id
+        app_id: app_id,
     };
     const headers = {
         "Authorization": "Bearer " + authToken,
