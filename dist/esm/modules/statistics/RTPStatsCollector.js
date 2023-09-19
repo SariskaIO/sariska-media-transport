@@ -200,11 +200,15 @@ function parseJwt(token) {
 }
 function postDataToPricingService(authToken, roomName, payload, userControls, pricingServiceUrl) {
     let meeting_id = isDev ? `${roomName}@muc.dev.sariska.io` : `${roomName}@muc.sariska.io`;
+    console.log("meeting id" + meeting_id);
     let url = pricingServiceUrl + meeting_id + "/usage";
+    console.log("url" + url);
     let decodedToken = parseJwt(authToken);
+    console.log("decoded token" + decodedToken);
     let owner_id = parseInt(decodedToken.context.group);
     let user_id = decodedToken.context.user.id;
     let app_id = decodedToken.sub;
+    console.log("idss" + owner_id + " " + user_id + " " + app_id);
     const api_payload = {
         user_id: user_id,
         meetingId: meeting_id,
