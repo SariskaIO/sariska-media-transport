@@ -226,7 +226,6 @@ function postDataToPricingService(authToken, roomName, payload, userControls, pr
 
     console.log("meeting id" + meeting_id);
 
-    
     let url = pricingServiceUrl+meeting_id+"/usage";
 
     console.log("url" + url);

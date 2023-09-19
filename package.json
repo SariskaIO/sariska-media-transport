@@ -1,6 +1,6 @@
 {
   "name": "sariska-media-transport",
-  "version": "1.0.8",
+  "version": "1.1.1",
   "description": "JS library for accessing Jitsi server side deployments",
   "repository": {
     "type": "git",
@@ -90,7 +90,7 @@
     "deploy": "aws s3 cp dist/ s3://sdk.sariska.io --recursive --acl public-read && aws cloudfront create-invalidation --distribution-id E3RL1IE6WPHQ72 --paths /main.bundle.js",
     "watch": "webpack --config webpack.config.js --watch --mode development"
   },
-  "browser": "dist/umd/sariska-media-transport.min.js",
+  "browser": "dist/esm/SariskaMediaTransport.js",
   "module": "dist/esm/SariskaMediaTransport.js",
   "files": [
     "dist",
