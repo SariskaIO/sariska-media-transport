@@ -46,42 +46,7 @@ const ScreenObtainer = {
      * @private
      */
     _createObtainStreamMethod() {
-        if (browser.isNWJS()) {
-            return (onSuccess, onFailure) => {
-                window.JitsiMeetNW.obtainDesktopStream(
-                    onSuccess,
-                    (error, constraints) => {
-                        let jitsiError;
-
-                        // FIXME:
-                        // This is very very dirty fix for recognising that the
-                        // user have clicked the cancel button from the Desktop
-                        // sharing pick window. The proper solution would be to
-                        // detect this in the NWJS application by checking the
-                        // streamId === "". Even better solution would be to
-                        // stop calling GUM from the NWJS app and just pass the
-                        // streamId to lib-jitsi-meet. This way the desktop
-                        // sharing implementation for NWJS and chrome extension
-                        // will be the same and lib-jitsi-meet will be able to
-                        // control the constraints, check the streamId, etc.
-                        //
-                        // I cannot find documentation about "InvalidStateError"
-                        // but this is what we are receiving from GUM when the
-                        // streamId for the desktop sharing is "".
-
-                        if (error && error.name === 'InvalidStateError') {
-                            jitsiError = new JitsiTrackError(
-                                JitsiTrackErrors.SCREENSHARING_USER_CANCELED
-                            );
-                        } else {
-                            jitsiError = new JitsiTrackError(
-                                error, constraints, [ 'desktop' ]);
-                        }
-                        (typeof onFailure === 'function')
-                            && onFailure(jitsiError);
-                    });
-            };
-        } else if (browser.isElectron()) {
+        if (browser.isElectron()) {
             return this.obtainScreenOnElectron;
         } else if (browser.isReactNative() && browser.supportsGetDisplayMedia()) {
             return this.obtainScreenFromGetDisplayMediaRN;
@@ -224,7 +189,11 @@ const ScreenObtainer = {
 
         const audio = this._getAudioConstraints();
         let video = {};
-        const { desktopSharingFrameRate } = this.options;
+        const constraintOpts = {};
+        const {
+            desktopSharingFrameRate,
+            screenShareSettings
+        } = this.options;
 
         if (typeof desktopSharingFrameRate === 'object') {
             video.frameRate = desktopSharingFrameRate;
@@ -235,8 +204,25 @@ const ScreenObtainer = {
         video.frameRate && delete video.frameRate.min;
 
         if (browser.isChromiumBased()) {
+            // Show users the current tab is the preferred capture source, default: false.
+            browser.isEngineVersionGreaterThan(93)
+                && (constraintOpts.preferCurrentTab = screenShareSettings?.desktopPreferCurrentTab || false);
+
+            // Allow users to select system audio, default: include.
+            browser.isEngineVersionGreaterThan(104)
+                && (constraintOpts.systemAudio = screenShareSettings?.desktopSystemAudio || 'include');
+
             // Allow users to seamlessly switch which tab they are sharing without having to select the tab again.
-            browser.isVersionGreaterThan(106) && (video.surfaceSwitching = 'include');
+            browser.isEngineVersionGreaterThan(106)
+                && (constraintOpts.surfaceSwitching = screenShareSettings?.desktopSurfaceSwitching || 'include');
+
+            // Allow a user to be shown a preference for what screen is to be captured, default: unset.
+            browser.isEngineVersionGreaterThan(106) && screenShareSettings?.desktopDisplaySurface
+                && (video.displaySurface = screenShareSettings?.desktopDisplaySurface);
+
+            // Allow users to select the current tab as a capture source, default: exclude.
+            browser.isEngineVersionGreaterThan(111)
+                && (constraintOpts.selfBrowserSurface = screenShareSettings?.desktopSelfBrowserSurface || 'exclude');
 
             // Set bogus resolution constraints to work around
             // https://bugs.chromium.org/p/chromium/issues/detail?id=1056311 for low fps screenshare. Capturing SS at
@@ -247,6 +233,11 @@ const ScreenObtainer = {
             }
         }
 
+        // Allow a user to be shown a preference for what screen is to be captured.
+        if (browser.isSafari() && screenShareSettings?.desktopDisplaySurface) {
+            video.displaySurface = screenShareSettings?.desktopDisplaySurface;
+        }
+
         if (Object.keys(video).length === 0) {
             video = true;
         }
@@ -254,6 +245,7 @@ const ScreenObtainer = {
         const constraints = {
             video,
             audio,
+            ...constraintOpts,
             cursor: 'always'
         };
 
@@ -262,6 +254,31 @@ const ScreenObtainer = {
         getDisplayMedia(constraints)
             .then(stream => {
                 this.setContentHint(stream);
+
+                // Apply min fps constraints to the track so that 0Hz mode doesn't kick in.
+                // https://bugs.chromium.org/p/webrtc/issues/detail?id=15539
+                if (browser.isChromiumBased()) {
+                    const track = stream.getVideoTracks()[0];
+                    let minFps = SS_DEFAULT_FRAME_RATE;
+
+                    if (typeof desktopSharingFrameRate?.min === 'number' && desktopSharingFrameRate.min > 0) {
+                        minFps = desktopSharingFrameRate.min;
+                    }
+
+                    const contraints = {
+                        frameRate: {
+                            min: minFps
+                        }
+                    };
+
+                    try {
+                        track.applyConstraints(contraints);
+                    } catch (err) {
+                        logger.warn(`Min fps=${minFps} constraint could not be applied on the desktop track,`
+                            + `${err.message}`);
+                    }
+                }
+
                 callback({
                     stream,
                     sourceId: stream.id
@@ -274,7 +291,7 @@ const ScreenObtainer = {
                     errorStack: error && error.stack
                 };
 
-                logger.error('getDisplayMedia error', constraints, errorDetails);
+                logger.error('getDisplayMedia error', JSON.stringify(constraints), JSON.stringify(errorDetails));
 
                 if (errorDetails.errorMsg && errorDetails.errorMsg.indexOf('denied by system') !== -1) {
                     // On Chrome this is the only thing different between error returned when user cancels

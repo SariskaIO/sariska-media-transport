@@ -99,7 +99,7 @@ export default function authenticateAndUpgradeRole({
                     onCreateResource
                 );
 
-                room.moderator.authenticate()
+                room.xmpp.moderator.authenticate(room.roomjid)
                     .then(() => {
                         xmpp && xmpp.disconnect();
 
@@ -107,9 +107,10 @@ export default function authenticateAndUpgradeRole({
                             return;
                         }
 
+                        // we execute this logic in JitsiConference where we bind the current conference as `this`
                         // At this point we should have the new session ID
                         // stored in the settings. Send a new conference IQ.
-                        this.room.moderator.sendConferenceRequest().finally(resolve);
+                        this.room.xmpp.moderator.sendConferenceRequest(this.room.roomjid).finally(resolve);
                     })
                     .catch(({ error, message }) => {
                         xmpp.disconnect();
