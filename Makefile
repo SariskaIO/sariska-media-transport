@@ -11,7 +11,7 @@ RNNOISE_WASM_DIR = node_modules/rnnoise-wasm/dist/
 TFLITE_WASM = libs/vendor/tflite
 MEET_MODELS_DIR  = libs/vendor/models/
 
-all: clean compile transpile deploy
+all: clean compile deploy
 
 clean:
 	rm -fr $(DEPLOY_DIR)
