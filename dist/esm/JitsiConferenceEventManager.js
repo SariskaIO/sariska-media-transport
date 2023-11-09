@@ -131,7 +131,6 @@ JitsiConferenceEventManager.prototype.setupChatRoomListeners = function () {
     this.chatRoomForwarder.forward(XMPPEvents.ROOM_MAX_USERS_ERROR, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.CONFERENCE_MAX_USERS);
     this.chatRoomForwarder.forward(XMPPEvents.PASSWORD_REQUIRED, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.PASSWORD_REQUIRED);
     this.chatRoomForwarder.forward(XMPPEvents.AUTHENTICATION_REQUIRED, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.AUTHENTICATION_REQUIRED);
-    this.chatRoomForwarder.forward(XMPPEvents.REDIRECTED, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.REDIRECTED);
     this.chatRoomForwarder.forward(XMPPEvents.BRIDGE_DOWN, JitsiConferenceEvents.CONFERENCE_FAILED, JitsiConferenceErrors.VIDEOBRIDGE_NOT_AVAILABLE);
     chatRoom.addListener(XMPPEvents.BRIDGE_DOWN, () => Statistics.sendAnalytics(createBridgeDownEvent()));
     chatRoom.addListener(XMPPEvents.CONNECTION_RESTARTED, jingleSession => {

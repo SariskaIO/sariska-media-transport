@@ -127,6 +127,15 @@ export default class JitsiParticipant {
         return this._id;
     }
     /**
+     * Returns the XMPP identity. This is defined by your application in the
+     * JWT `context` claims section.
+     *
+     * @returns {object|undefined} - XMPP user identity.
+     */
+    getIdentity() {
+        return this._identity;
+    }
+    /**
      * @returns {String} The JID of this participant.
      */
     getJid() {

@@ -1,6 +1,6 @@
 import Logger from '@jitsi/logger';
 import watchRTC from '@testrtc/watchrtc-sdk';
-import { isAnalyticsEnabled, isRtcstatsEnabled, isWatchRTCEnabled } from './functions';
+import { isAnalyticsEnabled, isWatchRTCEnabled } from './functions';
 const logger = Logger.getLogger(__filename);
 /**
  * Class that controls the watchRTC flow, because it overwrites and proxies global function it should only be
@@ -19,10 +19,6 @@ class WatchRTCHandler {
         if (isWatchRTCEnabled(options)) {
             if (!isAnalyticsEnabled(options)) {
                 logger.error('Cannot initialize WatchRTC when analytics or third party requests are disabled.');
-                return;
-            }
-            if (isRtcstatsEnabled(options)) {
-                logger.error('Cannot initialize WatchRTC when RTCStats is enabled.');
                 return;
             }
             try {

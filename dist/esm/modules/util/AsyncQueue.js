@@ -2,6 +2,18 @@ import { getLogger } from '@jitsi/logger';
 import { queue } from 'async-es';
 const logger = getLogger(__filename);
 /**
+ * Error to be passed to a callback of a queued task when the queue is cleared.
+ */
+export class ClearedQueueError extends Error {
+    /**
+     * Creates new instance.
+     */
+    constructor(message) {
+        super(message);
+        this.name = 'ClearedQueueError';
+    }
+}
+/**
  * A queue for async task execution.
  */
 export default class AsyncQueue {
@@ -11,11 +23,20 @@ export default class AsyncQueue {
     constructor() {
         this._queue = queue(this._processQueueTasks.bind(this), 1);
         this._stopped = false;
+        this._taskCallbacks = new Map();
     }
     /**
      * Removes any pending tasks from the queue.
      */
     clear() {
+        for (const finishedCallback of this._taskCallbacks.values()) {
+            try {
+                finishedCallback(new ClearedQueueError('The queue has been cleared'));
+            }
+            catch (error) {
+                logger.error('Error in callback while clearing the queue:', error);
+            }
+        }
         this._queue.kill();
     }
     /**
@@ -28,6 +49,9 @@ export default class AsyncQueue {
         catch (error) {
             logger.error(`Task failed: ${error === null || error === void 0 ? void 0 : error.stack}`);
             finishedCallback(error);
+        }
+        finally {
+            this._taskCallbacks.delete(task);
         }
     }
     /**
@@ -58,6 +82,7 @@ export default class AsyncQueue {
             callback && callback(new Error('The queue has been stopped'));
             return;
         }
+        this._taskCallbacks.set(task, callback);
         this._queue.push(task, callback);
     }
     /**

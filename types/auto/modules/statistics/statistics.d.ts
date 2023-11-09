@@ -17,11 +17,11 @@
  */
 /**
  *
- * @param xmpp
+ * @param {JitsiConference} conference - The conference instance from which the statistics were initialized.
  * @param {StatisticsOptions} options - The options to use creating the
  * Statistics.
  */
-declare function Statistics(xmpp: any, options: StatisticsOptions): void;
+declare function Statistics(conference: any, options: StatisticsOptions): void;
 declare class Statistics {
     /**
      * The options to configure Statistics.
@@ -41,11 +41,11 @@ declare class Statistics {
      */
     /**
      *
-     * @param xmpp
+     * @param {JitsiConference} conference - The conference instance from which the statistics were initialized.
      * @param {StatisticsOptions} options - The options to use creating the
      * Statistics.
      */
-    constructor(xmpp: any, options: StatisticsOptions);
+    constructor(conference: any, options: StatisticsOptions);
     /**
      * {@link RTPStats} mapped by {@link TraceablePeerConnection.id} which
      * collect RTP statistics for each peerconnection.
@@ -53,6 +53,7 @@ declare class Statistics {
      */
     rtpStatsMap: Map<string, RTPStats>;
     eventEmitter: EventEmitter;
+    conference: any;
     xmpp: any;
     options: {};
     callStatsIntegrationEnabled: boolean;
@@ -90,7 +91,7 @@ declare class Statistics {
      *
      * @returns {void}
      */
-    attachLongTasksStats(conference: any): void;
+    attachLongTasksStats(): void;
     performanceObserverStats: PerformanceObserverStats;
     /**
      * Obtains the current value of the LongTasks event statistics.

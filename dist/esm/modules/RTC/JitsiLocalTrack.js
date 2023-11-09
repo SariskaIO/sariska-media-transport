@@ -70,7 +70,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
         this.sourceType = sourceType !== null && sourceType !== void 0 ? sourceType : displaySurface;
         // Get the resolution from the track itself because it cannot be
         // certain which resolution webrtc has fallen back to using.
-        this.resolution = track.getSettings().height;
+        this.resolution = this.getHeight();
         this.maxEnabledResolution = resolution;
         // Cache the constraints of the track in case of any this track
         // model needs to call getUserMedia again, such as when unmuting.
@@ -78,8 +78,8 @@ export default class JitsiLocalTrack extends JitsiTrack {
         // Safari returns an empty constraints object, construct the constraints using getSettings.
         if (!Object.keys(this._constraints).length && videoType === VideoType.CAMERA) {
             this._constraints = {
-                height: track.getSettings().height,
-                width: track.getSettings().width
+                height: this.getHeight(),
+                width: this.getWidth()
             };
         }
         this.deviceId = deviceId;
@@ -185,6 +185,7 @@ export default class JitsiLocalTrack extends JitsiTrack {
     _fireNoDataFromSourceEvent() {
         const value = !this.isReceivingData();
         this.emit(NO_DATA_FROM_SOURCE, value);
+        logger.debug(`NO_DATA_FROM_SOURCE event with value ${value} detected for track: ${this}`);
         // FIXME: Should we report all of those events
         Statistics.sendAnalytics(createNoDataFromSourceEvent(this.getType(), value));
         Statistics.sendLog(JSON.stringify({
@@ -358,7 +359,9 @@ export default class JitsiLocalTrack extends JitsiTrack {
                 if (this._streamEffect) {
                     this._startStreamEffect(this._streamEffect);
                 }
-                this.containers.map(cont => RTCUtils.attachMediaStream(cont, this.stream));
+                this.containers.map(cont => RTCUtils.attachMediaStream(cont, this.stream).catch(() => {
+                    logger.error(`Attach media failed for ${this} on video unmute!`);
+                }));
                 return this._addStreamToConferenceAsUnmute();
             });
         }
@@ -713,7 +716,11 @@ export default class JitsiLocalTrack extends JitsiTrack {
         if (!conference) {
             this._switchStreamEffect(effect);
             if (this.isVideoTrack()) {
-                this.containers.forEach(cont => RTCUtils.attachMediaStream(cont, this.stream));
+                this.containers.forEach(cont => {
+                    RTCUtils.attachMediaStream(cont, this.stream).catch(() => {
+                        logger.error(`Attach media failed for ${this} when trying to set effect.`);
+                    });
+                });
             }
             return Promise.resolve();
         }
@@ -722,7 +729,11 @@ export default class JitsiLocalTrack extends JitsiTrack {
             .then(() => {
             this._switchStreamEffect(effect);
             if (this.isVideoTrack()) {
-                this.containers.forEach(cont => RTCUtils.attachMediaStream(cont, this.stream));
+                this.containers.forEach(cont => {
+                    RTCUtils.attachMediaStream(cont, this.stream).catch(() => {
+                        logger.error(`Attach media failed for ${this} when trying to set effect.`);
+                    });
+                });
             }
             return conference._addLocalTrackToPc(this);
         })

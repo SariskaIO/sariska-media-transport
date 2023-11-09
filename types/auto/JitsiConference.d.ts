@@ -24,10 +24,6 @@
  * @param {number} [options.config.channelLastN=-1] The requested amount of
  * videos are going to be delivered after the value is in effect. Set to -1 for
  * unlimited or all available videos.
- * @param {number} [options.config.forceJVB121Ratio]
- * "Math.random() < forceJVB121Ratio" will determine whether a 2 people
- * conference should be moved to the JVB instead of P2P. The decision is made on
- * the responder side, after ICE succeeds on the P2P connection.
  * @constructor
  *
  * FIXME Make all methods which are called from lib-internal classes
@@ -64,10 +60,6 @@ declare class JitsiConference {
      * @param {number} [options.config.channelLastN=-1] The requested amount of
      * videos are going to be delivered after the value is in effect. Set to -1 for
      * unlimited or all available videos.
-     * @param {number} [options.config.forceJVB121Ratio]
-     * "Math.random() < forceJVB121Ratio" will determine whether a 2 people
-     * conference should be moved to the JVB instead of P2P. The decision is made on
-     * the responder side, after ICE succeeds on the P2P connection.
      * @constructor
      *
      * FIXME Make all methods which are called from lib-internal classes
@@ -310,17 +302,6 @@ declare class JitsiConference {
      */
     getAuthLogin(): any;
     /**
-     * Check if external authentication is enabled for this conference.
-     */
-    isExternalAuthEnabled(): any;
-    /**
-     * Get url for external authentication.
-     * @param {boolean} [urlForPopup] if true then return url for login popup,
-     *                                else url of login page.
-     * @returns {Promise}
-     */
-    getExternalAuthUrl(urlForPopup?: boolean): Promise<any>;
-    /**
      * Returns the local tracks of the given media type, or all local tracks if no
      * specific type is given.
      * @param {MediaType} [mediaType] Optional media type (audio or video).
@@ -356,6 +337,13 @@ declare class JitsiConference {
      * impl, instead of rolling ourselves
      */
     on(eventId: any, handler: any): void;
+    /**
+     * Adds a one-time`listener` function for the event.
+     * @param eventId the event ID.
+     * @param handler handler for the event.
+     *
+     */
+    once(eventId: any, handler: any): void;
     /**
      * Removes event listener
      * @param eventId the event ID.
@@ -422,12 +410,6 @@ declare class JitsiConference {
      * @param {string} subject new subject
      */
     setSubject(subject: string): void;
-    /**
-     * Get a transcriber object for all current participants in this conference
-     * @return {Transcriber} the transcriber object
-     */
-    getTranscriber(): Transcriber;
-    transcriber: Transcriber;
     /**
      * Returns the transcription status.
      *
@@ -1273,5 +1255,4 @@ import NoAudioSignalDetection from "./modules/detection/NoAudioSignalDetection";
 import Jvb121EventGenerator from "./modules/event/Jvb121EventGenerator";
 import P2PDominantSpeakerDetection from "./modules/detection/P2PDominantSpeakerDetection";
 import { MediaType } from "./service/RTC/MediaType";
-import Transcriber from "./modules/transcription/transcriber";
 import IceFailedHandling from "./modules/connectivity/IceFailedHandling";

@@ -283,7 +283,7 @@ export default class ConnectionQuality {
             // Calculate a value based on the send video bitrate on the active TPC.
             const activeTPC = this._conference.getActivePeerConnection();
             if (activeTPC) {
-                const isSimulcastOn = activeTPC.isSimulcastOn();
+                const isSimulcastOn = activeTPC.isSpatialScalabilityOn();
                 const videoQualitySettings = activeTPC.getTargetVideoBitrates();
                 // Add the codec info as well.
                 videoQualitySettings.codec = activeTPC.getConfiguredVideoCodec();

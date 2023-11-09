@@ -1,3 +1,4 @@
+import { safeJsonParse } from '@jitsi/js-utils/json';
 import { getLogger } from '@jitsi/logger';
 import { Strophe } from 'strophe.js';
 import { MediaType } from '../../service/RTC/MediaType';
@@ -20,12 +21,10 @@ export default class SignalingLayerImpl extends SignalingLayer {
     constructor() {
         super();
         /**
-         * A map that stores SSRCs of remote streams. And is used only locally
-         * We store the mapping when jingle is received, and later is used
-         * onaddstream webrtc event where we have only the ssrc
+         * A map that stores SSRCs of remote streams and the corresponding jid and source name.
          * FIXME: This map got filled and never cleaned and can grow during long
          * conference
-         * @type {Map<number, string>} maps SSRC number to jid
+         * @type {Map<number, { endpointId: string, sourceName: string }>} maps SSRC number to jid and source name.
          */
         this.ssrcOwners = new Map();
         /**
@@ -43,15 +42,6 @@ export default class SignalingLayerImpl extends SignalingLayer {
          * @private
          */
         this._remoteSourceState = {};
-        /**
-         * A map that stores the source name of a track identified by it's ssrc.
-         * We store the mapping when jingle is received, and later is used
-         * onaddstream webrtc event where we have only the ssrc
-         * FIXME: This map got filled and never cleaned and can grow during long
-         * conference
-         * @type {Map<number, string>} maps SSRC number to source name
-         */
-        this._sourceNames = new Map();
     }
     /**
      * Adds <SourceInfo> element to the local presence.
@@ -106,7 +96,7 @@ export default class SignalingLayerImpl extends SignalingLayer {
             var _a;
             const endpointId = mucNick;
             const { value } = node;
-            const sourceInfoJSON = JSON.parse(value);
+            const sourceInfoJSON = safeJsonParse(value);
             const emitEventsFromHere = this._doesEndpointSendNewSourceInfo(endpointId);
             const endpointSourceState = this._remoteSourceState[endpointId] || (this._remoteSourceState[endpointId] = {});
             for (const sourceName of Object.keys(sourceInfoJSON)) {
@@ -152,11 +142,6 @@ export default class SignalingLayerImpl extends SignalingLayer {
         this._memberLeftHandler = jid => {
             const endpointId = Strophe.getResourceFromJid(jid);
             delete this._remoteSourceState[endpointId];
-            for (const [key, value] of this.ssrcOwners.entries()) {
-                if (value === endpointId) {
-                    delete this._sourceNames[key];
-                }
-            }
         };
         room.addEventListener(XMPPEvents.MUC_MEMBER_LEFT, this._memberLeftHandler);
     }
@@ -243,13 +228,15 @@ export default class SignalingLayerImpl extends SignalingLayer {
      * @inheritDoc
      */
     getSSRCOwner(ssrc) {
-        return this.ssrcOwners.get(ssrc);
+        var _a;
+        return (_a = this.ssrcOwners.get(ssrc)) === null || _a === void 0 ? void 0 : _a.endpointId;
     }
     /**
      * @inheritDoc
      */
     getTrackSourceName(ssrc) {
-        return this._sourceNames.get(ssrc);
+        var _a;
+        return (_a = this.ssrcOwners.get(ssrc)) === null || _a === void 0 ? void 0 : _a.sourceName;
     }
     /**
      * @inheritDoc
@@ -286,17 +273,23 @@ export default class SignalingLayerImpl extends SignalingLayer {
     /**
      * @inheritDoc
      */
-    setSSRCOwner(ssrc, endpointId) {
+    setSSRCOwner(ssrc, newEndpointId, newSourceName) {
         if (typeof ssrc !== 'number') {
             throw new TypeError(`SSRC(${ssrc}) must be a number`);
         }
         // Now signaling layer instance is shared between different JingleSessionPC instances, so although very unlikely
         // an SSRC conflict could potentially occur. Log a message to make debugging easier.
         const existingOwner = this.ssrcOwners.get(ssrc);
-        if (existingOwner && existingOwner !== endpointId) {
-            this._logOwnerChangedMessage(`SSRC owner re-assigned from ${existingOwner} to ${endpointId}`);
+        if (existingOwner) {
+            const { endpointId, sourceName } = existingOwner;
+            if (endpointId !== newEndpointId || sourceName !== newSourceName) {
+                this._logOwnerChangedMessage(`SSRC owner re-assigned from ${existingOwner}(source-name=${sourceName}) to ${newEndpointId}(source-name=${newSourceName})`);
+            }
         }
-        this.ssrcOwners.set(ssrc, endpointId);
+        this.ssrcOwners.set(ssrc, {
+            endpointId: newEndpointId,
+            sourceName: newSourceName
+        });
     }
     /**
      * @inheritDoc
@@ -311,21 +304,6 @@ export default class SignalingLayerImpl extends SignalingLayer {
             return this._addLocalSourceInfoToPresence();
         }
         return false;
-    }
-    /**
-     * @inheritDoc
-     */
-    setTrackSourceName(ssrc, sourceName) {
-        if (typeof ssrc !== 'number') {
-            throw new TypeError(`SSRC(${ssrc}) must be a number`);
-        }
-        // Now signaling layer instance is shared between different JingleSessionPC instances, so although very unlikely
-        // an SSRC conflict could potentially occur. Log a message to make debugging easier.
-        const existingName = this._sourceNames.get(ssrc);
-        if (existingName && existingName !== sourceName) {
-            this._logOwnerChangedMessage(`SSRC(${ssrc}) sourceName re-assigned from ${existingName} to ${sourceName}`);
-        }
-        this._sourceNames.set(ssrc, sourceName);
     }
     /**
      * @inheritDoc
@@ -345,9 +323,12 @@ export default class SignalingLayerImpl extends SignalingLayer {
      * @inheritDoc
      */
     updateSsrcOwnersOnLeave(id) {
-        const ssrcs = Array.from(this.ssrcOwners)
-            .filter(entry => entry[1] === id)
-            .map(entry => entry[0]);
+        const ssrcs = [];
+        this.ssrcOwners.forEach(({ endpointId }, ssrc) => {
+            if (endpointId === id) {
+                ssrcs.push(ssrc);
+            }
+        });
         if (!(ssrcs === null || ssrcs === void 0 ? void 0 : ssrcs.length)) {
             return;
         }

@@ -725,15 +725,14 @@ const rtcUtils = new RTCUtils();
 function wrapAttachMediaStream(origAttachMediaStream) {
     return function (element, stream) {
         // eslint-disable-next-line prefer-rest-params
-        const res = origAttachMediaStream.apply(rtcUtils, arguments);
+        origAttachMediaStream.apply(rtcUtils, arguments);
         if (stream
             && rtcUtils.isDeviceChangeAvailable('output')
             && stream.getAudioTracks
             && stream.getAudioTracks().length
             // we skip setting audio output if there was no explicit change
             && audioOutputChanged) {
-            element.setSinkId(rtcUtils.getAudioOutputDevice())
-                .catch(function (ex) {
+            return element.setSinkId(rtcUtils.getAudioOutputDevice()).catch(function (ex) {
                 const err = new JitsiTrackError(ex, null, ['audiooutput']);
                 GlobalOnErrorHandler.callUnhandledRejectionHandler({
                     promise: this,
@@ -741,10 +740,11 @@ function wrapAttachMediaStream(origAttachMediaStream) {
                 });
                 logger.warn('Failed to set audio output device for the element.'
                     + ' Default audio output device will be used'
-                    + ' instead', element, err);
+                    + ' instead', element === null || element === void 0 ? void 0 : element.id, err);
+                throw err;
             });
         }
-        return res;
+        return Promise.resolve();
     };
 }
 export default rtcUtils;

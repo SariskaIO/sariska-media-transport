@@ -5,7 +5,7 @@ import { MediaType } from '../../service/RTC/MediaType';
 import browser from '../browser';
 const logger = getLogger(__filename);
 // Default video codec preferences on mobile and desktop endpoints.
-const DESKTOP_VIDEO_CODEC_ORDER = [CodecMimeType.VP9, CodecMimeType.VP8, CodecMimeType.H264];
+const DESKTOP_VIDEO_CODEC_ORDER = [CodecMimeType.VP9, CodecMimeType.VP8, CodecMimeType.H264, CodecMimeType.AV1];
 const MOBILE_P2P_VIDEO_CODEC_ORDER = [CodecMimeType.H264, CodecMimeType.VP8, CodecMimeType.VP9];
 const MOBILE_VIDEO_CODEC_ORDER = [CodecMimeType.VP8, CodecMimeType.VP9, CodecMimeType.H264];
 /**
@@ -56,8 +56,9 @@ export class CodecSelection {
             }
             // Push VP9 to the end of the list so that the client continues to decode VP9 even if its not
             // preferable to encode VP9 (because of browser bugs on the encoding side or added complexity on mobile
-            // devices).
-            if (!browser.supportsVP9() || this.conference.isE2EEEnabled()) {
+            // devices). Currently, VP9 encode is supported on Chrome and on Safari (only for p2p).
+            const isVp9EncodeSupported = browser.supportsVP9() || (browser.isWebKitBased() && connectionType === 'p2p');
+            if (!isVp9EncodeSupported || this.conference.isE2EEEnabled()) {
                 const index = selectedOrder.findIndex(codec => codec === CodecMimeType.VP9);
                 if (index !== -1) {
                     selectedOrder.splice(index, 1);
@@ -92,18 +93,6 @@ export class CodecSelection {
         });
     }
     /**
-     * Filters VP9 from the list of the preferred video codecs for JVB if E2EE is enabled.
-     *
-     * @returns {Array}
-     */
-    _maybeFilterJvbCodecs() {
-        // TODO - remove this check when support for VP9-E2EE is introduced.
-        if (this.conference.isE2EEEnabled()) {
-            return this.codecPreferenceOrder.jvb.filter(codec => codec !== CodecMimeType.VP9);
-        }
-        return this.codecPreferenceOrder.jvb;
-    }
-    /**
      * Sets the codec on the media session based on the codec preference order configured in config.js and the supported
      * codecs published by the remote participants in their presence.
      *
@@ -115,9 +104,12 @@ export class CodecSelection {
             return;
         }
         const currentCodecOrder = session.peerconnection.getConfiguredVideoCodecs();
-        const localPreferredCodecOrder = session === this.conference.jvbJingleSession
-            ? this._maybeFilterJvbCodecs()
-            : this.codecPreferenceOrder.p2p;
+        const isJvbSession = session === this.conference.jvbJingleSession;
+        let localPreferredCodecOrder = isJvbSession ? this.codecPreferenceOrder.jvb : this.codecPreferenceOrder.p2p;
+        // E2EE is curently supported only for VP8 codec.
+        if (this.conference.isE2EEEnabled() && isJvbSession) {
+            localPreferredCodecOrder = [CodecMimeType.VP8];
+        }
         const remoteParticipants = this.conference.getParticipants().map(participant => participant.getId());
         const remoteCodecsPerParticipant = remoteParticipants === null || remoteParticipants === void 0 ? void 0 : remoteParticipants.map(remote => {
             var _a;

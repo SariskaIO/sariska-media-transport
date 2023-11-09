@@ -426,7 +426,6 @@ export class TrackStreamingStatusImpl {
             return;
         }
         const sourceName = this.track.getSourceName();
-        logger.debug(`Detector on track signalling mute changed: ${sourceName}`, track.isMuted());
         this.figureOutStreamingStatus();
     }
     /**

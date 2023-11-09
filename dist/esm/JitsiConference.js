@@ -47,7 +47,6 @@ import AvgRTPStatsReporter from './modules/statistics/AvgRTPStatsReporter';
 import LocalStatsCollector from './modules/statistics/LocalStatsCollector';
 import SpeakerStatsCollector from './modules/statistics/SpeakerStatsCollector';
 import Statistics from './modules/statistics/statistics';
-import Transcriber from './modules/transcription/transcriber';
 import GlobalOnErrorHandler from './modules/util/GlobalOnErrorHandler';
 import ComponentsVersions from './modules/version/ComponentsVersions';
 import VideoSIPGW from './modules/videosipgw/VideoSIPGW';
@@ -112,10 +111,6 @@ function _getCodecMimeType(codec) {
  * @param {number} [options.config.channelLastN=-1] The requested amount of
  * videos are going to be delivered after the value is in effect. Set to -1 for
  * unlimited or all available videos.
- * @param {number} [options.config.forceJVB121Ratio]
- * "Math.random() < forceJVB121Ratio" will determine whether a 2 people
- * conference should be moved to the JVB instead of P2P. The decision is made on
- * the responder side, after ICE succeeds on the P2P connection.
  * @constructor
  *
  * FIXME Make all methods which are called from lib-internal classes
@@ -411,7 +406,7 @@ JitsiConference.prototype._init = function (options = {}) {
     this.receiveVideoController = new ReceiveVideoController(this, this.rtc);
     this.sendVideoController = new SendVideoController(this, this.rtc);
     if (!this.statistics) {
-        this.statistics = new Statistics(this.xmpp, {
+        this.statistics = new Statistics(this, {
             aliasName: this._statsCurrentId,
             userName: config.statisticsDisplayName ? config.statisticsDisplayName : this.myUserId(),
             confID: config.confID || `${this.connection.options.hosts.domain}/${this.options.name}`,
@@ -429,7 +424,7 @@ JitsiConference.prototype._init = function (options = {}) {
         });
         // Start performance observer for monitoring long tasks
         if (config.longTasksStatsInterval) {
-            this.statistics.attachLongTasksStats(this);
+            this.statistics.attachLongTasksStats();
         }
     }
     this.eventManager.setupChatRoomListeners();
@@ -720,32 +715,6 @@ JitsiConference.prototype.getAuthLogin = function () {
     return this.authIdentity;
 };
 /**
- * Check if external authentication is enabled for this conference.
- */
-JitsiConference.prototype.isExternalAuthEnabled = function () {
-    return this.room && this.room.moderator.isExternalAuthEnabled();
-};
-/**
- * Get url for external authentication.
- * @param {boolean} [urlForPopup] if true then return url for login popup,
- *                                else url of login page.
- * @returns {Promise}
- */
-JitsiConference.prototype.getExternalAuthUrl = function (urlForPopup) {
-    return new Promise((resolve, reject) => {
-        if (!this.isExternalAuthEnabled()) {
-            reject();
-            return;
-        }
-        if (urlForPopup) {
-            this.room.moderator.getPopupLoginUrl(resolve, reject);
-        }
-        else {
-            this.room.moderator.getLoginUrl(resolve, reject);
-        }
-    });
-};
-/**
  * Returns the local tracks of the given media type, or all local tracks if no
  * specific type is given.
  * @param {MediaType} [mediaType] Optional media type (audio or video).
@@ -799,6 +768,17 @@ JitsiConference.prototype.getPerformanceStats = function () {
 JitsiConference.prototype.on = function (eventId, handler) {
     if (this.eventEmitter) {
         this.eventEmitter.on(eventId, handler);
+    }
+};
+/**
+ * Adds a one-time`listener` function for the event.
+ * @param eventId the event ID.
+ * @param handler handler for the event.
+ *
+ */
+JitsiConference.prototype.once = function (eventId, handler) {
+    if (this.eventEmitter) {
+        this.eventEmitter.once(eventId, handler);
     }
 };
 /**
@@ -922,26 +902,6 @@ JitsiConference.prototype.setSubject = function (subject) {
     else {
         logger.warn(`Failed to set subject, ${this.room ? '' : 'not in a room, '}${this.isModerator() ? '' : 'participant is not a moderator'}`);
     }
-};
-/**
- * Get a transcriber object for all current participants in this conference
- * @return {Transcriber} the transcriber object
- */
-JitsiConference.prototype.getTranscriber = function () {
-    if (this.transcriber === undefined) {
-        this.transcriber = new Transcriber();
-        // add all existing local audio tracks to the transcriber
-        const localAudioTracks = this.getLocalTracks(MediaType.AUDIO);
-        for (const localAudio of localAudioTracks) {
-            this.transcriber.addTrack(localAudio);
-        }
-        // and all remote audio tracks
-        const remoteAudioTracks = this.rtc.getRemoteTracks(MediaType.AUDIO);
-        for (const remoteTrack of remoteAudioTracks) {
-            this.transcriber.addTrack(remoteTrack);
-        }
-    }
-    return this.transcriber;
 };
 /**
  * Returns the transcription status.
@@ -1701,8 +1661,8 @@ JitsiConference.prototype.onMemberKicked = function (isSelfPresence, actorId, ki
     }
     const actorParticipant = this.participants.get(actorId);
     if (isSelfPresence) {
-        this.eventEmitter.emit(JitsiConferenceEvents.KICKED, actorParticipant, reason, isReplaceParticipant);
         this.leave().finally(() => this.xmpp.disconnect());
+        this.eventEmitter.emit(JitsiConferenceEvents.KICKED, actorParticipant, reason, isReplaceParticipant);
         return;
     }
     const kickedParticipant = this.participants.get(kickedParticipantId);
@@ -1761,9 +1721,6 @@ JitsiConference.prototype.onRemoteTrackAdded = function (track) {
     else {
         logger.info(`Source signaling received before presence for ${id}`);
     }
-    if (this.transcriber) {
-        this.transcriber.addTrack(track);
-    }
     const emitter = this.eventEmitter;
     track.addEventListener(JitsiTrackEvents.TRACK_MUTE_CHANGED, () => emitter.emit(JitsiConferenceEvents.TRACK_MUTE_CHANGED, track));
     track.isAudioTrack() && track.addEventListener(JitsiTrackEvents.TRACK_AUDIO_LEVEL_CHANGED, (audioLevel, tpc) => {
@@ -1817,9 +1774,6 @@ JitsiConference.prototype.onRemoteTrackRemoved = function (removedTrack) {
                 // considered equal the result of splice can be ignored.
                 participant._tracks.splice(i, 1);
                 this.eventEmitter.emit(JitsiConferenceEvents.TRACK_REMOVED, removedTrack);
-                if (this.transcriber) {
-                    this.transcriber.removeTrack(removedTrack);
-                }
                 break;
             }
         }
@@ -2064,22 +2018,13 @@ JitsiConference.prototype.onCallEnded = function (jingleSession, reasonCondition
     }
     else if (jingleSession === this.p2pJingleSession) {
         const stopOptions = {};
-        // It's the responder who decides to enforce JVB mode, so that both
-        // initiator and responder are aware if it was intentional.
-        if (reasonCondition === 'decline' && reasonText === 'force JVB121') {
-            logger.info('In forced JVB 121 mode...');
-            Statistics.analytics.addPermanentProperties({ forceJvb121: true });
-        }
-        else if (reasonCondition === 'connectivity-error'
-            && reasonText === 'ICE FAILED') {
-            // It can happen that the other peer detects ICE failed and
-            // terminates the session, before we get the event on our side.
-            // But we are able to parse the reason and mark it here.
+        if (reasonCondition === 'connectivity-error' && reasonText === 'ICE FAILED') {
+            // It can happen that the other peer detects ICE failed and terminates the session, before we get the event
+            // on our side. But we are able to parse the reason and mark it here.
             Statistics.analytics.addPermanentProperties({ p2pFailed: true });
         }
         else if (reasonCondition === 'success' && reasonText === 'restart') {
-            // When we are restarting media sessions we don't want to switch the tracks
-            // to the JVB just yet.
+            // When we are restarting media sessions we don't want to switch the tracks to the JVB just yet.
             stopOptions.requestRestart = true;
         }
         this._stopP2PSession(stopOptions);
@@ -2169,8 +2114,8 @@ JitsiConference.prototype.stopRecording = function (sessionID) {
  * Returns true if the SIP calls are supported and false otherwise
  */
 JitsiConference.prototype.isSIPCallingSupported = function () {
-    var _a, _b, _c;
-    return (_c = (_b = (_a = this.room) === null || _a === void 0 ? void 0 : _a.moderator) === null || _b === void 0 ? void 0 : _b.isSipGatewayEnabled()) !== null && _c !== void 0 ? _c : false;
+    var _a, _b, _c, _d;
+    return (_d = (_c = (_b = (_a = this.room) === null || _a === void 0 ? void 0 : _a.xmpp) === null || _b === void 0 ? void 0 : _b.moderator) === null || _c === void 0 ? void 0 : _c.isSipGatewayEnabled()) !== null && _d !== void 0 ? _d : false;
 };
 /**
  * Dials a number.
@@ -2592,7 +2537,7 @@ JitsiConference.prototype._acceptP2PIncomingCall = function (jingleSession, jing
         remoteID = participant.getStatsID() || remoteID;
     }
     this.statistics.startCallStats(this.p2pJingleSession.peerconnection, remoteID);
-    const localTracks = this.getLocalTracks();
+    const localTracks = this._getInitialLocalTracks();
     this.p2pJingleSession.acceptOffer(jingleOffer, () => {
         logger.debug('Got RESULT for P2P "session-accept"');
         this.eventEmitter.emit(JitsiConferenceEvents._MEDIA_SESSION_STARTED, jingleSession);
@@ -2651,24 +2596,12 @@ JitsiConference.prototype._onIceConnectionEstablished = function (jingleSession)
             = this.jvbJingleSession.establishmentDuration;
     }
     let done = false;
-    const forceJVB121Ratio = this.options.config.forceJVB121Ratio;
     // We don't care about the JVB case, there's nothing to be done
     if (!jingleSession.isP2P) {
         done = true;
     }
     else if (this.p2pJingleSession !== jingleSession) {
         logger.error('CONNECTION_ESTABLISHED - wrong P2P session instance ?!');
-        done = true;
-    }
-    else if (!jingleSession.isInitiator
-        && typeof forceJVB121Ratio === 'number'
-        && Math.random() < forceJVB121Ratio) {
-        logger.info(`Forcing JVB 121 mode (ratio=${forceJVB121Ratio})...`);
-        Statistics.analytics.addPermanentProperties({ forceJvb121: true });
-        this._stopP2PSession({
-            reason: 'decline',
-            reasonDescription: 'force JVB121'
-        });
         done = true;
     }
     if (!isNaN(this.p2pEstablishmentDuration)
@@ -2823,8 +2756,7 @@ JitsiConference.prototype._setP2PStatus = function (newStatus) {
         // When we end up in a valid P2P session need to reset the properties
         // in case they have persisted, after session with another peer.
         Statistics.analytics.addPermanentProperties({
-            p2pFailed: false,
-            forceJvb121: false
+            p2pFailed: false
         });
         // Sync up video transfer active in case p2pJingleSession not existed
         // when the lastN value was being adjusted.

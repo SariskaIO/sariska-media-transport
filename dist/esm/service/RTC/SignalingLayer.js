@@ -125,11 +125,13 @@ export default class SignalingLayer extends Listenable {
     }
     /**
      * Set an SSRC owner.
-     * @param {number} ssrc an SSRC to be owned
-     * @param {string} endpointId owner's ID (MUC nickname)
-     * @throws TypeError if <tt>ssrc</tt> is not a number
+     *
+     * @param {number} ssrc - An SSRC to be owned.
+     * @param {string} endpointId - Owner's ID (MUC nickname).
+     * @param {string} sourceName - The related source name.
+     * @throws TypeError if <tt>ssrc</tt> is not a number.
      */
-    setSSRCOwner(ssrc, endpointId) {
+    setSSRCOwner(ssrc, endpointId, sourceName) {
     }
     /**
      * Adjusts muted status of given track.
@@ -139,14 +141,6 @@ export default class SignalingLayer extends Listenable {
      * @returns {boolean}
      */
     setTrackMuteStatus(sourceName, muted) {
-    }
-    /**
-     * Saves the source name for a track identified by it's ssrc.
-     * @param {number} ssrc the ssrc of the target track.
-     * @param {SourceName} sourceName the track's source name to save.
-     * @throws TypeError if <tt>ssrc</tt> is not a number
-     */
-    setTrackSourceName(ssrc, sourceName) {
     }
     /**
      * Sets track's video type.
