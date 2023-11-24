@@ -110,17 +110,19 @@ export const conferenceConfig = {
     // p2pTestMode
     // octo
     // probability
+    useStunTurn: true,
     p2p: {
+        useStunTurn: true,
         // Enables peer to peer mode. When enabled the system will try to
         // establish a direct connection when there are exactly 2 participants
         // in the room. If that succeeds the conference will stop sending data
         // through the JVB and use the peer to peer connection instead. When a
         // 3rd participant joins the conference will be moved back to the JVB
         // connection.
-        enabled: false // The STUN servers that will be used in the peer to peer connections
-        // stunServers: [
-        //    { urls: 'stun.l.google.com:19302' }
-        //]
+        enabled: true,
+        stunServers: [
+            { urls: 'stun:coturn.sariska.io:443' }
+        ]
         // Sets the ICE transport policy for the p2p connection. At the time
         // of this writing the list of possible values are 'all' and 'relay',
         // but that is subject to change in the future. The enum is defined in
