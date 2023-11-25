@@ -1045,10 +1045,9 @@
   resolved "https://registry.yarnpkg.com/@jitsi/eslint-config/-/eslint-config-4.1.4.tgz#ea2ab3993833d96c9598eda3aa1e590ee1430bc9"
   integrity sha512-7ea1H2mpU5Z0azjcAsu0dx2T0fGzpcAfMmk2pEJ1xTQMp5YCwLYRu7ify9nupEbZUwnvJqyXoSeJQwwBQoX6Wg==
 
-"@jitsi/js-utils@2.2.1", "@jitsi/js-utils@^2.2.0":
+"@jitsi/js-utils@^2.2.0", "@jitsi/js-utils@https://github.com/SariskaIO/js-utils-new#1.0.0":
   version "2.2.1"
-  resolved "https://registry.yarnpkg.com/@jitsi/js-utils/-/js-utils-2.2.1.tgz#fffe0340295ea2db1c9f436c90a520e37d760e1a"
-  integrity sha512-4Ia4hWO7aTMGbYftzeBr+IHIu5YxiWwTlhsSK34z6925oNAUNI863WgYYGTcXkW/1yuM6LBZrnuZBySDqosISA==
+  resolved "https://github.com/SariskaIO/js-utils-new#5ccb2c4557effa71464066618806784b101cbb43"
   dependencies:
     "@hapi/bourne" "^3.0.0"
     js-md5 "0.7.3"
@@ -1197,9 +1196,9 @@
   integrity sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==
 
 "@types/node@*", "@types/node@>=10.0.0":
-  version "20.9.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.9.5.tgz#bb441014bcb91c63742b0e1fe25b902f5d581faa"
-  integrity sha512-Uq2xbNq0chGg+/WQEU0LJTSs/1nKxz6u1iemLcGomkSnKokbW1fbLqc3HOqCf2JP7KjlL4QkS7oZZTrOQHQYgQ==
+  version "20.10.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.10.0.tgz#16ddf9c0a72b832ec4fcce35b8249cf149214617"
+  integrity sha512-D0WfRmU9TQ8I9PFx9Yc+EBHw+vSpIub4IDvQivcp26PtPrdMGAq5SDcpXEo/epqa/DXotVpekHiLNTg3iaKXBQ==
   dependencies:
     undici-types "~5.26.4"
 
@@ -1943,9 +1942,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.4.535:
-  version "1.4.593"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.593.tgz#f71b157f7382f3d3a164f73ff2da772d4b3fd984"
-  integrity sha512-c7+Hhj87zWmdpmjDONbvNKNo24tvmD4mjal1+qqTYTrlF0/sNpAcDlU0Ki84ftA/5yj3BF2QhSGEC0Rky6larg==
+  version "1.4.594"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.594.tgz#f69f207fba80735a44a988df42f3f439115d0515"
+  integrity sha512-xT1HVAu5xFn7bDfkjGQi9dNpMqGchUkebwf1GL7cZN32NSwwlHRPMSDJ1KN6HkS0bWUtndbSQZqvpQftKG2uFQ==
 
 emoji-regex@^8.0.0:
   version "8.0.0"
