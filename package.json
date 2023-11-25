@@ -20,7 +20,7 @@
     "@hapi/bourne": "^2.0.0",
     "@jitsi/js-utils": "https://github.com/SariskaIO/js-utils-new#1.0.0",
     "@jitsi/logger": "2.0.2",
-    "@jitsi/rtcstats": "https://github.com/SariskaIO/rtcstats#1.0.0",
+    "@jitsi/rtcstats": "https://github.com/SariskaIO/rtcstats#1.0.1",
     "@jitsi/sdp-interop": "git+https://github.com/jitsi/sdp-interop#3d49eb4aa26863a3f8d32d7581cdb4321244266b",
     "@jitsi/sdp-simulcast": "0.4.0",
     "@testrtc/watchrtc-sdk": "1.36.3",
