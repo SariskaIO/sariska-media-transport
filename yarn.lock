@@ -1058,10 +1058,9 @@
   resolved "https://registry.yarnpkg.com/@jitsi/logger/-/logger-2.0.2.tgz#33491045e8c4b760df9c59e9885f401589f30c13"
   integrity sha512-qwbpRwuwkBFgh0F5jivq/5fAm46yVoXURc5LCklEs8lAShYVangFEXKW7RLpZuZ5nQnrHrlvU8MswQNREmvahg==
 
-"@jitsi/rtcstats@9.7.0":
+"@jitsi/rtcstats@https://github.com/SariskaIO/rtcstats#1.0.0":
   version "9.7.0"
-  resolved "https://registry.yarnpkg.com/@jitsi/rtcstats/-/rtcstats-9.7.0.tgz#4ded1f83660badf8d50c297a9cf09c3dc58105ff"
-  integrity sha512-OPURb3GO7zciPYoF/5IWLl2VVd90GD9KFlOnLQPalI2gUQDfxYNqn7JqeKAug1peTgml6I2o55lWYINuzPETWQ==
+  resolved "https://github.com/SariskaIO/rtcstats#ab757cc185561136f7e4ea1b8c5bdd19cfc19c26"
   dependencies:
     "@jitsi/js-utils" "^2.2.0"
     "@jitsi/logger" "2.0.2"
