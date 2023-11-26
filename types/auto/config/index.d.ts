@@ -47,7 +47,13 @@ export namespace conferenceConfig {
     namespace analytics {
         const disabled: boolean;
     }
+    const useStunTurn: boolean;
     namespace p2p {
-        const enabled: boolean;
+        const useStunTurn_1: boolean;
+        export { useStunTurn_1 as useStunTurn };
+        export const enabled: boolean;
+        export const stunServers: {
+            urls: string;
+        }[];
     }
 }
