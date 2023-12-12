@@ -46,8 +46,13 @@ export namespace conferenceConfig {
     }
     namespace analytics {
         const disabled: boolean;
+        const rtcstatsEnabled: boolean;
+        const watchRTCEnabled: boolean;
     }
     const useStunTurn: boolean;
+    namespace watchRTCConfigParams {
+        const rtcApiKey: string;
+    }
     namespace p2p {
         const useStunTurn_1: boolean;
         export { useStunTurn_1 as useStunTurn };
