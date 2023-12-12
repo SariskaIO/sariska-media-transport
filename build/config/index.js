@@ -70,7 +70,9 @@ export const conferenceConfig = {
 
   },
   analytics: {
-    disabled: false // rtcstatsEnabled: true,
+    disabled: false,
+    rtcstatsEnabled: true,
+    // rtcstatsEnabled: true,
     // In order to enable rtcstats one needs to provide a endpoint url.
     // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
     // The interval at which rtcstats will poll getStats, defaults to 1000ms.
