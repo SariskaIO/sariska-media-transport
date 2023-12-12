@@ -121,7 +121,7 @@ export const conferenceConfig = {
     useStunTurn: true,
     watchRTCConfigParams: {
             /** Watchrtc api key */
-            rtcApiKey: "d2a141d2-5e9b-4cf9-9568-82373667be4f"
+            rtcApiKey: "79ff9ddf-3969-4b9d-97a6-b078230b2e05"
             // /** Identifier for the session */
             // rtcRoomId?: string;
             // /** Identifier for the current peer */
