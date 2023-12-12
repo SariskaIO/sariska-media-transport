@@ -40,7 +40,7 @@ import * as ConnectionQualityEvents
 import * as E2ePingEvents from './service/e2eping/E2ePingEvents';
 import { createGetUserMediaEvent } from './service/statistics/AnalyticsEvents';
 import {createPresenterEffect, createRnnoiseProcessor, createScreenshotCaptureEffect, createVirtualBackgroundEffect} from "./modules/stream-effects";
-import {initSDKConfig} from './config';
+import {initSDKConfig, conferenceConfig } from './config';
 import * as createAnalyticsEvent from './modules/util/createAnalyticsEvent';
 
 const logger = getLogger(__filename);
@@ -164,7 +164,7 @@ export default {
         this.init(options); 
     },
     init(options: IJitsiMeetJSOptions = {}) {
-        let newOptions = {...initSDKConfig, ...options};
+        let newOptions = {...initSDKConfig, ...options, ...conferenceConfig};
         Settings.init(newOptions.externalStorage);
         Statistics.init(newOptions);
         const flags = newOptions.flags || {};
