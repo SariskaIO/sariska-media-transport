@@ -114,7 +114,7 @@ export const conferenceConfig = {
     useStunTurn: true,
     watchRTCConfigParams: {
         /** Watchrtc api key */
-        rtcApiKey: "79ff9ddf-3969-4b9d-97a6-b078230b2e05"
+        rtcApiKey: "be6cb388-c380-4a84-905f-b2df614026b8"
         // /** Identifier for the session */
         // rtcRoomId?: string;
         // /** Identifier for the current peer */
@@ -630,7 +630,7 @@ export const conferenceConfig = {
 //     microsoftApiApplicationClientID?: string;
 //     moderatedRoomServiceUrl?: string;
 //     mouseMoveCallbackInterval?: number;
-//     noiseSuppression?: INoiseSuppressionConfig;
+//    noiseSuppression?: INoiseSuppressionConfig;
 //     noticeMessage?: string;
 //     notificationTimeouts?: {
 //         long?: number;
