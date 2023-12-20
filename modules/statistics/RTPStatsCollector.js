@@ -8,8 +8,6 @@ import WebRTCMetrics from "webrtcmetrics";
 
 const metrics = new WebRTCMetrics();
 
-const GlobalOnErrorHandler = require('../util/GlobalOnErrorHandler');
-
 const logger = getLogger(__filename);
 
 let lastUpdatedData = { upload: 0, download: 0, audio: { upload: 0, download: 0}, video: { audio: 0, video: 0} };
@@ -27,12 +25,11 @@ let isDev;
  * @returns {number} packet loss percent
  */
 function calculatePacketLoss(lostPackets, totalPackets) {
-    if (!totalPackets || totalPackets <= 0
-            || !lostPackets || lostPackets <= 0) {
-        return 0;
+    if (lostPackets > 0 && totalPackets > 0) {
+        return Math.round(lostPackets / totalPackets * 100);
     }
 
-    return Math.round((lostPackets / totalPackets) * 100);
+    return 0;
 }
 
 /**
@@ -201,7 +198,6 @@ StatsCollector.prototype.stop = function() {
  * @param error an error that occurred on <tt>getStats</tt> call.
  */
 StatsCollector.prototype.errorCallback = function(error) {
-    GlobalOnErrorHandler.callErrorHandler(error);
     logger.error('Get stats error', error);
     this.stop();
 };
@@ -398,7 +394,6 @@ StatsCollector.prototype.start = function(startAudioLevelStats) {
                 try {
                     this.processStatsReport();
                 } catch (error) {
-                    GlobalOnErrorHandler.callErrorHandler(error);
                     logger.error('Processing of RTP stats failed:', error);
                 }
                 this.previousStatsReport = this.currentStatsReport;
@@ -528,18 +523,18 @@ StatsCollector.prototype._processAndEmitReport = async function() {
     }
 
     this.conferenceStats.bitrate = {
-        'upload': bitrateUpload,
-        'download': bitrateDownload
+        upload: bitrateUpload,
+        download: bitrateDownload
     };
 
     this.conferenceStats.bitrate.audio = {
-        'upload': audioBitrateUpload,
-        'download': audioBitrateDownload
+        upload: audioBitrateUpload,
+        download: audioBitrateDownload
     };
 
     this.conferenceStats.bitrate.video = {
-        'upload': videoBitrateUpload,
-        'download': videoBitrateDownload
+        upload: videoBitrateUpload,
+        download: videoBitrateDownload
     };
 
     this.conferenceStats.packetLoss = {
@@ -581,13 +576,13 @@ StatsCollector.prototype._processAndEmitReport = async function() {
         StatisticsEvents.CONNECTION_STATS,
         this.peerconnection,
         {
-            'bandwidth': this.conferenceStats.bandwidth,
-            'bitrate': lastUpdatedData,
-            'packetLoss': this.conferenceStats.packetLoss,
-            'resolution': resolutions,
-            'framerate': framerates,
-            'codec': codecs,
-            'transport': this.conferenceStats.transport,
+            bandwidth: this.conferenceStats.bandwidth,
+            bitrate: this.conferenceStats.bitrate,
+            packetLoss: this.conferenceStats.packetLoss,
+            resolution: resolutions,
+            framerate: framerates,
+            codec: codecs,
+            transport: this.conferenceStats.transport,
             localAvgAudioLevels,
             avgAudioLevels
         });

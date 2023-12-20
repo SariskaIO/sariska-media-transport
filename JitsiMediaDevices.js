@@ -1,9 +1,7 @@
-import EventEmitter from 'events';
-
 import * as JitsiMediaDevicesEvents from './JitsiMediaDevicesEvents';
 import RTC from './modules/RTC/RTC';
 import browser from './modules/browser';
-import Statistics from './modules/statistics/statistics';
+import Listenable from './modules/util/Listenable';
 import { MediaType } from './service/RTC/MediaType';
 import RTCEvents from './service/RTC/RTCEvents';
 
@@ -14,26 +12,20 @@ const VIDEO_PERMISSION_NAME = 'camera';
 /**
  * Media devices utilities for Jitsi.
  */
-class JitsiMediaDevices {
+class JitsiMediaDevices extends Listenable {
     /**
      * Initializes a {@code JitsiMediaDevices} object. There will be a single
      * instance of this class.
      */
     constructor() {
-        this._eventEmitter = new EventEmitter();
+        super();
         this._permissions = {};
 
         RTC.addListener(
             RTCEvents.DEVICE_LIST_CHANGED,
             devices =>
-                this._eventEmitter.emit(
+                this.eventEmitter.emit(
                     JitsiMediaDevicesEvents.DEVICE_LIST_CHANGED,
-                    devices));
-        RTC.addListener(
-            RTCEvents.DEVICE_LIST_AVAILABLE,
-            devices =>
-                this._logOutputDevice(
-                    this.getAudioOutputDevice(),
                     devices));
 
         // We would still want to update the permissions cache in case the permissions API is not supported.
@@ -135,7 +127,7 @@ class JitsiMediaDevices {
                 ...this._permissions,
                 ...permissions
             };
-            this._eventEmitter.emit(JitsiMediaDevicesEvents.PERMISSIONS_CHANGED, this._permissions);
+            this.eventEmitter.emit(JitsiMediaDevicesEvents.PERMISSIONS_CHANGED, this._permissions);
 
             if (this._permissions[MediaType.AUDIO] || this._permissions[MediaType.VIDEO]) {
                 // Triggering device list update when the permissiions are granted in order to update
@@ -143,22 +135,6 @@ class JitsiMediaDevices {
                 // eslint-disable-next-line no-empty-function
                 this.enumerateDevices(() => {});
             }
-        }
-    }
-
-    /**
-     * Gathers data and sends it to statistics.
-     * @param deviceID the device id to log
-     * @param devices list of devices
-     */
-    _logOutputDevice(deviceID, devices) {
-        const device
-            = devices.find(
-                d => d.kind === 'audiooutput' && d.deviceId === deviceID);
-
-        if (device) {
-            Statistics.sendActiveDeviceListEvent(
-                RTC.getEventDataForActiveDevice(device));
         }
     }
 
@@ -286,43 +262,7 @@ class JitsiMediaDevices {
      *      otherwise
      */
     setAudioOutputDevice(deviceId) {
-        const availableDevices = RTC.getCurrentlyAvailableMediaDevices();
-
-        if (availableDevices.length > 0) {
-            // if we have devices info report device to stats
-            // normally this will not happen on startup as this method is called
-            // too early. This will happen only on user selection of new device
-            this._logOutputDevice(
-                deviceId, RTC.getCurrentlyAvailableMediaDevices());
-        }
-
         return RTC.setAudioOutputDevice(deviceId);
-    }
-
-    /**
-     * Adds an event handler.
-     * @param {string} event - event name
-     * @param {function} handler - event handler
-     */
-    addEventListener(event, handler) {
-        this._eventEmitter.addListener(event, handler);
-    }
-
-    /**
-     * Removes event handler.
-     * @param {string} event - event name
-     * @param {function} handler - event handler
-     */
-    removeEventListener(event, handler) {
-        this._eventEmitter.removeListener(event, handler);
-    }
-
-    /**
-     * Emits an event.
-     * @param {string} event - event name
-     */
-    emitEvent(event, ...args) {
-        this._eventEmitter.emit(event, ...args);
     }
 }
 

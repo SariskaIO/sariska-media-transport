@@ -16,10 +16,9 @@
   "author": "",
   "readmeFilename": "README.md",
   "dependencies": {
-    "@babel/preset-env": "^7.21.5",
-    "@hapi/bourne": "^2.0.0",
-    "@jitsi/js-utils": "https://github.com/SariskaIO/js-utils.git",
-    "@jitsi/logger": "2.0.0",
+    "@jitsi/js-utils": "2.2.1",
+    "@jitsi/logger": "2.0.2",
+    "@jitsi/rtcstats": "9.7.0",
     "@jitsi/sdp-interop": "git+https://github.com/jitsi/sdp-interop#3d49eb4aa26863a3f8d32d7581cdb4321244266b",
     "@jitsi/sdp-simulcast": "0.4.0",
     "@testrtc/watchrtc-sdk": "1.36.3",
@@ -77,9 +76,7 @@
     "build:webpack": "LIB_JITSI_MEET_COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null) webpack",
     "build:webpack-dev": "webpack --mode development",
     "build:tsc": "tsc --build --clean && tsc",
-    "gen-types": "tsc --declaration --declarationDir types/auto --emitDeclarationOnly",
-    "build": "webpack",
-    "transpile": "tsc",
+    "gen-types": "tsc --declaration --emitDeclarationOnly --out types/index.d.ts",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
     "postinstall": "patch-package",
@@ -94,7 +91,8 @@
   "module": "dist/esm/SariskaMediaTransport.js",
   "files": [
     "dist",
-    "types"
+    "types",
+    "index.d.ts"
   ],
   "license": "Apache-2.0"
 }

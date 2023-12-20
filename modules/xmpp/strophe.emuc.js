@@ -2,6 +2,7 @@ import { getLogger } from '@jitsi/logger';
 import $ from 'jquery';
 import { Strophe } from 'strophe.js';
 
+import { CONNECTION_REDIRECTED } from '../../JitsiConnectionEvents';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 
 import ChatRoom from './ChatRoom';
@@ -216,7 +217,23 @@ export default class MucConnectionPlugin extends ConnectionPluginListenable {
         const from = iq.getAttribute('from');
         const room = this.rooms[Strophe.getBareJidFromJid(from)];
 
-        room?.onVisitorIQ(iq);
+        if (!room) {
+            return true;
+        }
+
+        const visitors = $(iq).find('>visitors[xmlns="jitsi:visitors"]');
+        const response = $(iq).find('promotion-response');
+
+        if (visitors.length && response.length) {
+            if (String(response.attr('allow')).toLowerCase() === 'true') {
+                logger.info('Promotion request accepted. Redirected to main room.');
+                this.xmpp.eventEmitter.emit(
+                    CONNECTION_REDIRECTED, undefined, visitors.attr('focusjid'), response.attr('username'));
+            } else {
+                logger.info('Promotion request rejected.');
+                this.xmpp.eventEmitter.emit(XMPPEvents.VISITORS_REJECTION);
+            }
+        }
 
         return true;
     }

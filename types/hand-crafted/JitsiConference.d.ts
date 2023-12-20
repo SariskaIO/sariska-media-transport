@@ -5,7 +5,6 @@ import JitsiParticipant from './JitsiParticipant';
 import JitsiLocalTrack from './modules/RTC/JitsiLocalTrack';
 import JitsiRemoteTrack from './modules/RTC/JitsiLocalTrack';
 import JitsiTrack from './modules/RTC/JitsiTrack';
-import Transcriber from './modules/transcription/transcriber';
 import JitsiVideoSIPGWSession from './modules/videosipgw/JitsiVideoSIPGWSession';
 import TraceablePeerConnection from './modules/RTC/TraceablePeerConnection';
 import { MediaType } from './service/RTC/MediaType';
@@ -20,8 +19,7 @@ export default class JitsiConference {
         enabled: boolean,
         backToP2PDelay?: number
       },
-      channelLastN?: number,
-      forceJVB121Ratio?: number
+      channelLastN?: number
     },
     connection: unknown
   } ); // TODO:
@@ -47,6 +45,7 @@ export default class JitsiConference {
   getLocalVideoTrack: () => JitsiLocalTrack | null;
   getPerformanceStats: () => unknown | null; // TODO:
   on: ( eventId: JitsiConferenceEvents, handler: (...args: any[]) => unknown ) => void; // TODO:
+  once: ( eventId: JitsiConferenceEvents, handler: (...args: any[]) => unknown ) => void; // TODO:
   off: ( eventId: JitsiConferenceEvents, handler: (...args: any[]) => unknown ) => void; // TODO:
   addEventListener: ( eventId: JitsiConferenceEvents, handler: (...args: any[]) => unknown ) => void; // TODO:
   removeEventListener: ( eventId: JitsiConferenceEvents, handler: (...args: any[]) => unknown ) => void; // TODO:
@@ -59,7 +58,6 @@ export default class JitsiConference {
   removeCommand: ( name: string ) => void;
   setDisplayName: ( name: string ) => void;
   setSubject: ( name: string ) => void;
-  getTranscriber: () => Transcriber;
   getTranscriptionStatus: () => 'on' | 'off';
   addTrack: ( track: JitsiLocalTrack ) => Promise<JitsiLocalTrack>;
   onLocalTrackRemoved: ( track: JitsiLocalTrack ) => void;
@@ -101,8 +99,6 @@ export default class JitsiConference {
   isSIPCallingSupported: () => boolean;
   dial: ( number: string ) => Promise<unknown>;
   hangup: () => Promise<unknown>;
-  startTranscriber: () => Promise<unknown>;
-  stopTranscriber: () => Promise<unknown>;
   getPhoneNumber: () => string | null;
   getPhonePin: () => string | null;
   getMeetingUniqueId: () => string | undefined;

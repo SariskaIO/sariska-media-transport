@@ -1,5 +1,4 @@
 import { getLogger } from '@jitsi/logger';
-import EventEmitter from 'events';
 import clonedeep from 'lodash.clonedeep';
 import 'webrtc-adapter';
 
@@ -12,14 +11,11 @@ import { VideoType } from '../../service/RTC/VideoType';
 import { AVAILABLE_DEVICE } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';
 import Statistics from '../statistics/statistics';
-import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import Listenable from '../util/Listenable';
 
 import screenObtainer from './ScreenObtainer';
 
 const logger = getLogger(__filename);
-
-const eventEmitter = new EventEmitter();
 
 const AVAILABLE_DEVICES_POLL_INTERVAL_TIME = 3000; // ms
 
@@ -159,29 +155,6 @@ function getConstraints(um = [], options = {}) {
 }
 
 /**
- * Updates the granted permissions based on the options we requested and the
- * streams we received.
- * @param um the options we requested to getUserMedia.
- * @param stream the stream we received from calling getUserMedia.
- */
-function updateGrantedPermissions(um, stream) {
-    const audioTracksReceived
-        = Boolean(stream) && stream.getAudioTracks().length > 0;
-    const videoTracksReceived
-        = Boolean(stream) && stream.getVideoTracks().length > 0;
-    const grantedPermissions = {};
-
-    if (um.indexOf('video') !== -1) {
-        grantedPermissions.video = videoTracksReceived;
-    }
-    if (um.indexOf('audio') !== -1) {
-        grantedPermissions.audio = audioTracksReceived;
-    }
-
-    eventEmitter.emit(RTCEvents.PERMISSIONS_CHANGED, grantedPermissions);
-}
-
-/**
  * Checks if new list of available media devices differs from previous one.
  * @param {MediaDeviceInfo[]} newDevices - list of new devices.
  * @returns {boolean} - true if list is different, false otherwise.
@@ -248,52 +221,10 @@ function sendDeviceListToAnalytics(deviceList) {
     });
 }
 
-
-/**
- * Update known devices.
- *
- * @param {Array<Object>} pds - The new devices.
- * @returns {void}
- *
- * NOTE: Use this function as a shared callback to handle both the devicechange event  and the polling implementations.
- * This prevents duplication and works around a chrome bug (verified to occur on 68) where devicechange fires twice in
- * a row, which can cause async post devicechange processing to collide.
- */
-function updateKnownDevices(pds) {
-    if (compareAvailableMediaDevices(pds)) {
-        onMediaDevicesListChanged(pds);
-    }
-}
-
-/**
- * Event handler for the 'devicechange' event.
- *
- * @param {MediaDeviceInfo[]} devices - list of media devices.
- * @emits RTCEvents.DEVICE_LIST_CHANGED
- */
-function onMediaDevicesListChanged(devicesReceived) {
-    availableDevices = devicesReceived.slice(0);
-    logger.info('list of media devices has changed:', availableDevices);
-
-    sendDeviceListToAnalytics(availableDevices);
-
-    // Used by tracks to update the real device id before the consumer of lib-jitsi-meet receives the new device list.
-    eventEmitter.emit(RTCEvents.DEVICE_LIST_WILL_CHANGE, availableDevices);
-
-    eventEmitter.emit(RTCEvents.DEVICE_LIST_CHANGED, availableDevices);
-}
-
 /**
  *
  */
 class RTCUtils extends Listenable {
-    /**
-     *
-     */
-    constructor() {
-        super(eventEmitter);
-    }
-
     /**
      * Depending on the browser, sets difference instance methods for
      * interacting with user media and adds methods to native WebRTC-related
@@ -348,7 +279,7 @@ class RTCUtils extends Listenable {
                 logger.debug('Available devices: ', availableDevices);
                 sendDeviceListToAnalytics(availableDevices);
 
-                eventEmitter.emit(
+                this.eventEmitter.emit(
                     RTCEvents.DEVICE_LIST_AVAILABLE,
                     availableDevices);
 
@@ -374,12 +305,12 @@ class RTCUtils extends Listenable {
     enumerateDevices(callback) {
         navigator.mediaDevices.enumerateDevices()
             .then(devices => {
-                updateKnownDevices(devices);
+                this._updateKnownDevices(devices);
                 callback(devices);
             })
             .catch(error => {
                 logger.warn(`Failed to  enumerate devices. ${error}`);
-                updateKnownDevices([]);
+                this._updateKnownDevices([]);
                 callback([]);
             });
     }
@@ -408,7 +339,7 @@ class RTCUtils extends Listenable {
             navigator.mediaDevices.getUserMedia(constraints)
                 .then(stream => {
                     logger.log('onUserMediaSuccess');
-                    updateGrantedPermissions(umDevices, stream);
+                    this._updateGrantedPermissions(umDevices, stream);
                     if (!timeoutExpired) {
                         if (typeof gumTimeout !== 'undefined') {
                             clearTimeout(gumTimeout);
@@ -428,7 +359,7 @@ class RTCUtils extends Listenable {
                     }
 
                     if (jitsiError.name === JitsiTrackErrors.PERMISSION_DENIED) {
-                        updateGrantedPermissions(umDevices, undefined);
+                        this._updateGrantedPermissions(umDevices, undefined);
                     }
 
                     // else {
@@ -496,6 +427,65 @@ class RTCUtils extends Listenable {
         }
 
         return missingDevices;
+    }
+
+    /**
+     * Event handler for the 'devicechange' event.
+     *
+     * @param {MediaDeviceInfo[]} devices - list of media devices.
+     * @emits RTCEvents.DEVICE_LIST_CHANGED
+     */
+    _onMediaDevicesListChanged(devicesReceived) {
+        availableDevices = devicesReceived.slice(0);
+        logger.info('list of media devices has changed:', availableDevices);
+
+        sendDeviceListToAnalytics(availableDevices);
+
+        // Used by tracks to update the real device id before the consumer of lib-jitsi-meet receives the
+        // new device list.
+        this.eventEmitter.emit(RTCEvents.DEVICE_LIST_WILL_CHANGE, availableDevices);
+
+        this.eventEmitter.emit(RTCEvents.DEVICE_LIST_CHANGED, availableDevices);
+    }
+
+    /**
+     * Update known devices.
+     *
+     * @param {Array<Object>} pds - The new devices.
+     * @returns {void}
+     *
+     * NOTE: Use this function as a shared callback to handle both the devicechange event and the
+     * polling implementations.
+     * This prevents duplication and works around a chrome bug (verified to occur on 68) where devicechange
+     * fires twice in a row, which can cause async post devicechange processing to collide.
+     */
+    _updateKnownDevices(pds) {
+        if (compareAvailableMediaDevices(pds)) {
+            this._onMediaDevicesListChanged(pds);
+        }
+    }
+
+    /**
+     * Updates the granted permissions based on the options we requested and the
+     * streams we received.
+     * @param um the options we requested to getUserMedia.
+     * @param stream the stream we received from calling getUserMedia.
+     */
+    _updateGrantedPermissions(um, stream) {
+        const audioTracksReceived
+            = Boolean(stream) && stream.getAudioTracks().length > 0;
+        const videoTracksReceived
+            = Boolean(stream) && stream.getVideoTracks().length > 0;
+        const grantedPermissions = {};
+
+        if (um.indexOf('video') !== -1) {
+            grantedPermissions.video = videoTracksReceived;
+        }
+        if (um.indexOf('audio') !== -1) {
+            grantedPermissions.audio = audioTracksReceived;
+        }
+
+        this.eventEmitter.emit(RTCEvents.PERMISSIONS_CHANGED, grantedPermissions);
     }
 
     /**
@@ -793,7 +783,7 @@ class RTCUtils extends Listenable {
 
                 logger.log(`Audio output device set to ${deviceId}`);
 
-                eventEmitter.emit(RTCEvents.AUDIO_OUTPUT_DEVICE_CHANGED,
+                this.eventEmitter.emit(RTCEvents.AUDIO_OUTPUT_DEVICE_CHANGED,
                     deviceId);
             });
     }
@@ -864,7 +854,7 @@ const rtcUtils = new RTCUtils();
 function wrapAttachMediaStream(origAttachMediaStream) {
     return function(element, stream) {
         // eslint-disable-next-line prefer-rest-params
-        const res = origAttachMediaStream.apply(rtcUtils, arguments);
+        origAttachMediaStream.apply(rtcUtils, arguments);
 
         if (stream
                 && rtcUtils.isDeviceChangeAvailable('output')
@@ -873,26 +863,22 @@ function wrapAttachMediaStream(origAttachMediaStream) {
 
                 // we skip setting audio output if there was no explicit change
                 && audioOutputChanged) {
-            element.setSinkId(rtcUtils.getAudioOutputDevice())
-                .catch(function(ex) {
-                    const err
-                        = new JitsiTrackError(ex, null, [ 'audiooutput' ]);
+            return element.setSinkId(rtcUtils.getAudioOutputDevice()).catch(ex => {
+                const err
+                    = new JitsiTrackError(ex, null, [ 'audiooutput' ]);
 
-                    GlobalOnErrorHandler.callUnhandledRejectionHandler({
-                        promise: this, // eslint-disable-line no-invalid-this
-                        reason: err
-                    });
+                logger.warn(
+                    'Failed to set audio output device for the element.'
+                        + ' Default audio output device will be used'
+                        + ' instead',
+                    element?.id,
+                    err);
 
-                    logger.warn(
-                        'Failed to set audio output device for the element.'
-                            + ' Default audio output device will be used'
-                            + ' instead',
-                        element,
-                        err);
-                });
+                throw err;
+            });
         }
 
-        return res;
+        return Promise.resolve();
     };
 }
 
