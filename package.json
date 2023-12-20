@@ -17,7 +17,7 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "@hapi/bourne": "^2.0.0",
-    "@jitsi/js-utils": "2.2.1",
+    "@jitsi/js-utils": "git+https://github.com/SariskaIO/js-utils.git#1.0.0",
     "@jitsi/logger": "2.0.2",
     "@jitsi/rtcstats": "git+https://github.com/SariskaIO/rtcstats.git#1.0.0",
     "@jitsi/sdp-interop": "git+https://github.com/jitsi/sdp-interop#3d49eb4aa26863a3f8d32d7581cdb4321244266b",
