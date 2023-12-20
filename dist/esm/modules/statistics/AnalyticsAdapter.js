@@ -5,7 +5,6 @@ import { getLogger } from '@jitsi/logger';
 import { TYPE_OPERATIONAL, TYPE_PAGE, TYPE_TRACK, TYPE_UI } from '../../service/statistics/AnalyticsEvents';
 import browser from '../browser';
 const MAX_CACHE_SIZE = 100;
-// eslist-disable-line no-undef
 const logger = getLogger(__filename);
 /**
  * This class provides an API to lib-jitsi-meet and its users for sending
@@ -100,7 +99,7 @@ class AnalyticsAdapter {
      * Dispose analytics. Clears all handlers.
      */
     dispose() {
-        logger.warn('Disposing of analytics adapter.');
+        logger.debug('Disposing of analytics adapter.');
         if (this.analyticsHandlers && this.analyticsHandlers.size > 0) {
             this.analyticsHandlers.forEach(handler => {
                 if (typeof handler.dispose === 'function') {

@@ -26,18 +26,12 @@ compile:
 	npm run build
 
 	
-deploy: deploy-rnnoise-binary deploy-libflac deploy-olm deploy-tflite deploy-tflite-models
+deploy: deploy-rnnoise-binary deploy-olm deploy-tflite deploy-tflite-models
 
 
 deploy-rnnoise-binary:
 	cp \
 		$(RNNOISE_WASM_DIR)/* \
-		$(DEPLOY_DIR)
-
-deploy-libflac:
-	cp \
-		$(LIBFLAC_DIR)/libflac4-1.3.2.min.js \
-		$(LIBFLAC_DIR)/libflac4-1.3.2.min.js.mem \
 		$(DEPLOY_DIR)
 
 deploy-olm:

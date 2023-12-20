@@ -1,4 +1,3 @@
-import Statistics from '../statistics/statistics';
 const logger = require('@jitsi/logger').getLogger(__filename);
 /**
  * Creates new instance of <tt>ComponentsVersions</tt> which will be discovering
@@ -19,24 +18,14 @@ ComponentsVersions.prototype.processVersions
             logger.warn(`Received versions not from the focus user: ${versions}`, mucJid);
             return;
         }
-        const log = [];
         versions.children.forEach(component => {
             const name = component.attributes.name;
             const version = component.value;
             if (this.versions[name] !== version) {
                 this.versions[name] = version;
                 logger.info(`Got ${name} version: ${version}`);
-                log.push({
-                    id: 'component_version',
-                    component: name,
-                    version
-                });
             }
         });
-        // logs versions to stats
-        if (log.length > 0) {
-            Statistics.sendLog(JSON.stringify(log));
-        }
     };
 /**
  * Obtains the version of conferencing system component.

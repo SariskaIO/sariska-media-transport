@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { safeJsonParse as _safeJsonParse } from '@jitsi/js-utils/json';
 import { getLogger } from '@jitsi/logger';
 import base64js from 'base64-js';
 import isEqual from 'lodash.isequal';
@@ -242,7 +243,7 @@ export class OlmAdapter extends Listenable {
                 yield Olm.init();
                 this._olmAccount = new Olm.Account();
                 this._olmAccount.create();
-                this._idKeys = JSON.parse(this._olmAccount.identity_keys());
+                this._idKeys = _safeJsonParse(this._olmAccount.identity_keys());
                 logger.debug(`Olm ${Olm.get_library_version().join('.')} initialized`);
                 this._init.resolve();
                 this._onIdKeysReady(this._idKeys);
@@ -792,7 +793,7 @@ export class OlmAdapter extends Listenable {
         }
         // Generate a One Time Key.
         this._olmAccount.generate_one_time_keys(1);
-        const otKeys = JSON.parse(this._olmAccount.one_time_keys());
+        const otKeys = _safeJsonParse(this._olmAccount.one_time_keys());
         const otKey = Object.values(otKeys.curve25519)[0];
         if (!otKey) {
             return Promise.reject(new Error('No one-time-keys generated'));
@@ -871,7 +872,7 @@ export class OlmAdapter extends Listenable {
  */
 function safeJsonParse(data) {
     try {
-        return JSON.parse(data);
+        return _safeJsonParse(data);
     }
     catch (e) {
         return {};

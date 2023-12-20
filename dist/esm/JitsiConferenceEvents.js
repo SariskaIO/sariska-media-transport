@@ -19,8 +19,7 @@ export var JitsiConferenceEvents;
     JitsiConferenceEvents["AUTH_STATUS_CHANGED"] = "conference.auth_status_changed";
     /**
      * Fired just before the statistics module is disposed and it's the last chance
-     * to submit some logs to the statistics service (ex. CallStats if enabled),
-     * before it's disconnected.
+     * to submit some logs to the statistics service before it's disconnected.
      */
     JitsiConferenceEvents["BEFORE_STATISTICS_DISPOSED"] = "conference.beforeStatisticsDisposed";
     /**
@@ -199,7 +198,7 @@ export var JitsiConferenceEvents;
      */
     JitsiConferenceEvents["PARTCIPANT_FEATURES_CHANGED"] = "conference.partcipant_features_changed";
     /**
-     * Indicates that a the value of a specific property of a specific participant
+     * Indicates that a value of a specific property of a specific participant
      * has changed.
      */
     JitsiConferenceEvents["PARTICIPANT_PROPERTY_CHANGED"] = "conference.participant_property_changed";
@@ -237,7 +236,7 @@ export var JitsiConferenceEvents;
      *     {string} address,
      *     {VideoSIPGWConstants} oldState,
      *     {VideoSIPGWConstants} newState,
-     *     {string} displayName}
+     *     {string} displayName
      * }.
      */
     JitsiConferenceEvents["VIDEO_SIP_GW_SESSION_STATE_CHANGED"] = "conference.videoSIPGWSessionStateChanged";
@@ -319,6 +318,14 @@ export var JitsiConferenceEvents;
      */
     JitsiConferenceEvents["VIDEO_UNMUTE_PERMISSIONS_CHANGED"] = "conference.video_unmute_permissions_changed";
     /**
+     * Event indicating we have received a message from the visitors component.
+     */
+    JitsiConferenceEvents["VISITORS_MESSAGE"] = "conference.visitors_message";
+    /**
+     * Event indicating that our request for promotion was rejected.
+     */
+    JitsiConferenceEvents["VISITORS_REJECTION"] = "conference.visitors_rejection";
+    /**
      * Event indicates that the bot participant type changed.
      */
     JitsiConferenceEvents["BOT_TYPE_CHANGED"] = "conference.bot_type_changed";
@@ -394,7 +401,6 @@ export var JitsiConferenceEvents;
     JitsiConferenceEvents["E2EE_VERIFICATION_READY"] = "conference.e2ee.verification.ready";
     JitsiConferenceEvents["E2EE_VERIFICATION_COMPLETED"] = "conference.e2ee.verification.completed";
 })(JitsiConferenceEvents || (JitsiConferenceEvents = {}));
-;
 // exported for backward compatibility
 export const AUDIO_INPUT_STATE_CHANGE = JitsiConferenceEvents.AUDIO_INPUT_STATE_CHANGE;
 export const AUDIO_UNMUTE_PERMISSIONS_CHANGED = JitsiConferenceEvents.AUDIO_UNMUTE_PERMISSIONS_CHANGED;
@@ -460,6 +466,8 @@ export const USER_LEFT = JitsiConferenceEvents.USER_LEFT;
 export const USER_ROLE_CHANGED = JitsiConferenceEvents.USER_ROLE_CHANGED;
 export const USER_STATUS_CHANGED = JitsiConferenceEvents.USER_STATUS_CHANGED;
 export const VIDEO_UNMUTE_PERMISSIONS_CHANGED = JitsiConferenceEvents.VIDEO_UNMUTE_PERMISSIONS_CHANGED;
+export const VISITORS_MESSAGE = JitsiConferenceEvents.VISITORS_MESSAGE;
+export const VISITORS_REJECTION = JitsiConferenceEvents.VISITORS_REJECTION;
 export const BOT_TYPE_CHANGED = JitsiConferenceEvents.BOT_TYPE_CHANGED;
 export const LOBBY_USER_JOINED = JitsiConferenceEvents.LOBBY_USER_JOINED;
 export const LOBBY_USER_UPDATED = JitsiConferenceEvents.LOBBY_USER_UPDATED;

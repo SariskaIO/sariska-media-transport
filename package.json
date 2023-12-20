@@ -16,6 +16,7 @@
   "author": "",
   "readmeFilename": "README.md",
   "dependencies": {
+    "@hapi/bourne": "^2.0.0",
     "@jitsi/js-utils": "2.2.1",
     "@jitsi/logger": "2.0.2",
     "@jitsi/rtcstats": "9.7.0",
@@ -45,6 +46,7 @@
     "webrtcmetrics": "https://github.com/SariskaIO/webrtcmetrics.git"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.23.6",
     "@babel/core": "7.16.0",
     "@babel/eslint-parser": "7.16.0",
     "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
@@ -73,6 +75,8 @@
   },
   "scripts": {
     "build_new": "npm run build:webpack && npm run build:tsc",
+    "build": "webpack",
+    "transpile": "tsc",
     "build:webpack": "LIB_JITSI_MEET_COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null) webpack",
     "build:webpack-dev": "webpack --mode development",
     "build:tsc": "tsc --build --clean && tsc",

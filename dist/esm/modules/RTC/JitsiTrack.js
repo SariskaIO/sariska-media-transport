@@ -1,8 +1,8 @@
 import { getLogger } from '@jitsi/logger';
-import EventEmitter from 'events';
 import * as JitsiTrackEvents from '../../JitsiTrackEvents';
 import { MediaType } from '../../service/RTC/MediaType';
 import browser from '../browser';
+import EventEmitter from '../util/EventEmitter';
 import RTCUtils from './RTCUtils';
 const logger = getLogger(__filename);
 /**
@@ -32,9 +32,6 @@ export default class JitsiTrack extends EventEmitter {
      */
     constructor(conference, stream, track, streamInactiveHandler, trackMediaType, videoType) {
         super();
-        // aliases for addListener/removeListener
-        this.addEventListener = this.addListener;
-        this.removeEventListener = this.off = this.removeListener;
         /**
          * Array with the HTML elements that are displaying the streams.
          * @type {Array}
@@ -88,17 +85,6 @@ export default class JitsiTrack extends EventEmitter {
      */
     _attachTTFMTracker(container) {
         // Should be defined by the classes that are extending JitsiTrack
-    }
-    /**
-     * Eventually will trigger RTCEvents.TRACK_ATTACHED event.
-     * @param container the video/audio container to which this stream is
-     *        attached and for which event will be fired.
-     * @private
-     */
-    _maybeFireTrackAttached(container) {
-        if (this.conference && container) {
-            this.conference._onTrackAttach(this, container);
-        }
     }
     /**
      * Called when the track has been attached to a new container.
@@ -198,13 +184,14 @@ export default class JitsiTrack extends EventEmitter {
      * @returns {void}
      */
     attach(container) {
+        let result = Promise.resolve();
         if (this.stream) {
             this._onTrackAttach(container);
-            RTCUtils.attachMediaStream(container, this.stream);
+            result = RTCUtils.attachMediaStream(container, this.stream);
         }
         this.containers.push(container);
-        this._maybeFireTrackAttached(container);
         this._attachTTFMTracker(container);
+        return result;
     }
     /**
      * Removes this JitsiTrack from the passed HTML container.
@@ -219,7 +206,9 @@ export default class JitsiTrack extends EventEmitter {
             const c = cs[i];
             if (!container) {
                 this._onTrackDetach(c);
-                RTCUtils.attachMediaStream(c, null);
+                RTCUtils.attachMediaStream(c, null).catch(() => {
+                    logger.error(`Detach for ${this} failed!`);
+                });
             }
             if (!container || c === container) {
                 cs.splice(i, 1);
@@ -227,7 +216,9 @@ export default class JitsiTrack extends EventEmitter {
         }
         if (container) {
             this._onTrackDetach(container);
-            RTCUtils.attachMediaStream(container, null);
+            RTCUtils.attachMediaStream(container, null).catch(() => {
+                logger.error(`Detach for ${this} failed!`);
+            });
         }
     }
     /**
@@ -319,6 +310,18 @@ export default class JitsiTrack extends EventEmitter {
      */
     getVideoType() {
         return this.videoType;
+    }
+    /**
+     * Returns the height of the track in normalized landscape format.
+     */
+    getHeight() {
+        return Math.min(this.track.getSettings().height, this.track.getSettings().width);
+    }
+    /**
+     * Returns the width of the track in normalized landscape format.
+     */
+    getWidth() {
+        return Math.max(this.track.getSettings().height, this.track.getSettings().width);
     }
     /**
      * Checks whether the MediaStream is active/not ended.

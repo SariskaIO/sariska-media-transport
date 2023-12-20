@@ -74,7 +74,7 @@ export default class LocalSdpMunger {
                 continue; // eslint-disable-line no-continue
             }
             // Inject removed SSRCs
-            const requiredSSRCs = this.tpc.isSimulcastOn()
+            const requiredSSRCs = this.tpc.isSpatialScalabilityOn()
                 ? this.tpc.simulcast.ssrcCache
                 : [this.tpc.sdpConsistency.cachedPrimarySsrc];
             if (!requiredSSRCs.length) {

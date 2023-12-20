@@ -163,10 +163,6 @@ export var XMPPEvents;
      * Indicates that recording state changed.
      */
     XMPPEvents["RECORDER_STATE_CHANGED"] = "xmpp.recorderStateChanged";
-    /**
-     * The conference was redirected to a visitor node.
-     */
-    XMPPEvents["REDIRECTED"] = "xmpp.redirected";
     // Designates an event indicating that we received statistics from a
     // participant in the MUC.
     XMPPEvents["REMOTE_STATS"] = "xmpp.remote_stats";
@@ -311,6 +307,14 @@ export var XMPPEvents;
      * @param {options} event - {address, oldState, newState, displayName}.
      */
     XMPPEvents["VIDEO_SIP_GW_SESSION_STATE_CHANGED"] = "xmpp.videoSIPGWSessionStateChanged";
+    /**
+     * Event indicating we have received a message from the visitors component.
+     */
+    XMPPEvents["VISITORS_MESSAGE"] = "xmpp.visitors_message";
+    /**
+     * Event indicating that our request for promotion was rejected.
+     */
+    XMPPEvents["VISITORS_REJECTION"] = "xmpp.visitors_rejection";
     // Designates an event indicating that the local ICE connection state has
     // changed.
     XMPPEvents["ICE_CONNECTION_STATE_CHANGED"] = "xmpp.ice_connection_state_changed";

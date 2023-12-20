@@ -21,7 +21,6 @@ module.exports = (_env, argv) => {
         }),
         Object.assign({}, config, {
             entry: {
-                'flacEncodeWorker': './modules/local-recording/recording/flac/flacEncodeWorker.js'
             },
             plugins: [
                 ...config.plugins

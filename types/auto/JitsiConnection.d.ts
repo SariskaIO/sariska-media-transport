@@ -47,10 +47,19 @@ export default class JitsiConnection {
     parseJwt(token: any): any;
     /**
      * Connect the client with the server.
-     * @param options {object} connecting options
-     * (for example authentications parameters).
+     * @param options {object} connecting options (for example authentications parameters).
+     * @param options.id {string} The username to use when connecting, if any.
+     * @param options.password {string} The password to use when connecting with username, if any.
+     * @param options.name {string} The name of the room/conference we will be connecting to. This is needed on connection
+     * time to be able to send conference-request over http. If missing the flow where we send conference-iq to jicofo over
+     * the established xmpp connection will be used, even in the case where we have configured conference http request url
+     * to be used.
      */
-    connect(options?: object): void;
+    connect(options?: {
+        id: string;
+        password: string;
+        name: string;
+    }): void;
     /**
      * Attach to existing connection. Can be used for optimizations. For example:
      * if the connection is created on the server we can attach to it and start

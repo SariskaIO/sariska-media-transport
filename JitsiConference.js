@@ -27,7 +27,6 @@ import { E2EEncryption } from './modules/e2ee/E2EEncryption';
 import E2ePing from './modules/e2eping/e2eping';
 import Jvb121EventGenerator from './modules/event/Jvb121EventGenerator';
 import FeatureFlags from './modules/flags/FeatureFlags';
-import { RecordingController } from './modules/local-recording';
 import { LiteModeContext } from './modules/litemode/LiteModeContext';
 import ReceiveVideoController from './modules/qualitycontrol/ReceiveVideoController';
 import SendVideoController from './modules/qualitycontrol/SendVideoController';
@@ -329,10 +328,6 @@ export default function JitsiConference(options) {
 
     this.handleSubtitles();
 
-    if (options.config.enableLocalRecording) {
-        this.recordingController = new RecordingController();
-        this.recordingController.registerEvents(this);
-    }
 
     if (options.config.enableAnalytics) {
         this.enableAnalytics();
@@ -4224,26 +4219,6 @@ JitsiConference.prototype.enableAnalytics = function() {
 
         this.eventEmitter.emit(JitsiConferenceEvents.ANALYTICS_EVENT_RECEIVED, finalPaylaod);
     });
-};
-
-JitsiConference.prototype.startLocalRecording = function(format = 'ogg') {
-    this.recordingController.startRecording(format);
-};
-
-JitsiConference.prototype.stopLocalRecording = function() {
-    this.recordingController.stopRecording();
-};
-
-JitsiConference.prototype.switchFormat = function() {
-    this.recordingController.switchFormat(format);
-};
-
-JitsiConference.prototype.setMuted = function(muted) {
-    this.recordingController.setMuted(muted);
-};
-
-JitsiConference.prototype.setMicDevice = function(micDeviceId) {
-    this.recordingController.setMicDevice(micDeviceId);
 };
 
 JitsiConference.prototype.startSIPVideoCall = function(sipAddress, displayName) {

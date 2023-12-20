@@ -1,11 +1,11 @@
 import { getLogger } from '@jitsi/logger';
 import $ from 'jquery';
+import clonedeep from 'lodash.clonedeep';
 import { $iq, Strophe } from 'strophe.js';
 import { MediaType } from '../../service/RTC/MediaType';
 import { ACTION_JINGLE_TR_RECEIVED, ACTION_JINGLE_TR_SUCCESS, createJingleEvent } from '../../service/statistics/AnalyticsEvents';
 import { XMPPEvents } from '../../service/xmpp/XMPPEvents';
 import Statistics from '../statistics/statistics';
-import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import RandomUtil from '../util/RandomUtil';
 import ConnectionPlugin from './ConnectionPlugin';
 import { expandSourcesFromJson } from './JingleHelperFunctions';
@@ -162,10 +162,7 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
                 }
                 const pcConfig = isP2P ? this.p2pIceConfig : this.jvbIceConfig;
                 sess
-                    = new JingleSessionPC($(iq).find('jingle').attr('sid'), $(iq).attr('to'), fromJid, this.connection, this.mediaConstraints, 
-                    // Makes a copy in order to prevent exception thrown on RN when either this.p2pIceConfig or
-                    // this.jvbIceConfig is modified and there's a PeerConnection instance holding a reference
-                    JSON.parse(JSON.stringify(pcConfig)), isP2P, 
+                    = new JingleSessionPC($(iq).find('jingle').attr('sid'), $(iq).attr('to'), fromJid, this.connection, this.mediaConstraints, clonedeep(pcConfig), isP2P, 
                     /* initiator */ false);
                 this.sessions[sess.sid] = sess;
                 this.eventEmitter.emit(XMPPEvents.CALL_INCOMING, sess, $(iq).find('>jingle'), now);
@@ -229,7 +226,6 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
                         value: successTime
                     }));
                 }, error => {
-                    GlobalOnErrorHandler.callErrorHandler(error);
                     logger.error('Transport replace failed', error);
                     sess.sendTransportReject();
                 });
@@ -316,7 +312,7 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
      * @return {boolean} Whether something was processed from the supplied message.
      */
     onReceiveStunAndTurnCredentials(res) {
-        const iceservers = [];
+        let iceservers = [];
         $(res).find('>services>service').each((idx, el) => {
             // eslint-disable-next-line no-param-reassign
             el = $(el);
@@ -337,20 +333,52 @@ export default class JingleConnectionPlugin extends ConnectionPlugin {
                     dict.urls += el.attr('host');
                     const port = el.attr('port');
                     if (port) {
-                        dict.urls += `:${el.attr('port')}`;
+                        dict.urls += `:${port}`;
                     }
                     const transport = el.attr('transport');
                     if (transport && transport !== 'udp') {
                         dict.urls += `?transport=${transport}`;
                     }
-                    dict.credential = el.attr('password')
-                        || dict.credential;
+                    dict.credential = el.attr('password') || dict.credential;
                     iceservers.push(dict);
                     break;
                 }
             }
         });
         const options = this.xmpp.options;
+        const { iceServersOverride = [] } = options;
+        iceServersOverride.forEach(({ targetType, urls, username, credential }) => {
+            if (!['turn', 'turns', 'stun'].includes(targetType)) {
+                return;
+            }
+            const pattern = `${targetType}:`;
+            if (typeof urls === 'undefined'
+                && typeof username === 'undefined'
+                && typeof credential === 'undefined') {
+                return;
+            }
+            if (urls === null) { // remove this type of ice server
+                iceservers = iceservers.filter(server => !server.urls.startsWith(pattern));
+            }
+            iceservers.forEach(server => {
+                if (!server.urls.startsWith(pattern)) {
+                    return;
+                }
+                server.urls = urls !== null && urls !== void 0 ? urls : server.urls;
+                if (username === null) {
+                    delete server.username;
+                }
+                else {
+                    server.username = username !== null && username !== void 0 ? username : server.username;
+                }
+                if (credential === null) {
+                    delete server.credential;
+                }
+                else {
+                    server.credential = credential !== null && credential !== void 0 ? credential : server.credential;
+                }
+            });
+        });
         // Shuffle ICEServers for loadbalancing
         for (let i = iceservers.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

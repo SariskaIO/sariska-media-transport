@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /**
  * Creates a JitsiConference object with the given name and properties.
  * Note: this constructor is not a part of the public API (objects should be
@@ -24,10 +23,6 @@
  * @param {number} [options.config.channelLastN=-1] The requested amount of
  * videos are going to be delivered after the value is in effect. Set to -1 for
  * unlimited or all available videos.
- * @param {number} [options.config.forceJVB121Ratio]
- * "Math.random() < forceJVB121Ratio" will determine whether a 2 people
- * conference should be moved to the JVB instead of P2P. The decision is made on
- * the responder side, after ICE succeeds on the P2P connection.
  * @constructor
  *
  * FIXME Make all methods which are called from lib-internal classes
@@ -64,10 +59,6 @@ declare class JitsiConference {
      * @param {number} [options.config.channelLastN=-1] The requested amount of
      * videos are going to be delivered after the value is in effect. Set to -1 for
      * unlimited or all available videos.
-     * @param {number} [options.config.forceJVB121Ratio]
-     * "Math.random() < forceJVB121Ratio" will determine whether a 2 people
-     * conference should be moved to the JVB instead of P2P. The decision is made on
-     * the responder side, after ICE succeeds on the P2P connection.
      * @constructor
      *
      * FIXME Make all methods which are called from lib-internal classes
@@ -191,7 +182,6 @@ declare class JitsiConference {
      * again by Jicofo.
      */
     _videoSenderLimitReached: any;
-    recordingController: RecordingController;
     localTracksDuration: LocalTracksDuration;
     sessions: {};
     user: any;
@@ -310,17 +300,6 @@ declare class JitsiConference {
      */
     getAuthLogin(): any;
     /**
-     * Check if external authentication is enabled for this conference.
-     */
-    isExternalAuthEnabled(): any;
-    /**
-     * Get url for external authentication.
-     * @param {boolean} [urlForPopup] if true then return url for login popup,
-     *                                else url of login page.
-     * @returns {Promise}
-     */
-    getExternalAuthUrl(urlForPopup?: boolean): Promise<any>;
-    /**
      * Returns the local tracks of the given media type, or all local tracks if no
      * specific type is given.
      * @param {MediaType} [mediaType] Optional media type (audio or video).
@@ -356,6 +335,13 @@ declare class JitsiConference {
      * impl, instead of rolling ourselves
      */
     on(eventId: any, handler: any): void;
+    /**
+     * Adds a one-time`listener` function for the event.
+     * @param eventId the event ID.
+     * @param handler handler for the event.
+     *
+     */
+    once(eventId: any, handler: any): void;
     /**
      * Removes event listener
      * @param eventId the event ID.
@@ -422,12 +408,6 @@ declare class JitsiConference {
      * @param {string} subject new subject
      */
     setSubject(subject: string): void;
-    /**
-     * Get a transcriber object for all current participants in this conference
-     * @return {Transcriber} the transcriber object
-     */
-    getTranscriber(): Transcriber;
-    transcriber: Transcriber;
     /**
      * Returns the transcription status.
      *
@@ -623,6 +603,7 @@ declare class JitsiConference {
      */
     onMemberJoined(jid: any, nick: any, role: any, isHidden: any, statsID: any, status: any, identity: any, botType: any, fullJid: any, features: any, isReplaceParticipant: any): void;
     private _onMucJoined;
+    _numberOfParticipantsOnJoin: number;
     private _updateFeatures;
     private _onMemberBotTypeChanged;
     onMemberLeft(jid: any, reason: any): void;
@@ -756,14 +737,6 @@ declare class JitsiConference {
      */
     hangup(): any;
     /**
-     * Starts the transcription service.
-     */
-    startTranscriber(): any;
-    /**
-     * Stops the transcription service.
-     */
-    stopTranscriber: any;
-    /**
      * Returns the phone number for joining the conference.
      */
     getPhoneNumber(): any;
@@ -835,7 +808,7 @@ declare class JitsiConference {
      */
     getLocalParticipantProperty(name: any): any;
     /**
-     * Sends the given feedback through CallStats if enabled.
+     * Sends the given feedback if enabled.
      *
      * @param overallFeedback an integer between 1 and 5 indicating the
      * user feedback
@@ -844,11 +817,8 @@ declare class JitsiConference {
      */
     sendFeedback(overallFeedback: any, detailedFeedback: any): Promise<any>;
     /**
-     * Returns true if the callstats integration is enabled, otherwise returns
-     * false.
-     *
-     * @returns true if the callstats integration is enabled, otherwise returns
-     * false.
+     * @returns false, since callstats in not supported anymore.
+     * @deprecated
      */
     isCallstatsEnabled(): boolean;
     /**
@@ -859,20 +829,9 @@ declare class JitsiConference {
      */
     getSsrcByTrack(track: any): number | undefined;
     /**
-     * Handles track attached to container (Calls associateStreamWithVideoTag method
-     * from statistics module)
-     * @param {JitsiLocalTrack|JitsiRemoteTrack} track the track
-     * @param container the container
+     * This is a no-op since callstats is no longer supported.
      */
-    _onTrackAttach(track: any | any, container: any): void;
-    /**
-     * Logs an "application log" message.
-     * @param message {string} The message to log. Note that while this can be a
-     * generic string, the convention used by lib-jitsi-meet and jitsi-meet is to
-     * log valid JSON strings, with an "id" field used for distinguishing between
-     * message types. E.g.: {id: "recorder_status", status: "off"}
-     */
-    sendApplicationLog(message: string): void;
+    sendApplicationLog(): void;
     /**
      * Checks if the user identified by given <tt>mucJid</tt> is the conference focus.
      * @param mucJid the full MUC address of the user to be checked.
@@ -932,6 +891,7 @@ declare class JitsiConference {
     private _addRemoteTracks;
     p2pEstablishmentDuration: any;
     jvbEstablishmentDuration: any;
+    _hasVisitors: boolean;
     /**
      * Gets a conference property with a given key.
      *
@@ -1218,11 +1178,6 @@ declare class JitsiConference {
     terminate(): void;
     handleSubtitles(): void;
     enableAnalytics(): void;
-    startLocalRecording(format?: string): void;
-    stopLocalRecording(): void;
-    switchFormat(): void;
-    setMuted(muted: any): void;
-    setMicDevice(micDeviceId: any): void;
     startSIPVideoCall(sipAddress: any, displayName: any): void;
     stopSIPVideoCall(sipAddress: any): void;
     /**
@@ -1248,7 +1203,7 @@ declare namespace JitsiConference {
     function resourceCreator(jid: string): string;
 }
 export default JitsiConference;
-import EventEmitter from "events";
+import EventEmitter from "./modules/util/EventEmitter";
 import JitsiConferenceEventManager from "./JitsiConferenceEventManager";
 import JitsiParticipant from "./JitsiParticipant";
 import ComponentsVersions from "./modules/version/ComponentsVersions";
@@ -1260,7 +1215,6 @@ import VideoSIPGW from "./modules/videosipgw/VideoSIPGW";
 import RecordingManager from "./modules/recording/RecordingManager";
 import { E2EEncryption } from "./modules/e2ee/E2EEncryption";
 import { LiteModeContext } from "./modules/litemode/LiteModeContext";
-import { RecordingController } from "./modules/local-recording/controller/RecordingController";
 import LocalTracksDuration from "./modules/statistics/LocalTracksDuration";
 import { CodecSelection } from "./modules/RTC/CodecSelection";
 import E2ePing from "./modules/e2eping/e2eping";
@@ -1273,5 +1227,4 @@ import NoAudioSignalDetection from "./modules/detection/NoAudioSignalDetection";
 import Jvb121EventGenerator from "./modules/event/Jvb121EventGenerator";
 import P2PDominantSpeakerDetection from "./modules/detection/P2PDominantSpeakerDetection";
 import { MediaType } from "./service/RTC/MediaType";
-import Transcriber from "./modules/transcription/transcriber";
 import IceFailedHandling from "./modules/connectivity/IceFailedHandling";
