@@ -47,7 +47,10 @@ class RTCStats {
      */
     start(conference) {
         const { options: { config: confConfig = {}, name: confName = '' } = {}, _statsCurrentId: displayName = '' } = conference;
-        const { analytics: { rtcstatsEnabled = false, rtcstatsEndpoint: endpoint = '', rtcstatsUseLegacy: useLegacy = false } = {} } = confConfig;
+        let { analytics: { rtcstatsEnabled = false, rtcstatsEndpoint: endpoint = '', rtcstatsUseLegacy: useLegacy = false } = {} } = confConfig;
+        if (conference.options.connection.isDev) {
+            endpoint = "wss://rtcstats-server.dev.sariska.io/";
+        }
         // Reset the trace module in case it wasn't during the previous conference.
         // Closing the underlying websocket connection and deleting the trace obj.
         this.reset();

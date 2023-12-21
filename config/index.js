@@ -101,9 +101,9 @@ export const conferenceConfig = {
     analytics: {
         disabled: false,
         rtcstatsEnabled: true,
-        watchRTCEnabled: false
+        watchRTCEnabled: false,
         // In order to enable rtcstats one needs to provide a endpoint url.
-        // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
+        rtcstatsEndpoint: "wss://rtcstats-server.sariska.io/",
 
         // The interval at which rtcstats will poll getStats, defaults to 1000ms.
         // If the value is set to 0 getStats won't be polled and the rtcstats client
