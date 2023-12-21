@@ -1,6 +1,6 @@
 import { getLogger } from '@jitsi/logger';
-import rtcstatsInit from '@jitsi/rtcstats/rtcstats';
-import traceInit from '@jitsi/rtcstats/trace-ws';
+import rtcstatsInit from '@jitsi/rtcstats/dist/rtcstats';
+import traceInit from '@jitsi/rtcstats/dist/trace-ws';
 import { CONFERENCE_JOINED, CONFERENCE_LEFT, CONFERENCE_UNIQUE_ID_SET } from '../../JitsiConferenceEvents';
 import { RTC_STATS_PC_EVENT, RTC_STATS_WC_DISCONNECTED } from './RTCStatsEvents';
 import EventEmitter from '../util/EventEmitter';

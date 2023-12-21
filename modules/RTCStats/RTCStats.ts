@@ -1,7 +1,7 @@
 import { getLogger } from '@jitsi/logger';
 
-import rtcstatsInit from '@jitsi/rtcstats/rtcstats';
-import traceInit from '@jitsi/rtcstats/trace-ws';
+import rtcstatsInit from '@jitsi/rtcstats/dist/rtcstats';
+import traceInit from '@jitsi/rtcstats/dist/trace-ws';
 
 import {
     CONFERENCE_JOINED,
