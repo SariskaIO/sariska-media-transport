@@ -135,7 +135,7 @@ export default class JitsiParticipant {
 
     /**
      * Returns a set with the features for the participant.
-     * @returns {Promise<Set<String>, Error>}
+     * @returns {Promise<Set<String>>}
      */
     getFeatures() {
         return Promise.resolve(this._features);
@@ -146,6 +146,16 @@ export default class JitsiParticipant {
      */
     getId() {
         return this._id;
+    }
+
+    /**
+     * Returns the XMPP identity. This is defined by your application in the
+     * JWT `context` claims section.
+     *
+     * @returns {object|undefined} - XMPP user identity.
+     */
+    getIdentity() {
+        return this._identity;
     }
 
     /**

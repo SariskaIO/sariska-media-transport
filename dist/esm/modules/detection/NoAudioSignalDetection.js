@@ -1,6 +1,6 @@
-import EventEmitter from 'events';
 import * as JitsiConferenceEvents from '../../JitsiConferenceEvents';
 import * as JitsiTrackEvents from '../../JitsiTrackEvents';
+import EventEmitter from '../util/EventEmitter';
 import * as DetectionEvents from './DetectionEvents';
 // We wait a certain time interval for constant silence input from the current device to account for
 // potential abnormalities and for a better use experience i.e. don't generate event the instant

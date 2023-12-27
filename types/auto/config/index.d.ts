@@ -48,6 +48,7 @@ export namespace conferenceConfig {
         const disabled: boolean;
         const rtcstatsEnabled: boolean;
         const watchRTCEnabled: boolean;
+        const rtcstatsEndpoint: string;
     }
     const useStunTurn: boolean;
     namespace watchRTCConfigParams {

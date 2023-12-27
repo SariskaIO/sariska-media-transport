@@ -69,8 +69,10 @@ export class CodecSelection {
 
             // Push VP9 to the end of the list so that the client continues to decode VP9 even if its not
             // preferable to encode VP9 (because of browser bugs on the encoding side or added complexity on mobile
-            // devices).
-            if (!browser.supportsVP9() || this.conference.isE2EEEnabled()) {
+            // devices). Currently, VP9 encode is supported on Chrome and on Safari (only for p2p).
+            const isVp9EncodeSupported = browser.supportsVP9() || (browser.isWebKitBased() && connectionType === 'p2p');
+
+            if (!isVp9EncodeSupported || this.conference.isE2EEEnabled()) {
                 const index = selectedOrder.findIndex(codec => codec === CodecMimeType.VP9);
 
                 if (index !== -1) {
@@ -110,23 +112,19 @@ export class CodecSelection {
             ? MOBILE_P2P_VIDEO_CODEC_ORDER
             : browser.isMobileDevice() ? MOBILE_VIDEO_CODEC_ORDER : DESKTOP_VIDEO_CODEC_ORDER;
 
-        return videoCodecMimeTypes.filter(codec =>
-            (window.RTCRtpReceiver?.getCapabilities?.(MediaType.VIDEO)?.codecs ?? [])
-                .some(supportedCodec => supportedCodec.mimeType.toLowerCase() === `${MediaType.VIDEO}/${codec}`));
-    }
-
-    /**
-     * Filters VP9 from the list of the preferred video codecs for JVB if E2EE is enabled.
-     *
-     * @returns {Array}
-     */
-    _maybeFilterJvbCodecs() {
-        // TODO - remove this check when support for VP9-E2EE is introduced.
-        if (this.conference.isE2EEEnabled()) {
-            return this.codecPreferenceOrder.jvb.filter(codec => codec !== CodecMimeType.VP9);
+        if (connectionType === 'p2p' || this.options.jvb.supportsAv1) {
+            videoCodecMimeTypes.push(CodecMimeType.AV1);
         }
 
-        return this.codecPreferenceOrder.jvb;
+        const supportedCodecs = videoCodecMimeTypes.filter(codec =>
+            (window.RTCRtpReceiver?.getCapabilities?.(MediaType.VIDEO)?.codecs ?? [])
+                .some(supportedCodec => supportedCodec.mimeType.toLowerCase() === `${MediaType.VIDEO}/${codec}`));
+
+        // Select VP8 as the default codec if RTCRtpReceiver.getCapabilities() is not supported by the browser or if it
+        // returns an empty set.
+        !supportedCodecs.length && supportedCodecs.push(CodecMimeType.VP8);
+
+        return supportedCodecs;
     }
 
     /**
@@ -142,9 +140,14 @@ export class CodecSelection {
             return;
         }
         const currentCodecOrder = session.peerconnection.getConfiguredVideoCodecs();
-        const localPreferredCodecOrder = session === this.conference.jvbJingleSession
-            ? this._maybeFilterJvbCodecs()
-            : this.codecPreferenceOrder.p2p;
+        const isJvbSession = session === this.conference.jvbJingleSession;
+
+        let localPreferredCodecOrder = isJvbSession ? this.codecPreferenceOrder.jvb : this.codecPreferenceOrder.p2p;
+
+        // E2EE is curently supported only for VP8 codec.
+        if (this.conference.isE2EEEnabled() && isJvbSession) {
+            localPreferredCodecOrder = [ CodecMimeType.VP8 ];
+        }
 
         const remoteParticipants = this.conference.getParticipants().map(participant => participant.getId());
         const remoteCodecsPerParticipant = remoteParticipants?.map(remote => {

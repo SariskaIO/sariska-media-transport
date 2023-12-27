@@ -263,11 +263,16 @@ export default class ProxyConnectionPC {
      * out to the remote peer.
      *
      * @param {XML} iq - The message to signal out.
+     * @param {Function} callback - Callback when the IQ was acknowledged.
      * @private
      * @returns {void}
      */
-    _onSendMessage(iq) {
+    _onSendMessage(iq, callback) {
         this._options.onSendMessage(this._options.peerJid, iq);
+        if (callback) {
+            // Fake some time to receive the acknowledge.
+            setTimeout(callback, 250);
+        }
     }
     /**
      * Callback invoked in response to an agreement to start a proxy connection.
@@ -299,7 +304,7 @@ export default class ProxyConnectionPC {
             return;
         }
         this._peerConnection = this._createPeerConnection();
-        this._peerConnection.acceptOffer($jingle, () => { }, () => this._onError(this._options.peerJid, ACTIONS.CONNECTION_ERROR, 'session initiate error'));
+        this._peerConnection.acceptOffer($jingle, () => { }, () => this._onError(this._options.peerJid, ACTIONS.CONNECTION_ERROR, 'session initiate error'), []);
     }
     /**
      * Callback invoked in response to a request to disconnect an active proxy

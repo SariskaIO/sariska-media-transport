@@ -94,10 +94,10 @@ export const conferenceConfig = {
     },
     analytics: {
         disabled: false,
-        rtcstatsEnabled: false,
-        watchRTCEnabled: true
+        rtcstatsEnabled: true,
+        watchRTCEnabled: false,
         // In order to enable rtcstats one needs to provide a endpoint url.
-        // rtcstatsEndpoint: wss://rtcstats-server-pilot.jitsi.net/,
+        rtcstatsEndpoint: "wss://rtcstats-server.sariska.io/",
         // The interval at which rtcstats will poll getStats, defaults to 1000ms.
         // If the value is set to 0 getStats won't be polled and the rtcstats client
         // will only send data related to RTCPeerConnection events.
@@ -114,7 +114,7 @@ export const conferenceConfig = {
     useStunTurn: true,
     watchRTCConfigParams: {
         /** Watchrtc api key */
-        rtcApiKey: "d2a141d2-5e9b-4cf9-9568-82373667be4f"
+        rtcApiKey: "79ff9ddf-3969-4b9d-97a6-b078230b2e05"
         // /** Identifier for the session */
         // rtcRoomId?: string;
         // /** Identifier for the current peer */

@@ -163,7 +163,9 @@ export class Context {
             const keyIndex = data[encodedFrame.data.byteLength - 1];
             if (this._cryptoKeyRing[keyIndex]) {
                 const decodedFrame = yield this._decryptFrame(encodedFrame, keyIndex);
-                return controller.enqueue(decodedFrame);
+                if (decodedFrame) {
+                    controller.enqueue(decodedFrame);
+                }
             }
         });
     }

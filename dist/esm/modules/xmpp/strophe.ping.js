@@ -1,6 +1,5 @@
 import { getLogger } from '@jitsi/logger';
 import { $iq, Strophe } from 'strophe.js';
-import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 import ConnectionPlugin from './ConnectionPlugin';
 const logger = getLogger(__filename);
 /**
@@ -28,7 +27,7 @@ export default class PingConnectionPlugin extends ConnectionPlugin {
      * @param {Object} options
      * @param {Function} options.onPingThresholdExceeded - Callback called when ping fails too many times (controlled
      * by the {@link PING_THRESHOLD} constant).
-     * @param {Function} options._getTimeSinceLastServerResponse - A function to obtain the last seen
+     * @param {Function} options.getTimeSinceLastServerResponse - A function to obtain the last seen
      * response from the server.
      * @param {Object} options.pingOptions - The ping options if any.
      * @constructor
@@ -104,7 +103,6 @@ export default class PingConnectionPlugin extends ConnectionPlugin {
                 this.failedPings += 1;
                 const errmsg = `Ping ${error ? 'error' : 'timeout'}`;
                 if (this.failedPings >= this.pingThreshold) {
-                    GlobalOnErrorHandler.callErrorHandler(new Error(errmsg));
                     logger.error(errmsg, error);
                     this._onPingThresholdExceeded && this._onPingThresholdExceeded();
                 }

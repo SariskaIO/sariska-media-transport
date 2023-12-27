@@ -54,12 +54,6 @@ export default function JitsiConnection(token, roomName, isDev) {
                     ANALYTICS_CONNECTION_DISCONNECTED,
                     { message: msg });
             }
-            Statistics.sendLog(
-                JSON.stringify(
-                    {
-                        id: ANALYTICS_CONNECTION_DISCONNECTED,
-                        msg
-                    }));
         });
 }
 
@@ -73,22 +67,24 @@ JitsiConnection.prototype.parseJwt = function (token) {
   
 /**
  * Connect the client with the server.
- * @param options {object} connecting options
- * (for example authentications parameters).
+ * @param options {object} connecting options (for example authentications parameters).
+ * @param options.id {string} The username to use when connecting, if any.
+ * @param options.password {string} The password to use when connecting with username, if any.
+ * @param options.name {string} The name of the room/conference we will be connecting to. This is needed on connection
+ * time to be able to send conference-request over http. If missing the flow where we send conference-iq to jicofo over
+ * the established xmpp connection will be used, even in the case where we have configured conference http request url
+ * to be used.
  */
 JitsiConnection.prototype.connect = function(options = {}) {
-    const usernameOverride = jitsiLocalStorage.getItem('xmpp_username_override');
-    const passwordOverride = jitsiLocalStorage.getItem('xmpp_password_override');
-  
-    if (usernameOverride && usernameOverride.length > 0) {
-      options.id = usernameOverride; // eslint-disable-line no-param-reassign
+    // if we get redirected, we set disableFocus to skip sending the conference request twice
+    if (this.xmpp.moderator.targetUrl && !this.options.disableFocus && options.name) {
+        this.xmpp.moderator.sendConferenceRequest(this.xmpp.getRoomJid(options.name))
+            .then(() => {
+                this.xmpp.connect(options.id, options.password);
+            });
+    } else {
+        this.xmpp.connect(options.id, options.password);
     }
-  
-    if (passwordOverride && passwordOverride.length > 0) {
-      options.password = passwordOverride; // eslint-disable-line no-param-reassign
-    }
-  
-    this.xmpp.connect(options.id, options.password);
 };
 
 /**

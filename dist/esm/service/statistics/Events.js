@@ -13,8 +13,7 @@ export var Events;
     Events["AUDIO_LEVEL"] = "statistics.audioLevel";
     /**
      * An event fired just before the statistics module gets disposes and it's
-     * the last chance to submit some logs that will end up in stats services like
-     * CallStats (if enabled).
+     * the last chance to submit logs.
      */
     Events["BEFORE_DISPOSED"] = "statistics.before_disposed";
     /**

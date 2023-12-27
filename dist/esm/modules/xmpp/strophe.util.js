@@ -3,7 +3,6 @@
  */
 import { getLogger } from '@jitsi/logger';
 import { Strophe } from 'strophe.js';
-import GlobalOnErrorHandler from '../util/GlobalOnErrorHandler';
 const logger = getLogger(__filename);
 /**
  * This is the last HTTP error status captured from Strophe debug logs.
@@ -73,10 +72,7 @@ export default function () {
                 break;
             case Strophe.LogLevel.ERROR:
             case Strophe.LogLevel.FATAL:
-                // eslint-disable-next-line no-param-reassign
-                msg = `Strophe: ${msg}`;
-                GlobalOnErrorHandler.callErrorHandler(new Error(msg));
-                logger.error(msg);
+                logger.error(`Strophe: ${msg}`, msg);
                 break;
         }
         /* eslint-enable no-case-declarations */

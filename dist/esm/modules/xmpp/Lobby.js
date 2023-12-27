@@ -244,19 +244,24 @@ export default class Lobby {
                 }
             });
             this.lobbyRoom.addEventListener(XMPPEvents.MUC_DESTROYED, (reason, jid) => {
+                var _a;
+                (_a = this.lobbyRoom) === null || _a === void 0 ? void 0 : _a.clean();
+                this.lobbyRoom = undefined;
+                logger.info('Lobby room left(destroyed)!');
                 // we are receiving the jid of the main room
                 // means we are invited to join, maybe lobby was disabled
                 if (jid) {
                     this.mainRoom.join();
                     return;
                 }
-                this.lobbyRoom.clean();
                 this.mainRoom.eventEmitter.emit(XMPPEvents.MUC_DESTROYED, reason);
             });
             // If participant retries joining shared password while waiting in the lobby
             // and succeeds make sure we leave lobby
             this.mainRoom.addEventListener(XMPPEvents.MUC_JOINED, () => {
-                this.leave();
+                this.leave().catch(() => {
+                    // this may happen if the room has been destroyed.
+                });
             });
         }
         return new Promise((resolve, reject) => {

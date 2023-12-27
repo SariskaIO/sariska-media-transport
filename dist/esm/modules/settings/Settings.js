@@ -22,14 +22,14 @@ export default {
         this._storage = externalStorage || jitsiLocalStorage;
     },
     /**
-     * Returns fake username for callstats
+     * Returns the ID to use for the purposes of stats, saved in localstorage as "callStatsUserName".
      * @returns {string} fake username for callstats
      */
     get callStatsUserName() {
         if (!_callStatsUserName) {
             _callStatsUserName = this._storage.getItem('callStatsUserName');
             if (!_callStatsUserName) {
-                _callStatsUserName = generateCallStatsUserName();
+                _callStatsUserName = _generateStatsId();
                 this._storage.setItem('callStatsUserName', _callStatsUserName);
             }
         }
@@ -76,12 +76,12 @@ export default {
     }
 };
 /**
- * Generate fake username for callstats.
- * @returns {string} fake random username
+ * Generate a random ID to be used for statistics.
+ * @returns {string} the random ID
  */
-function generateCallStatsUserName() {
+function _generateStatsId() {
     const username = UsernameGenerator.generateUsername();
-    logger.log('generated callstats uid', username);
+    logger.log('generated stats id', username);
     return username;
 }
 /**

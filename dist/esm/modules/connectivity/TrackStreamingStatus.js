@@ -55,7 +55,7 @@ export class TrackStreamingStatusImpl {
      *
      * @constructor
      * @param rtc - the RTC service instance
-     * @param conference - parent conference instance
+     * @param conference - parent conference instance // TODO: Needs JitsiConference Type
      * @param {Object} options
      * @param {number} [options.p2pRtcMuteTimeout=2500] custom value for
      * {@link TrackStreamingStatusImpl.p2pRtcMuteTimeout}.
@@ -203,12 +203,6 @@ export class TrackStreamingStatusImpl {
             const sourceName = this.track.getSourceName();
             this.track._setTrackStreamingStatus(newStatus);
             logger.debug(`Emit track streaming status(${Date.now()}) ${sourceName}: ${newStatus}`);
-            // Log the event on CallStats
-            Statistics.sendLog(JSON.stringify({
-                id: 'track.streaming.status',
-                track: sourceName,
-                status: newStatus
-            }));
             // It's common for the event listeners to access the JitsiRemoteTrack. Thus pass it as a parameter here.
             this.track.emit(JitsiTrackEvents.TRACK_STREAMING_STATUS_CHANGED, this.track, newStatus);
         }
@@ -426,7 +420,6 @@ export class TrackStreamingStatusImpl {
             return;
         }
         const sourceName = this.track.getSourceName();
-        logger.debug(`Detector on track signalling mute changed: ${sourceName}`, track.isMuted());
         this.figureOutStreamingStatus();
     }
     /**

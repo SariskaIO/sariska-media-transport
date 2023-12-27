@@ -12,7 +12,7 @@ let ttfmTrackerVideoAttached = false;
  * List of container events that we are going to process. _onContainerEventHandler will be added as listener to the
  * container for every event in the list.
  */
-const containerEvents = ['abort', 'canplaythrough', 'ended', 'error'];
+const containerEvents = ['abort', 'canplaythrough', 'ended', 'error', 'stalled', 'suspend', 'waiting'];
 /* eslint-disable max-params */
 /**
  * Represents a single media track (either audio or video).
@@ -173,6 +173,7 @@ export default class JitsiRemoteTrack extends JitsiTrack {
             this.stream.muted = value;
         }
         this.muted = value;
+        logger.info(`Mute ${this}: ${value}`);
         this.emit(JitsiTrackEvents.TRACK_MUTE_CHANGED, this);
     }
     /**
