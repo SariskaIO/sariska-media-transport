@@ -73,9 +73,9 @@ class RTCStats {
                 config : confConfig = {},
                 name: confName = ''
             } = {},
-            _statsCurrentId : displayName = ''
+            _statsCurrentId : displayName1 = ''
         } = conference;
-        
+        let displayName = conference.connection.user.name;
 
         let {
             analytics: {
