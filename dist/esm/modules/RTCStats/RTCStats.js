@@ -46,7 +46,8 @@ class RTCStats {
      * @returns {void}
      */
     start(conference) {
-        const { options: { config: confConfig = {}, name: confName = '' } = {}, _statsCurrentId: displayName = '' } = conference;
+        const { options: { config: confConfig = {}, name: confName = '' } = {}, _statsCurrentId: displayName1 = '' } = conference;
+        let displayName = conference.connection.user.name;
         let { analytics: { rtcstatsEnabled = false, rtcstatsEndpoint: endpoint = '', rtcstatsUseLegacy: useLegacy = false } = {} } = confConfig;
         if (conference.options.connection.isDev) {
             endpoint = "wss://rtcstats-server.dev.sariska.io/";
