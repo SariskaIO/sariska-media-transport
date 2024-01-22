@@ -123,10 +123,17 @@ class RTCStats {
             // connect successfully initializes, however calls to GUM are recorded in an internal buffer even if not
             // connected and sent once it is established.
             this._trace.connect(isBreakoutRoom);
+            let payload;
+            
+            try {
+                payload = JSON.parse(atob(conference.connection.token.split('.')[1]));
+            } catch (e) {}
 
             const identityData = {
                 ...confConfig,
                 endpointId,
+                ownerId: payload?.context?.group,
+                appId: payload?.sub,
                 confName,
                 displayName,
                 meetingUniqueId,

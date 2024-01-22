@@ -66,7 +66,7 @@ class RTCStats {
         // When the conference is joined, we need to initialize the trace module with the new conference's config.
         // The trace module will then connect to the rtcstats server and send the identity data.
         conference.once(CONFERENCE_JOINED, () => {
-            var _a;
+            var _a, _b;
             const traceOptions = {
                 endpoint,
                 meetingFqn: confName,
@@ -81,8 +81,12 @@ class RTCStats {
             // connect successfully initializes, however calls to GUM are recorded in an internal buffer even if not
             // connected and sent once it is established.
             this._trace.connect(isBreakoutRoom);
-            const identityData = Object.assign(Object.assign({}, confConfig), { endpointId,
-                confName,
+            let payload;
+            try {
+                payload = JSON.parse(atob(conference.connection.token.split('.')[1]));
+            }
+            catch (e) { }
+            const identityData = Object.assign(Object.assign({}, confConfig), { endpointId, ownerId: (_b = payload === null || payload === void 0 ? void 0 : payload.context) === null || _b === void 0 ? void 0 : _b.group, appId: payload === null || payload === void 0 ? void 0 : payload.sub, confName,
                 displayName,
                 meetingUniqueId,
                 isBreakoutRoom });
