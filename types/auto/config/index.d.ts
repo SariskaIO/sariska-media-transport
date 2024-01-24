@@ -43,6 +43,7 @@ export namespace conferenceConfig {
     const enableLayerSuspension: boolean;
     namespace e2eping {
         const pingInterval: number;
+        const enabled: boolean;
     }
     namespace analytics {
         const disabled: boolean;
@@ -54,10 +55,29 @@ export namespace conferenceConfig {
     namespace watchRTCConfigParams {
         const rtcApiKey: string;
     }
+    const useNewBandwidthAllocationStrategy: boolean;
+    namespace faceLandmarks {
+        const enableFaceCentering: boolean;
+        const enableFaceExpressionsDetection: boolean;
+        const enableDisplayFaceExpressions: boolean;
+        const enableRTCStats: boolean;
+        const faceCenteringThreshold: number;
+        const captureInterval: number;
+    }
+    namespace deploymentInfo {
+        const environment: string;
+        const envType: string;
+        const shard: string;
+        const region: string;
+        const userRegion: string;
+        const crossRegion: number;
+    }
+    const enableP2P: boolean;
     namespace p2p {
         const useStunTurn_1: boolean;
         export { useStunTurn_1 as useStunTurn };
-        export const enabled: boolean;
+        const enabled_1: boolean;
+        export { enabled_1 as enabled };
         export const stunServers: {
             urls: string;
         }[];

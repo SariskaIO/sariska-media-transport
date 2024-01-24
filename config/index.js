@@ -96,7 +96,8 @@ export const conferenceConfig = {
     // analyticsInterval
     // stunServers
     e2eping: {
-        pingInterval: -1 // analyticsInterval: 60000,
+        "pingInterval": -1,
+        "enabled": true
     },
     analytics: {
         disabled: false,
@@ -149,6 +150,24 @@ export const conferenceConfig = {
             // collectionInterval?: number;
             // logGetStats?: boolean;
     },
+    useNewBandwidthAllocationStrategy: true,
+    faceLandmarks: {
+      "enableFaceCentering": true,
+      "enableFaceExpressionsDetection": false,
+      "enableDisplayFaceExpressions": false,
+      "enableRTCStats": false,
+      "faceCenteringThreshold": 20,
+      "captureInterval": 1000
+    },
+    deploymentInfo: {
+        "environment": "lonely",
+        "envType": "prod",
+        "shard": "shard-0",
+        "region": "ap-south-1",
+        "userRegion": "asia",
+        "crossRegion": 0
+    },
+    enableP2P: true,
     p2p: {
         useStunTurn: true,
             // Enables peer to peer mode. When enabled the system will try to
