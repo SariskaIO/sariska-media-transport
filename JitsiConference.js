@@ -4309,14 +4309,16 @@ JitsiConference.prototype.sendRTCStatsEventForConference = function() {
         });
     });
 
-    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, { type, faceLandmarks }) => {
-        const { duration, faceExpression, timestamp } = faceLandmarks;
-        const durationSeconds = Math.round(duration / 1000);
-        RTCStats.sendStatsEntry(faceLandmarks, {
-            duration: durationSeconds,
-            faceLandmarks: faceExpression,
-            timestamp
-        });
+    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, data) => {
+        const { duration, faceExpression, timestamp } = data || {};
+        if (faceExpression) {
+            const durationSeconds = Math.round(duration / 1000);
+            RTCStats.sendStatsEntry(faceLandmarks, {
+                duration: durationSeconds,
+                faceLandmarks: faceExpression,
+                timestamp
+            });
+        }
     });
 
     this.on(JitsiConferenceEvents.CONFERENCE_LEFT, () => {
