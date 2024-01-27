@@ -2,6 +2,7 @@ import { getLogger } from '@jitsi/logger';
 import $ from 'jquery';
 import isEqual from 'lodash.isequal';
 import { Strophe } from 'strophe.js';
+const FACE_LANDMARK_MESSAGE_TYPE = 'face-landmarks';
 
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import JitsiConferenceEventManager from './JitsiConferenceEventManager';
@@ -4291,8 +4292,7 @@ JitsiConference.prototype.sendRTCStatsEventForConference = function() {
             }
     });
 
-    this.on(JitsiConferenceEvents.DOMINANT_SPEAKER_CHANGED, (data) => {
-        const { id, previousSpeakers, silence } = data;
+    this.on(JitsiConferenceEvents.DOMINANT_SPEAKER_CHANGED, (id, previousSpeakers, silence) => {
         RTCStats.sendStatsEntry('dominantSpeaker', null, {
             dominantSpeakerEndpoint: silence ? null : id,
             previousSpeakers
@@ -4300,8 +4300,7 @@ JitsiConference.prototype.sendRTCStatsEventForConference = function() {
 
     });
 
-    this.on(JitsiE2EPingEvents.E2E_RTT_CHANGED, (data) => {
-        const { participant, rtt } = data;
+    this.on(JitsiE2EPingEvents.E2E_RTT_CHANGED, (participant, rtt) => {
         RTCStats.sendStatsEntry('e2eRtt', null, {
             remoteEndpointId: participant.getId(),
             rtt,
@@ -4310,14 +4309,14 @@ JitsiConference.prototype.sendRTCStatsEventForConference = function() {
     });
 
     this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, data) => {
-        const { duration, faceExpression, timestamp } = data || {};
-        if (faceExpression) {
+        const { type, timestamp , faceExpression, duration } = data || {};
+        if (type === FACE_LANDMARK_MESSAGE_TYPE) {
             const durationSeconds = Math.round(duration / 1000);
-            RTCStats.sendStatsEntry(faceLandmarks, {
+            RTCStats.sendStatsEntry('faceLandmarks', null, {
                 duration: durationSeconds,
                 faceLandmarks: faceExpression,
                 timestamp
-            });
+            });   
         }
     });
 
