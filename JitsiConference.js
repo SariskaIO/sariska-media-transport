@@ -5,7 +5,6 @@ import { Strophe } from 'strophe.js';
 
 import * as JitsiConferenceErrors from './JitsiConferenceErrors';
 import JitsiConferenceEventManager from './JitsiConferenceEventManager';
-import * as JitsiConferenceEvents from './JitsiConferenceEvents';
 import JitsiParticipant from './JitsiParticipant';
 import JitsiTrackError from './JitsiTrackError';
 import * as JitsiTrackErrors from './JitsiTrackErrors';
@@ -44,6 +43,9 @@ import ComponentsVersions from './modules/version/ComponentsVersions';
 import VideoSIPGW from './modules/videosipgw/VideoSIPGW';
 import * as VideoSIPGWConstants from './modules/videosipgw/VideoSIPGWConstants';
 import SignalingLayerImpl from './modules/xmpp/SignalingLayerImpl';
+import RTCStats from './modules/RTCStats/RTCStats';
+import * as JitsiConferenceEvents from './JitsiConferenceEvents';
+import * as JitsiE2EPingEvents from './service/e2eping/E2ePingEvents';
 import LocalTracksDuration from './modules/statistics/LocalTracksDuration';
 import {
     FEATURE_E2EE,
@@ -331,6 +333,10 @@ export default function JitsiConference(options) {
 
     if (options.config.enableAnalytics) {
         this.enableAnalytics();
+    }
+
+    if (options.config.analytics.rtcstatsEnabled) {
+        this.sendRTCStatsEventForConference();
     }
 
     if (options.config.iAmRecorder) {
@@ -4246,3 +4252,78 @@ JitsiConference.prototype.stopSIPVideoCall = function(sipAddress) {
 JitsiConference.prototype.getMetadataHandler = function() {
     return this.room?.getMetadataHandler();
 };
+
+
+JitsiConference.prototype.sendRTCStatsEventForConference = function() {
+
+    this.on(JitsiConferenceEvents.TRACK_ADDED, (data) => {
+        const jitsiTrack = data?.track?.jitsiTrack;
+        const { ssrc, videoType } = jitsiTrack || { };
+
+        // Remote tracks store their ssrc in the jitsiTrack object. Local tracks don't. See getSsrcByTrack.
+        if (videoType && ssrc && !jitsiTrack.isLocal() && !jitsiTrack.isAudioTrack()) {
+            RTCStats.sendStatsEntry('setVideoType', null, {
+                ssrc,
+                videoType
+            }); 
+        }
+    });
+
+    this.on(JitsiConferenceEvents.TRACK_UPDATED, (data) => {
+            const { videoType, jitsiTrack, muted } = data?.track || { };
+            const { ssrc, isLocal, videoType: trackVideoType, conference } = jitsiTrack || { };
+
+            if (trackVideoType === 'camera' && conference && isLocal()) {
+                RTCStats.sendStatsEntry('faceLandmarks', null, {
+                    duration: 0,
+                    faceLandmarks: muted ? 'camera-off' : 'camera-on',
+                    timestamp: Date.now()
+                });
+            }
+
+            // if the videoType of the remote track has changed we expect to find it in track.videoType. grep for
+            // trackVideoTypeChanged.
+            if (videoType && ssrc && !jitsiTrack.isLocal() && !jitsiTrack.isAudioTrack()) {
+                RTCStats.sendStatsEntry('setVideoType',null, {
+                    ssrc,
+                    videoType
+                });
+            }
+    });
+
+    this.on(JitsiConferenceEvents.DOMINANT_SPEAKER_CHANGED, (data) => {
+        const { id, previousSpeakers, silence } = data;
+        RTCStats.sendStatsEntry('dominantSpeaker', null, {
+            dominantSpeakerEndpoint: silence ? null : id,
+            previousSpeakers
+        });
+
+    });
+
+    this.on(JitsiE2EPingEvents.E2E_RTT_CHANGED, (data) => {
+        const { participant, rtt } = data;
+        RTCStats.sendStatsEntry('e2eRtt', null, {
+            remoteEndpointId: participant.getId(),
+            rtt,
+            remoteRegion: participant.getProperty('region')
+        });
+    });
+
+    this.on(JitsiConferenceEvents.ENDPOINT_MESSAGE_RECEIVED, (participant, { type, faceLandmarks }) => {
+        const { duration, faceExpression, timestamp } = faceLandmarks;
+        const durationSeconds = Math.round(duration / 1000);
+        RTCStats.sendStatsEntry(faceLandmarks, {
+            duration: durationSeconds,
+            faceLandmarks: faceExpression,
+            timestamp
+        });
+    });
+
+    this.on(JitsiConferenceEvents.CONFERENCE_LEFT, () => {
+        RTCStats.sendStatsEntry('conferenceStartTimestamp', null, 0);
+    });
+
+    this.on(JitsiConferenceEvents.CONFERENCE_CREATED_TIMESTAMP, (timestamp) => {
+        RTCStats.sendStatsEntry('conferenceStartTimestamp', null, timestamp);
+    });
+}
