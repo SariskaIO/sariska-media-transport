@@ -1186,6 +1186,7 @@ declare class JitsiConference {
      * @returns {Object} the room metadata handler.
      */
     getMetadataHandler(): any;
+    sendRTCStatsEventForConference(): void;
 }
 declare namespace JitsiConference {
     /**
