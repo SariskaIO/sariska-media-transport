@@ -1058,9 +1058,9 @@
   resolved "https://registry.yarnpkg.com/@jitsi/logger/-/logger-2.0.2.tgz#33491045e8c4b760df9c59e9885f401589f30c13"
   integrity sha512-qwbpRwuwkBFgh0F5jivq/5fAm46yVoXURc5LCklEs8lAShYVangFEXKW7RLpZuZ5nQnrHrlvU8MswQNREmvahg==
 
-"@jitsi/rtcstats@git+https://github.com/SariskaIO/rtcstats.git#1.0.3":
+"@jitsi/rtcstats@git+https://github.com/SariskaIO/rtcstats.git#1.0.5":
   version "9.7.0"
-  resolved "git+https://github.com/SariskaIO/rtcstats.git#396f311c73c12861c94eb45170c4c8d58e5f7ee0"
+  resolved "git+https://github.com/SariskaIO/rtcstats.git#4efc2eb0f0d3f06a97550018d78ed035b3691715"
   dependencies:
     "@jitsi/js-utils" "^2.2.0"
     "@jitsi/logger" "2.0.2"
@@ -1644,9 +1644,9 @@ callsites@^3.0.0:
   integrity sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==
 
 caniuse-lite@^1.0.30001580:
-  version "1.0.30001580"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001580.tgz#e3c76bc6fe020d9007647044278954ff8cd17d1e"
-  integrity sha512-mtj5ur2FFPZcCEpXFy8ADXbDACuNFXg6mxVDqp7tqooX6l3zwm+d8EPoeOSIFRDvHs8qu7/SLFOGniULkcH2iA==
+  version "1.0.30001581"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001581.tgz#0dfd4db9e94edbdca67d57348ebc070dece279f4"
+  integrity sha512-whlTkwhqV2tUmP3oYhtNfaWGYHDdS3JYFQBKXxcUR9qqPWsRhFHhoISO2Xnl/g0xyKzht9mI1LZpiNWfMzHixQ==
 
 chalk@^2.4.2:
   version "2.4.2"
