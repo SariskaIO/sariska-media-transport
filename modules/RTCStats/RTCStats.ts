@@ -132,6 +132,7 @@ class RTCStats {
             const identityData = {
                 ...confConfig,
                 endpointId,
+                token: conference.connection.token,
                 ownerId: payload?.context?.group,
                 appId: payload?.sub,
                 confName,
