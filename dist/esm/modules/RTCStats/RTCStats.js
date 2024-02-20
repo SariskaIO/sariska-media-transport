@@ -86,7 +86,7 @@ class RTCStats {
                 payload = JSON.parse(atob(conference.connection.token.split('.')[1]));
             }
             catch (e) { }
-            const identityData = Object.assign(Object.assign({}, confConfig), { endpointId, ownerId: (_b = payload === null || payload === void 0 ? void 0 : payload.context) === null || _b === void 0 ? void 0 : _b.group, appId: payload === null || payload === void 0 ? void 0 : payload.sub, confName,
+            const identityData = Object.assign(Object.assign({}, confConfig), { endpointId, token: conference.connection.token, ownerId: (_b = payload === null || payload === void 0 ? void 0 : payload.context) === null || _b === void 0 ? void 0 : _b.group, appId: payload === null || payload === void 0 ? void 0 : payload.sub, confName,
                 displayName,
                 meetingUniqueId,
                 isBreakoutRoom });
