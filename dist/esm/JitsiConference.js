@@ -481,9 +481,22 @@ JitsiConference.prototype._init = function (options = {}) {
     this.jvb121Status = new Jvb121EventGenerator(this);
     // creates dominant speaker detection that works only in p2p mode
     this.p2pDominantSpeakerDetection = new P2PDominantSpeakerDetection(this);
-    if (config && config.deploymentInfo && config.deploymentInfo.userRegion) {
-        this.setLocalParticipantProperty('region', config.deploymentInfo.userRegion);
-    }
+    const geolocationServiceUrl = options.isDev ? "https://api.dev.sariska.io/api/v1/geolocation" : "https://api.sariska.io/api/v1/geolocation";
+    fetch(geolocationServiceUrl)
+        .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+        .then(data => {
+        // Assuming data contains the user's region
+        this.setLocalParticipantProperty('region', data.userRegion);
+    })
+        .catch(error => {
+        console.error('Error fetching geolocation:', error.message);
+        // Handle the error if needed
+    });
     // Publish the codec preference to presence.
     this.setLocalParticipantProperty('codecList', this.codecSelection.getCodecPreferenceList('jvb'));
     // Set transcription language presence extension.
