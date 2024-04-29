@@ -153,7 +153,8 @@ JitsiConnection.prototype.initJitsiConference = function(options={}) {
         name,
         config: options,
         connection: this,
-        user: this.user
+        user: this.user,
+        isDev: this.isDev
     });
 };
 
